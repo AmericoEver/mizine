@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 60" fill="none">
+  <circle cx="25" cy="30" r="18" stroke="#FFFFFF" stroke-width="2" stroke-dasharray="4 2"/>
+  <path d="M25 18L28 26L36 26L30 31L32 39L25 34L18 39L20 31L14 26L22 26Z" fill="#E10600"/>
+  <text x="56" y="30" fill="#FFFFFF" font-family="'Inter', sans-serif" font-weight="800" font-size="18" letter-spacing="1.5">MIZINE</text>
+  <text x="130" y="30" fill="#E10600" font-family="'Inter', sans-serif" font-weight="300" font-size="18" font-style="italic">celebrate</text>
+  <text x="56" y="44" fill="#888888" font-family="'Inter', sans-serif" font-weight="600" font-size="8" letter-spacing="3">EXCLUSIVE EVENTS</text>
+</svg>

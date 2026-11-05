@@ -947,3 +947,375 @@ footer .wrap {
     scroll-behavior: auto;
   }
 }
+
+/* ==========================================================================
+   SCROLL REVEAL & CINEMATIC AUDIOVISUAL ANIMATIONS ("TXAMM")
+   ========================================================================== */
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Sistema de Scroll Reveal */
+.reveal-up {
+  opacity: 0;
+  transform: translateY(42px);
+  filter: blur(4px);
+  transition: opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.85s cubic-bezier(0.16, 1, 0.3, 1),
+              filter 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform, filter;
+}
+
+.reveal-up.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+  filter: blur(0);
+}
+
+.reveal-fade {
+  opacity: 0;
+  transition: opacity 1s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity;
+}
+
+.reveal-fade.is-visible {
+  opacity: 1;
+}
+
+.reveal-scale {
+  opacity: 0;
+  transform: scale(0.92);
+  filter: blur(3px);
+  transition: opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.9s cubic-bezier(0.16, 1, 0.3, 1),
+              filter 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform, filter;
+}
+
+.reveal-scale.is-visible {
+  opacity: 1;
+  transform: scale(1);
+  filter: blur(0);
+}
+
+/* Stagger Delays para Grelhas */
+.stagger-1 { transition-delay: 0.08s; }
+.stagger-2 { transition-delay: 0.16s; }
+.stagger-3 { transition-delay: 0.24s; }
+.stagger-4 { transition-delay: 0.32s; }
+.stagger-5 { transition-delay: 0.40s; }
+.stagger-6 { transition-delay: 0.48s; }
+
+/* Animação nos Títulos das Secções */
+.head h2 {
+  position: relative;
+  display: inline-block;
+}
+
+.head h2::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -6px;
+  width: 0;
+  height: 2px;
+  background: var(--red);
+  transition: width 1s cubic-bezier(0.16, 1, 0.3, 1) 0.3s;
+}
+
+.is-visible .head h2::after,
+.head.is-visible h2::after {
+  width: 50px;
+}
+
+/* Efeito Audiovisual de Câmara HUD nos Reels */
+.reel {
+  position: relative;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.4s ease !important;
+}
+
+.reel:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 16px 40px rgba(225, 6, 0, 0.28), 0 0 1px 1px rgba(225, 6, 0, 0.5) !important;
+  border-color: var(--red) !important;
+}
+
+.reel .art {
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reel:hover .art {
+  transform: scale(1.08);
+}
+
+.reel .play {
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.35s ease,
+              background-color 0.35s ease;
+}
+
+.reel:hover .play {
+  transform: scale(1.15);
+  box-shadow: 0 0 25px rgba(225, 6, 0, 0.7);
+}
+
+/* Indicador de Gravação 4K nos Reels */
+.hud-rec-badge {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  padding: 4px 8px;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  font-family: 'Inter', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #fff;
+  z-index: 3;
+}
+
+.hud-rec-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--red);
+  animation: pulse-rec 1.8s infinite;
+}
+
+@keyframes pulse-rec {
+  0% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.3; transform: scale(0.8); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* Efeito de Zoom e Glow nos Projetos */
+.grid .card {
+  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.4s ease;
+}
+
+.grid .card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 16px 45px rgba(225, 6, 0, 0.22);
+  border-color: rgba(225, 6, 0, 0.6);
+}
+
+.grid .card .art {
+  transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.grid .card:hover .art {
+  transform: scale(1.06);
+}
+
+/* Letreiro de Logotipos de Clientes */
+.marq-logos {
+  overflow: hidden;
+  border-block: 1px solid rgba(225, 6, 0, 0.25);
+  padding: 24px 0;
+  background: #070707;
+  position: relative;
+}
+
+.marq-logos::before,
+.marq-logos::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 120px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.marq-logos::before {
+  left: 0;
+  background: linear-gradient(to right, #000 0%, transparent 100%);
+}
+
+.marq-logos::after {
+  right: 0;
+  background: linear-gradient(to left, #000 0%, transparent 100%);
+}
+
+.marq-track {
+  display: flex;
+  gap: 40px;
+  width: max-content;
+  animation: m 30s linear infinite;
+  align-items: center;
+}
+
+.marq-logos:hover .marq-track {
+  animation-play-state: paused;
+}
+
+.client-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 64px;
+  min-width: 150px;
+  padding: 10px 24px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+}
+
+.client-badge:hover {
+  background: rgba(225, 6, 0, 0.08);
+  border-color: rgba(225, 6, 0, 0.5);
+  transform: translateY(-3px) scale(1.04);
+  box-shadow: 0 10px 25px rgba(225, 6, 0, 0.25);
+}
+
+.client-img {
+  max-height: 40px;
+  max-width: 160px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  filter: brightness(0.9) contrast(1.1);
+  transition: all 0.3s ease;
+}
+
+.client-badge:hover .client-img {
+  filter: brightness(1.2) contrast(1.2) drop-shadow(0 0 10px rgba(225, 6, 0, 0.5));
+}
+
+.client-fallback {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: Anton, Impact, sans-serif;
+  font-size: 20px;
+  text-transform: uppercase;
+  color: #ddd;
+  letter-spacing: 1px;
+}
+
+.client-dot {
+  color: var(--red);
+  font-size: 12px;
+}
+
+/* Grelha de Clientes */
+.clients-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 16px;
+}
+
+.client-grid-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 72px;
+  padding: 12px 18px;
+  background: #0d0d0d;
+  border: 1px solid #1f1f1f;
+  border-radius: 4px;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+}
+
+.client-grid-card:hover {
+  border-color: var(--red);
+  background: #140808;
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(225, 6, 0, 0.22);
+}
+
+.client-grid-img {
+  max-height: 36px;
+  max-width: 120px;
+  object-fit: contain;
+  filter: grayscale(60%) opacity(0.85);
+  transition: all 0.3s ease;
+}
+
+.client-grid-card:hover .client-grid-img {
+  filter: grayscale(0%) opacity(1) drop-shadow(0 0 8px rgba(225, 6, 0, 0.5));
+}
+
+.client-grid-name {
+  font-family: Anton, sans-serif;
+  font-size: 16px;
+  color: #aaa;
+  letter-spacing: 1px;
+  transition: color 0.3s;
+}
+
+.client-grid-card:hover .client-grid-name {
+  color: #fff;
+}
+
+/* Cartões de Depoimentos Modernos */
+.testimonial-card {
+  position: relative;
+  background: #0e0e0e;
+  border: 1px solid #222;
+  padding: 32px 28px 24px 28px;
+  border-radius: 4px;
+  transition: transform 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+}
+
+.testimonial-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(225, 6, 0, 0.4);
+  box-shadow: 0 12px 35px rgba(225, 6, 0, 0.15);
+}
+
+.quote-mark {
+  position: absolute;
+  top: 10px;
+  left: 20px;
+  font-family: Anton, Georgia, serif;
+  font-size: 50px;
+  line-height: 1;
+  color: rgba(225, 6, 0, 0.35);
+  pointer-events: none;
+}
+
+.testimonial-card p {
+  position: relative;
+  z-index: 1;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #e0e0e0;
+  margin-bottom: 20px;
+}
+
+.testimonial-card cite {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid #1f1f1f;
+  padding-top: 14px;
+  font-style: normal;
+}
+
+.cite-author {
+  font-weight: 700;
+  color: #fff;
+  font-size: 14px;
+}
+
+.cite-company {
+  font-size: 12px;
+  color: var(--red);
+  margin-top: 2px;
+  letter-spacing: 0.5px;
+}
+

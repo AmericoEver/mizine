@@ -10,6 +10,16 @@ interface AdminDashboardProps {
 
 type TabType = 'hero' | 'about' | 'reels' | 'projects' | 'clients' | 'timeline' | 'team' | 'group' | 'messages';
 
+const DEFAULT_BRAND_LOGOS: Record<string, string> = {
+  'GEEK EVER': '/media/clients/geek-ever.svg',
+  'MIZINE CELEBRATE': '/media/clients/mizine-celebrate.svg',
+  'MAPUTO CREATIVE': '/media/clients/maputo-creative.svg',
+  'STUDIO 8': '/media/clients/studio-8.svg',
+  'VALOR DIGITAL': '/media/clients/valor-digital.svg',
+  'BRAND MZ': '/media/clients/brand-mz.svg',
+  'XAI ART': '/media/clients/xai-art.svg',
+};
+
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   initialContent,
   onClose,
@@ -52,12 +62,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   const [isUploading, setIsUploading] = useState(false);
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, target: 'cover' | 'reel' | 'project', index?: number) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, target: 'cover' | 'reel' | 'project' | 'client', index?: number) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setIsUploading(true);
-    setSaveStatus('A carregar imagem do seu computador...');
+    setSaveStatus('A carregar ficheiro do seu computador...');
 
     const res = await apiService.uploadFile(file);
     setIsUploading(false);
@@ -72,6 +82,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           }
         }));
         setSaveStatus('Capa carregada com sucesso! Clique em "Guardar Alterações" para aplicar.');
+      } else if (target === 'client' && typeof index === 'number') {
+        const updated = [...content.clients];
+        updated[index].logoUrl = res.url;
+        setContent((prev) => ({ ...prev, clients: updated }));
+        setSaveStatus(`Logo da marca "${updated[index].name || 'Cliente'}" carregado com sucesso!`);
       } else if (target === 'reel' && typeof index === 'number') {
         const updated = [...content.reels];
         updated[index].imageUrl = res.url;
@@ -124,7 +139,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const addClient = () => {
     const newClient: ClientItem = {
       id: Date.now(),
-      name: `Cliente ${content.clients.length + 1}`
+      name: `Nova Marca ${content.clients.length + 1}`,
+      logoUrl: ''
     };
     setContent({ ...content, clients: [...content.clients, newClient] });
   };
@@ -737,33 +753,148 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           {/* TAB: CLIENTS & TESTIMONIALS */}
           {activeTab === 'clients' && (
             <div>
-              <h2 style={{ fontSize: '26px', marginBottom: '20px' }}>Clientes no Letreiro & Testemunhos</h2>
+              <h2 style={{ fontSize: '26px', marginBottom: '20px' }}>Marcas, Logotipos & Testemunhos</h2>
 
-              <div style={{ marginBottom: '32px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                  <h3 style={{ fontSize: '18px', color: 'var(--red)' }}>Marcas no Letreiro Rotativo (Marquee)</h3>
-                  <button onClick={addClient} className="btn outline" style={{ fontSize: '12px' }}>+ Adicionar Marca</button>
+              <div style={{ marginBottom: '36px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                  <div>
+                    <h3 style={{ fontSize: '18px', color: 'var(--red)', margin: 0, fontWeight: 700 }}>
+                      Logotipos das Marcas & Clientes
+                    </h3>
+                    <p style={{ color: '#888', fontSize: '13px', margin: '4px 0 0 0' }}>
+                      Adicione os logotipos (PNG, SVG, WEBP) das empresas com quem já trabalhou. Serão exibidos no letreiro e na secção de parceiros.
+                    </p>
+                  </div>
+                  <button onClick={addClient} className="btn red" style={{ fontSize: '13px' }}>
+                    + Adicionar Nova Marca
+                  </button>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
-                  {content.clients.map((c, idx) => (
-                    <div key={c.id} style={{ display: 'flex', gap: '8px' }}>
-                      <input
-                        value={c.name}
-                        onChange={(e) => {
-                          const updated = [...content.clients];
-                          updated[idx].name = e.target.value;
-                          setContent({ ...content, clients: updated });
+                <div style={{ display: 'grid', gap: '14px' }}>
+                  {content.clients.map((c, idx) => {
+                    const logoPreview = c.logoUrl || DEFAULT_BRAND_LOGOS[(c.name || '').trim().toUpperCase()] || '';
+                    return (
+                    <div
+                      key={c.id}
+                      style={{
+                        background: '#141414',
+                        border: '1px solid #282828',
+                        padding: '16px',
+                        display: 'grid',
+                        gridTemplateColumns: '70px 1.5fr 2fr auto 40px',
+                        gap: '14px',
+                        alignItems: 'center',
+                        borderRadius: '4px'
+                      }}
+                    >
+                      {/* Pré-visualização do Logo */}
+                      <div
+                        style={{
+                          width: '70px',
+                          height: '48px',
+                          background: '#0a0a0a',
+                          border: '1px solid #333',
+                          borderRadius: '4px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: '4px',
+                          overflow: 'hidden'
                         }}
-                      />
+                      >
+                        {logoPreview ? (
+                          <img
+                            src={logoPreview}
+                            alt={c.name}
+                            style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+                          />
+                        ) : (
+                          <span style={{ fontSize: '10px', color: '#666' }}>Sem logo</span>
+                        )}
+                      </div>
+
+                      {/* Nome da Marca */}
+                      <div>
+                        <label style={{ display: 'block', fontSize: '11px', color: '#888', marginBottom: '4px' }}>
+                          Nome da Marca
+                        </label>
+                        <input
+                          placeholder="Ex: GEEK EVER"
+                          value={c.name}
+                          onChange={(e) => {
+                            const updated = [...content.clients];
+                            updated[idx].name = e.target.value;
+                            setContent({ ...content, clients: updated });
+                          }}
+                          style={{ width: '100%', fontSize: '13px' }}
+                        />
+                      </div>
+
+                      {/* URL / Caminho do Logo */}
+                      <div>
+                        <label style={{ display: 'block', fontSize: '11px', color: '#888', marginBottom: '4px' }}>
+                          Caminho / URL do Ficheiro de Logo
+                        </label>
+                        <input
+                          placeholder="Ex: /media/clients/geek-ever.svg"
+                          value={c.logoUrl || ''}
+                          onChange={(e) => {
+                            const updated = [...content.clients];
+                            updated[idx].logoUrl = e.target.value;
+                            setContent({ ...content, clients: updated });
+                          }}
+                          style={{ width: '100%', fontSize: '13px' }}
+                        />
+                      </div>
+
+                      {/* Botão de Upload do Computador */}
+                      <div style={{ paddingTop: '16px' }}>
+                        <label
+                          style={{
+                            background: '#222',
+                            border: '1px solid #444',
+                            color: '#fff',
+                            padding: '8px 14px',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            cursor: isUploading ? 'not-allowed' : 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            borderRadius: '3px',
+                            whiteSpace: 'nowrap'
+                          }}
+                          title="Escolher arquivo do seu computador"
+                        >
+                          <span>📁 Upload PC</span>
+                          <input
+                            type="file"
+                            accept="image/*,.svg"
+                            style={{ display: 'none' }}
+                            disabled={isUploading}
+                            onChange={(e) => handleFileUpload(e, 'client', idx)}
+                          />
+                        </label>
+                      </div>
+
+                      {/* Botão Eliminar */}
                       <button
                         onClick={() => removeClient(c.id)}
-                        style={{ background: '#1c1c1c', border: '1px solid #333', color: '#ff4d4f', padding: '0 10px', cursor: 'pointer' }}
+                        style={{
+                          background: 'none',
+                          border: 0,
+                          color: '#ff4d4f',
+                          cursor: 'pointer',
+                          fontSize: '18px',
+                          marginTop: '14px'
+                        }}
+                        title="Remover Marca"
                       >
                         ✕
                       </button>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 60" fill="none">
+  <polygon points="12,30 24,14 38,22 32,38 18,36" stroke="#E10600" stroke-width="2" fill="none"/>
+  <circle cx="25" cy="27" r="5" fill="#FFFFFF"/>
+  <text x="56" y="30" fill="#FFFFFF" font-family="'Inter', sans-serif" font-weight="900" font-size="18" letter-spacing="2">MAPUTO</text>
+  <text x="146" y="30" fill="#AAAAAA" font-family="'Inter', sans-serif" font-weight="400" font-size="18" letter-spacing="2">CREATIVE</text>
+  <text x="56" y="44" fill="#E10600" font-family="'Inter', sans-serif" font-weight="700" font-size="8" letter-spacing="4">AGENCY HUB</text>
+</svg>

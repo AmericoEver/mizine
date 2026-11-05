@@ -103,13 +103,13 @@ export const defaultContent: SiteContent = {
     }
   ],
   clients: [
-    { id: 1, name: 'GEEK EVER' },
-    { id: 2, name: 'MIZINE CELEBRATE' },
-    { id: 3, name: 'MAPUTO CREATIVE' },
-    { id: 4, name: 'STUDIO 8' },
-    { id: 5, name: 'VALOR DIGITAL' },
-    { id: 6, name: 'BRAND MZ' },
-    { id: 7, name: 'XAI ART' }
+    { id: 1, name: 'GEEK EVER', logoUrl: '/media/clients/geek-ever.svg' },
+    { id: 2, name: 'MIZINE CELEBRATE', logoUrl: '/media/clients/mizine-celebrate.svg' },
+    { id: 3, name: 'MAPUTO CREATIVE', logoUrl: '/media/clients/maputo-creative.svg' },
+    { id: 4, name: 'STUDIO 8', logoUrl: '/media/clients/studio-8.svg' },
+    { id: 5, name: 'VALOR DIGITAL', logoUrl: '/media/clients/valor-digital.svg' },
+    { id: 6, name: 'BRAND MZ', logoUrl: '/media/clients/brand-mz.svg' },
+    { id: 7, name: 'XAI ART', logoUrl: '/media/clients/xai-art.svg' }
   ],
   testimonials: [
     {

@@ -88,6 +88,39 @@ export function App() {
     return () => observer.disconnect();
   }, [isAdminRoute, content]);
 
+  // Observador de Scroll Reveal ("Txamm") para animações cinematográficas ao fazer scroll
+  useEffect(() => {
+    if (isAdminRoute) return;
+
+    const timeout = setTimeout(() => {
+      const targets = document.querySelectorAll(
+        '.reveal-up, .reveal-fade, .reveal-scale, section > .wrap, .strip, .marq-logos, .grid .card, .reel, .tl li, .team article, .gcards .gcard, .cwrap'
+      );
+
+      const revealObserver = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('is-visible');
+            }
+          });
+        },
+        { threshold: 0.08, rootMargin: '0px 0px -40px 0px' }
+      );
+
+      targets.forEach((el) => {
+        if (!el.classList.contains('reveal-fade') && !el.classList.contains('reveal-scale')) {
+          el.classList.add('reveal-up');
+        }
+        revealObserver.observe(el);
+      });
+
+      return () => revealObserver.disconnect();
+    }, 80);
+
+    return () => clearTimeout(timeout);
+  }, [isAdminRoute, content]);
+
   const navigateToSite = () => {
     window.history.pushState({}, '', '/');
     setIsAdminRoute(false);

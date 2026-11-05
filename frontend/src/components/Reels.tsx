@@ -41,6 +41,12 @@ export const Reels: React.FC<ReelsProps> = ({ reels, onOpenReel }) => {
               onClick={() => onOpenReel(reel.title, reel.videoUrl)}
               aria-label={`Ver ${reel.title}`}
             >
+              {/* HUD Badge de Gravação Audiovisual */}
+              <div className="hud-rec-badge">
+                <span className="hud-rec-dot" />
+                <span>REC 4K</span>
+              </div>
+
               {reel.imageUrl ? (
                 <img
                   src={reel.imageUrl}

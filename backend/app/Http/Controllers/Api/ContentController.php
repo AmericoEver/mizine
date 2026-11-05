@@ -67,6 +67,7 @@ class ContentController extends Controller
             return [
                 'id' => $c->id,
                 'name' => $c->name,
+                'logoUrl' => $c->logo_url ?? '',
                 'order' => $c->order,
             ];
         });
@@ -255,6 +256,7 @@ class ContentController extends Controller
             foreach ($data['clients'] as $idx => $c) {
                 DB::table('clients')->insert([
                     'name' => is_array($c) ? ($c['name'] ?? '') : $c,
+                    'logo_url' => is_array($c) ? ($c['logoUrl'] ?? ($c['logo_url'] ?? null)) : null,
                     'order' => $idx + 1,
                     'is_active' => true,
                     'created_at' => now(),

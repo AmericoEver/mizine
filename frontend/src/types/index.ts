@@ -46,6 +46,7 @@ export interface ProjectItem {
 export interface ClientItem {
   id: number | string;
   name: string;
+  logoUrl?: string;
   order?: number;
 }
 

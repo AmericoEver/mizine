@@ -32,3 +32,4 @@ backend/bootstrap/cache/*
 
 # Local databases
 backend/database/*.sqlite-journal
+

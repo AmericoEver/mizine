@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
 
 interface NavbarProps {
-  onOpenAdmin?: () => void;
+  onBackToSite?: () => void;
   isAdminView?: boolean;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ onOpenAdmin, isAdminView }) => {
+export const Navbar: React.FC<NavbarProps> = ({ onBackToSite, isAdminView }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
     <nav>
       <div className="wrap">
-        <a className="logo" href="#topo">
+        <a className="logo" href={isAdminView ? '/#topo' : '#topo'}>
           MIZINE<i>.</i>
         </a>
         
@@ -29,16 +29,6 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAdmin, isAdminView }) => {
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <a className="btn" href="#contacto">Falar connosco</a>
-              {onOpenAdmin && (
-                <button
-                  onClick={onOpenAdmin}
-                  className="btn outline"
-                  style={{ padding: '8px 14px', fontSize: '11px' }}
-                  title="Painel de Administração"
-                >
-                  Admin
-                </button>
-              )}
             </div>
 
             <button
@@ -53,8 +43,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAdmin, isAdminView }) => {
         ) : (
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginLeft: 'auto' }}>
             <span className="admin-badge">Painel de Gestão</span>
-            {onOpenAdmin && (
-              <button onClick={onOpenAdmin} className="btn">
+            {onBackToSite && (
+              <button onClick={onBackToSite} className="btn">
                 Voltar ao Site
               </button>
             )}
@@ -64,4 +54,3 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAdmin, isAdminView }) => {
     </nav>
   );
 };
-

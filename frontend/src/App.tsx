@@ -22,12 +22,38 @@ import { AdminDashboard } from './admin/AdminDashboard';
 
 export function App() {
   const [content, setContent] = useState<SiteContent>(defaultContent);
-  const [view, setView] = useState<'site' | 'login' | 'admin'>('site');
+
+  // Determina se a URL atual é /admin ou #admin
+  const checkIsAdminRoute = () => {
+    const path = window.location.pathname.toLowerCase();
+    const hash = window.location.hash.toLowerCase();
+    return path === '/admin' || path === '/admin/' || hash === '#admin';
+  };
+
+  const [isAdminRoute, setIsAdminRoute] = useState<boolean>(checkIsAdminRoute);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(apiService.isAuthenticated);
+
   const [lightbox, setLightbox] = useState<{ isOpen: boolean; title: string; videoUrl: string }>({
     isOpen: false,
     title: '',
     videoUrl: ''
   });
+
+  // Ouve alterações de rota (popstate / hashchange)
+  useEffect(() => {
+    const handleLocationChange = () => {
+      const isAdm = checkIsAdminRoute();
+      setIsAdminRoute(isAdm);
+      setIsAuthenticated(apiService.isAuthenticated());
+    };
+
+    window.addEventListener('popstate', handleLocationChange);
+    window.addEventListener('hashchange', handleLocationChange);
+    return () => {
+      window.removeEventListener('popstate', handleLocationChange);
+      window.removeEventListener('hashchange', handleLocationChange);
+    };
+  }, []);
 
   // Carregar conteúdo inicial da API Laravel
   useEffect(() => {
@@ -38,9 +64,9 @@ export function App() {
     load();
   }, []);
 
-  // Observador de interseção para ativar menu
+  // Observador de interseção para ativar menu apenas na página pública
   useEffect(() => {
-    if (view !== 'site') return;
+    if (isAdminRoute) return;
 
     const links = document.querySelectorAll('#menu a');
     const sections = document.querySelectorAll('section[id], header[id]');
@@ -60,18 +86,11 @@ export function App() {
 
     sections.forEach((s) => observer.observe(s));
     return () => observer.disconnect();
-  }, [view, content]);
+  }, [isAdminRoute, content]);
 
-  const handleOpenAdmin = () => {
-    if (view === 'admin') {
-      setView('site');
-      return;
-    }
-    if (apiService.isAuthenticated()) {
-      setView('admin');
-    } else {
-      setView('login');
-    }
+  const navigateToSite = () => {
+    window.history.pushState({}, '', '/');
+    setIsAdminRoute(false);
   };
 
   const handleOpenVideo = (title: string, videoUrl?: string) => {
@@ -90,45 +109,51 @@ export function App() {
     });
   };
 
+  // Se a rota for /admin
+  if (isAdminRoute) {
+    if (!isAuthenticated) {
+      return (
+        <AdminLogin
+          onSuccess={() => setIsAuthenticated(true)}
+          onCancel={navigateToSite}
+        />
+      );
+    }
+
+    return (
+      <div className="mizine-app">
+        <Navbar onBackToSite={navigateToSite} isAdminView={true} />
+        <AdminDashboard
+          initialContent={content}
+          onClose={navigateToSite}
+          onContentUpdated={(updated) => setContent(updated)}
+        />
+      </div>
+    );
+  }
+
+  // Página pública original 100% limpa (sem botão de admin)
   return (
     <div className="mizine-app">
-      {view === 'login' ? (
-        <AdminLogin
-          onSuccess={() => setView('admin')}
-          onCancel={() => setView('site')}
-        />
-      ) : view === 'admin' ? (
-        <>
-          <Navbar onOpenAdmin={() => setView('site')} isAdminView={true} />
-          <AdminDashboard
-            initialContent={content}
-            onClose={() => setView('site')}
-            onContentUpdated={(updated) => setContent(updated)}
-          />
-        </>
-      ) : (
-        <>
-          <Navbar onOpenAdmin={handleOpenAdmin} />
-          <Hero content={content.hero} />
-          <Strip content={content.hero} onPlayShowreel={handleOpenVideo} />
-          <About content={content.about} />
-          <Reels reels={content.reels} onOpenReel={handleOpenVideo} />
-          <Projects projects={content.projects} />
-          <Clients clients={content.clients} testimonials={content.testimonials} />
-          <Timeline timeline={content.timeline} />
-          <Team team={content.team} />
-          <Group companies={content.group} />
-          <Contact hero={content.hero} />
-          <Footer />
+      <Navbar />
+      <Hero content={content.hero} />
+      <Strip content={content.hero} onPlayShowreel={handleOpenVideo} />
+      <About content={content.about} />
+      <Reels reels={content.reels} onOpenReel={handleOpenVideo} />
+      <Projects projects={content.projects} />
+      <Clients clients={content.clients} testimonials={content.testimonials} />
+      <Timeline timeline={content.timeline} />
+      <Team team={content.team} />
+      <Group companies={content.group} />
+      <Contact hero={content.hero} />
+      <Footer />
 
-          <Lightbox
-            isOpen={lightbox.isOpen}
-            title={lightbox.title}
-            videoUrl={lightbox.videoUrl}
-            onClose={handleCloseVideo}
-          />
-        </>
-      )}
+      <Lightbox
+        isOpen={lightbox.isOpen}
+        title={lightbox.title}
+        videoUrl={lightbox.videoUrl}
+        onClose={handleCloseVideo}
+      />
     </div>
   );
 }

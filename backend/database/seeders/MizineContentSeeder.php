@@ -24,7 +24,7 @@ class MizineContentSeeder extends Seeder
             'whatsapp_url' => 'https://wa.me/258840000000',
             'instagram_handle' => '@mizine_8',
             'instagram_url' => 'https://www.instagram.com/mizine_8',
-            'contact_email' => 'ola@mizine.co.mz',
+            'contact_email' => 'support@mizine.co.mz',
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -124,7 +124,7 @@ class MizineContentSeeder extends Seeder
         // Team
         DB::table('team_members')->truncate();
         $team = [
-            ['name' => 'Moisés Mabunda', 'role' => 'Fundador & Diretor Criativo', 'initial' => 'M', 'order' => 1],
+            ['name' => 'Moisés Mabunda', 'role' => 'Fundador & Diretor Criativo', 'initial' => 'M', 'avatar_url' => '/logo-m.jpg', 'order' => 1],
             ['name' => 'Direção de Fotografia', 'role' => 'Cinematografia & Luz', 'initial' => 'D', 'order' => 2],
             ['name' => 'Edição & Color Grading', 'role' => 'Montagem & Pós-Produção', 'initial' => 'E', 'order' => 3],
             ['name' => 'Estratégia de Marketing', 'role' => 'Storytelling & Social', 'initial' => 'S', 'order' => 4],

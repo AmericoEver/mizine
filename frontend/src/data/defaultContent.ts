@@ -14,7 +14,7 @@ export const defaultContent: SiteContent = {
     whatsappUrl: 'https://wa.me/258840000000',
     instagramHandle: '@mizine_8',
     instagramUrl: 'https://www.instagram.com/mizine_8',
-    contactEmail: 'ola@mizine.co.mz'
+    contactEmail: 'support@mizine.co.mz'
   },
   about: {
     tagTitle: 'Abordagem',
@@ -147,7 +147,7 @@ export const defaultContent: SiteContent = {
     }
   ],
   team: [
-    { id: 1, name: 'Moisés Mabunda', role: 'Fundador & Diretor Criativo', initial: 'M' },
+    { id: 1, name: 'Moisés Mabunda', role: 'Fundador & Diretor Criativo', initial: 'M', avatarUrl: '/logo-m.jpg' },
     { id: 2, name: 'Direção de Fotografia', role: 'Cinematografia & Luz', initial: 'D' },
     { id: 3, name: 'Edição & Color Grading', role: 'Montagem & Pós-Produção', initial: 'E' },
     { id: 4, name: 'Estratégia de Marketing', role: 'Storytelling & Social', initial: 'S' }

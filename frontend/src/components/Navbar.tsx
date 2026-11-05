@@ -11,8 +11,20 @@ export const Navbar: React.FC<NavbarProps> = ({ onBackToSite, isAdminView }) => 
   return (
     <nav>
       <div className="wrap">
-        <a className="logo" href={isAdminView ? '/#topo' : '#topo'}>
-          MIZINE<i>.</i>
+        <a className="logo" href={isAdminView ? '/#topo' : '#topo'} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <img
+            src="/logo-m.jpg"
+            alt="Mizine"
+            style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: '6px',
+              objectFit: 'cover',
+              border: '1px solid rgba(225, 6, 0, 0.4)',
+              display: 'inline-block'
+            }}
+          />
+          <span>MIZINE<i>.</i></span>
         </a>
         
         {!isAdminView ? (

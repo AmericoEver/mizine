@@ -159,6 +159,43 @@ export const apiService = {
     const filtered = stored.filter((m: ContactMessage) => m.id !== id);
     localStorage.setItem('mizine_offline_msgs', JSON.stringify(filtered));
     return true;
+  },
+
+  // Upload de imagem/capa a partir do computador (PC)
+  async uploadFile(file: File): Promise<{ success: boolean; url: string; error?: string }> {
+    const token = localStorage.getItem('mizine_admin_token');
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch(`${API_BASE}/admin/upload`, {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: formData
+      });
+
+      const data = await res.json();
+      if (res.ok && data.url) {
+        return { success: true, url: data.url };
+      }
+    } catch (err) {
+      console.warn('Erro no envio para a API, a utilizar data-url local:', err);
+    }
+
+    // Fallback local caso a API esteja temporariamente indisponível
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        resolve({ success: true, url: reader.result as string });
+      };
+      reader.onerror = () => {
+        resolve({ success: false, url: '', error: 'Falha ao ler o ficheiro local' });
+      };
+      reader.readAsDataURL(file);
+    });
   }
 };
 

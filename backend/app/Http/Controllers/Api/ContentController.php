@@ -17,6 +17,7 @@ class ContentController extends Controller
         $hero = [
             'title' => $heroRow->title ?? "Mizine\nProdução",
             'tagline' => $heroRow->tagline ?? '',
+            'coverImageUrl' => $heroRow->cover_image_url ?? '',
             'bannerDate' => $heroRow->banner_date ?? '[00/00]',
             'bannerTitle' => $heroRow->banner_title ?? '[Evento recente]',
             'bannerDescription' => $heroRow->banner_description ?? '',
@@ -183,6 +184,7 @@ class ContentController extends Controller
             DB::table('hero_settings')->updateOrInsert(['id' => 1], [
                 'title' => $h['title'] ?? "Mizine\nProdução",
                 'tagline' => $h['tagline'] ?? '',
+                'cover_image_url' => $h['coverImageUrl'] ?? ($h['cover_image_url'] ?? null),
                 'banner_date' => $h['bannerDate'] ?? '',
                 'banner_title' => $h['bannerTitle'] ?? '',
                 'banner_description' => $h['bannerDescription'] ?? '',
@@ -358,6 +360,54 @@ class ContentController extends Controller
     {
         DB::table('contact_messages')->where('id', $id)->delete();
         return response()->json(['success' => true]);
+    }
+
+    // Upload de arquivo / imagem de capa a partir do computador
+    public function uploadFile(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:jpeg,png,jpg,gif,webp,svg,mp4,mov|max:51200',
+        ]);
+
+        $file = $request->file('file');
+        $ext = $file->getClientOriginalExtension() ?: 'jpg';
+        $filename = 'cover_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
+
+        $targetDir = dirname(base_path()) . '/media/uploads';
+        if (!is_dir($targetDir)) {
+            @mkdir($targetDir, 0755, true);
+        }
+
+        $localDir = public_path('media/uploads');
+        if (!is_dir($localDir)) {
+            @mkdir($localDir, 0755, true);
+        }
+
+        $frontendDir = dirname(base_path(), 2) . '/frontend/public/media/uploads';
+        if (!is_dir($frontendDir)) {
+            @mkdir($frontendDir, 0755, true);
+        }
+
+        // Salvar arquivo
+        $file->move($targetDir, $filename);
+        $savedFile = $targetDir . '/' . $filename;
+
+        if (is_file($savedFile)) {
+            if ($localDir !== $targetDir) {
+                @copy($savedFile, $localDir . '/' . $filename);
+            }
+            if (is_dir($frontendDir)) {
+                @copy($savedFile, $frontendDir . '/' . $filename);
+            }
+        }
+
+        $url = '/media/uploads/' . $filename;
+
+        return response()->json([
+            'success' => true,
+            'url' => $url,
+            'filename' => $filename,
+        ]);
     }
 }
 

@@ -4,6 +4,7 @@ export const defaultContent: SiteContent = {
   hero: {
     title: 'MIZINE PRODUÇÃO',
     tagline: 'Soluções Audiovisuais, Marketing e Publicidade. +3 anos criando conteúdos e histórias que posicionam marcas com olhar de cinema.',
+    coverImageUrl: '/media/projects/proj-1.jpg',
     bannerDate: 'DESTAQUE',
     bannerTitle: 'Audiovisual & Marketing',
     bannerDescription: 'Vídeos curtos, reels dinâmicos e campanhas de impacto para marcas corajosas.',

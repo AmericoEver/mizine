@@ -187,6 +187,10 @@ nav ul a:hover, nav ul a.on {
   pointer-events: none;
 }
 
+.hero.has-custom-cover::before {
+  display: none;
+}
+
 .hero::after {
   content: "";
   position: absolute;

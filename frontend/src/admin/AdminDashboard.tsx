@@ -50,6 +50,45 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setMessages(messages.filter((m) => m.id !== id));
   };
 
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, target: 'cover' | 'reel' | 'project', index?: number) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    setSaveStatus('A carregar imagem do seu computador...');
+
+    const res = await apiService.uploadFile(file);
+    setIsUploading(false);
+
+    if (res.success && res.url) {
+      if (target === 'cover') {
+        setContent((prev) => ({
+          ...prev,
+          hero: {
+            ...prev.hero,
+            coverImageUrl: res.url
+          }
+        }));
+        setSaveStatus('Capa carregada com sucesso! Clique em "Guardar Alterações" para aplicar.');
+      } else if (target === 'reel' && typeof index === 'number') {
+        const updated = [...content.reels];
+        updated[index].imageUrl = res.url;
+        setContent((prev) => ({ ...prev, reels: updated }));
+        setSaveStatus('Capa do Reel carregada!');
+      } else if (target === 'project' && typeof index === 'number') {
+        const updated = [...content.projects];
+        updated[index].imageUrl = res.url;
+        setContent((prev) => ({ ...prev, projects: updated }));
+        setSaveStatus('Capa do Projeto carregada!');
+      }
+      setTimeout(() => setSaveStatus(''), 4000);
+    } else {
+      setSaveStatus('Erro ao carregar o ficheiro: ' + (res.error || 'Falha no processamento'));
+    }
+  };
+
   // Funções de manipulação de listas
   const addReel = () => {
     const newReel: ReelItem = {
@@ -250,28 +289,162 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           {/* TAB: HERO & GERAL */}
           {activeTab === 'hero' && (
             <div style={{ display: 'grid', gap: '24px' }}>
-              <h2 style={{ fontSize: '26px' }}>Hero & Informações Gerais</h2>
-              
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '13px', color: '#ccc', marginBottom: '6px' }}>Título do Topo (Hero)</label>
-                  <textarea
-                    rows={2}
-                    value={content.hero.title}
-                    onChange={(e) => setContent({ ...content, hero: { ...content.hero, title: e.target.value } })}
-                  />
-                  <small style={{ color: '#777' }}>Use quebra de linha para dividir o título em duas linhas</small>
+              <div>
+                <h2 style={{ fontSize: '26px', margin: 0 }}>Capa Principal & Informações Gerais</h2>
+                <p style={{ color: '#888', fontSize: '14px', marginTop: '4px' }}>
+                  A secção do topo foi atualizada para exibir uma capa limpa sem títulos sobrepostos.
+                </p>
+              </div>
+
+              {/* CARD DE UPLOAD DA CAPA PRINCIPAL */}
+              <div style={{
+                background: '#141414',
+                border: '1px solid #2a2a2a',
+                padding: '24px',
+                borderRadius: '4px'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                  <div>
+                    <h3 style={{ fontSize: '18px', color: 'var(--red)', margin: 0, fontWeight: 700 }}>
+                      Capa do Topo (Hero Cover)
+                    </h3>
+                    <span style={{ fontSize: '13px', color: '#aaa' }}>
+                      Adicione ou altere a imagem de capa diretamente a partir do seu computador.
+                    </span>
+                  </div>
+                  {content.hero.coverImageUrl && (
+                    <button
+                      type="button"
+                      onClick={() => setContent({ ...content, hero: { ...content.hero, coverImageUrl: '' } })}
+                      style={{
+                        background: 'transparent',
+                        border: '1px solid #ff4d4f',
+                        color: '#ff4d4f',
+                        padding: '6px 14px',
+                        cursor: 'pointer',
+                        fontSize: '12px',
+                        fontWeight: 600
+                      }}
+                    >
+                      Remover Capa
+                    </button>
+                  )}
                 </div>
 
-                <div>
-                  <label style={{ display: 'block', fontSize: '13px', color: '#ccc', marginBottom: '6px' }}>Frase de Efeito (Tagline)</label>
-                  <textarea
-                    rows={2}
-                    value={content.hero.tagline}
-                    onChange={(e) => setContent({ ...content, hero: { ...content.hero, tagline: e.target.value } })}
-                  />
+                {/* Pré-visualização da Capa */}
+                {content.hero.coverImageUrl ? (
+                  <div style={{
+                    position: 'relative',
+                    width: '100%',
+                    height: '260px',
+                    borderRadius: '4px',
+                    overflow: 'hidden',
+                    marginBottom: '16px',
+                    border: '1px solid #333'
+                  }}>
+                    <img
+                      src={content.hero.coverImageUrl}
+                      alt="Pré-visualização da Capa"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                    <div style={{
+                      position: 'absolute',
+                      bottom: '12px',
+                      left: '12px',
+                      background: 'rgba(0,0,0,0.85)',
+                      padding: '4px 10px',
+                      fontSize: '12px',
+                      color: '#00ff66',
+                      borderRadius: '3px',
+                      border: '1px solid #00aa44'
+                    }}>
+                      ✓ Capa Ativa no Site
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{
+                    width: '100%',
+                    height: '140px',
+                    border: '2px dashed #333',
+                    borderRadius: '4px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: '16px',
+                    color: '#777'
+                  }}>
+                    <span style={{ fontSize: '26px', marginBottom: '6px' }}>🖼️</span>
+                    <span>Nenhuma imagem de capa selecionada (exibirá fundo escuro cinematográfico).</span>
+                  </div>
+                )}
+
+                {/* Botões de Ação para Carregar do Computador */}
+                <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <label style={{
+                    background: 'var(--red)',
+                    color: '#fff',
+                    padding: '10px 20px',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    cursor: isUploading ? 'not-allowed' : 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    borderRadius: '2px',
+                    transition: 'opacity 0.2s',
+                    opacity: isUploading ? 0.6 : 1
+                  }}>
+                    <span>{isUploading ? '⏳ A carregar...' : '📁 Escolher Capa do Computador (PC)'}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      style={{ display: 'none' }}
+                      disabled={isUploading}
+                      onChange={(e) => handleFileUpload(e, 'cover')}
+                    />
+                  </label>
+
+                  <div style={{ flex: 1, minWidth: '240px' }}>
+                    <input
+                      type="text"
+                      placeholder="Caminho ou URL da imagem (ex: /media/projects/proj-1.jpg)"
+                      value={content.hero.coverImageUrl || ''}
+                      onChange={(e) => setContent({
+                        ...content,
+                        hero: { ...content.hero, coverImageUrl: e.target.value }
+                      })}
+                      style={{ width: '100%', fontSize: '13px' }}
+                    />
+                  </div>
                 </div>
               </div>
+
+              {/* Informações Opcionais / Metadados */}
+              <details style={{ background: '#121212', border: '1px solid #222', padding: '16px', borderRadius: '4px' }}>
+                <summary style={{ cursor: 'pointer', color: '#999', fontSize: '13px', fontWeight: 600 }}>
+                  Metadados e Textos Opcionais (Ocultos na Capa)
+                </summary>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '16px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', color: '#ccc', marginBottom: '6px' }}>Título Interno</label>
+                    <textarea
+                      rows={2}
+                      value={content.hero.title}
+                      onChange={(e) => setContent({ ...content, hero: { ...content.hero, title: e.target.value } })}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', color: '#ccc', marginBottom: '6px' }}>Frase / Tagline Interna</label>
+                    <textarea
+                      rows={2}
+                      value={content.hero.tagline}
+                      onChange={(e) => setContent({ ...content, hero: { ...content.hero, tagline: e.target.value } })}
+                    />
+                  </div>
+                </div>
+              </details>
 
               <h3 style={{ fontSize: '20px', marginTop: '16px', color: 'var(--red)' }}>Banner Informativo (Strip)</h3>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>

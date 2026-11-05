@@ -1,6 +1,7 @@
 export interface HeroContent {
   title: string;
   tagline: string;
+  coverImageUrl?: string;
   bannerDate: string;
   bannerTitle: string;
   bannerDescription: string;

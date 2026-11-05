@@ -12,6 +12,7 @@ return new class extends Migration
             $table->id();
             $table->string('title')->default("Mizine\nProdução");
             $table->text('tagline')->nullable();
+            $table->string('cover_image_url')->nullable();
             $table->string('banner_date')->nullable();
             $table->string('banner_title')->nullable();
             $table->text('banner_description')->nullable();

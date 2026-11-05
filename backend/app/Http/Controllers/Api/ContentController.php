@@ -43,6 +43,7 @@ class ContentController extends Controller
                 'title' => $r->title,
                 'subtitle' => $r->subtitle,
                 'videoUrl' => $r->video_url ?? '',
+                'imageUrl' => $r->image_url ?? '',
                 'artClass' => $r->art_class ?? 'a1',
                 'order' => $r->order,
             ];
@@ -55,6 +56,7 @@ class ContentController extends Controller
                 'description' => $p->description,
                 'isWide' => (bool)$p->is_wide,
                 'artClass' => $p->art_class ?? 'a3',
+                'imageUrl' => $p->image_url ?? '',
                 'linkUrl' => $p->link_url ?? '#contacto',
                 'order' => $p->order,
             ];
@@ -216,6 +218,7 @@ class ContentController extends Controller
                     'title' => $r['title'] ?? 'Reel',
                     'subtitle' => $r['subtitle'] ?? '',
                     'video_url' => $r['videoUrl'] ?? '',
+                    'image_url' => $r['imageUrl'] ?? null,
                     'art_class' => $r['artClass'] ?? 'a1',
                     'order' => $idx + 1,
                     'is_active' => true,
@@ -234,6 +237,7 @@ class ContentController extends Controller
                     'description' => $p['description'] ?? '',
                     'is_wide' => !empty($p['isWide']),
                     'art_class' => $p['artClass'] ?? 'a3',
+                    'image_url' => $p['imageUrl'] ?? null,
                     'link_url' => $p['linkUrl'] ?? '#contacto',
                     'order' => $idx + 1,
                     'is_active' => true,

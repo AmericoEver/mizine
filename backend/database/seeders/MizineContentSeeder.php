@@ -19,7 +19,7 @@ class MizineContentSeeder extends Seeder
             'banner_description' => 'Vídeos curtos, reels dinâmicos e campanhas de impacto para marcas corajosas.',
             'intent_title' => "Cada plano\ntem uma intenção",
             'intent_subtitle' => 'Do conceito criativo e captação à pós-produção e entrega final.',
-            'showreel_video_url' => 'https://www.instagram.com/mizine_8/reels/',
+            'showreel_video_url' => '/media/videos/showreel.mp4',
             'whatsapp_number' => '+258 84 000 0000',
             'whatsapp_url' => 'https://wa.me/258840000000',
             'instagram_handle' => '@mizine_8',
@@ -43,12 +43,12 @@ class MizineContentSeeder extends Seeder
         // Reels
         DB::table('reels')->truncate();
         $reels = [
-            ['title' => 'Branding & Posicionamento', 'subtitle' => 'Comercial & Awareness / 2026', 'art_class' => 'a1', 'video_url' => 'https://www.instagram.com/mizine_8/reels/', 'order' => 1],
-            ['title' => 'Cobertura de Evento VIP', 'subtitle' => 'Aftermovie & Dinamismo / 2026', 'art_class' => 'a2', 'video_url' => 'https://www.instagram.com/mizine_8/reels/', 'order' => 2],
-            ['title' => 'Storytelling de Marca', 'subtitle' => 'Narrativa Cinematográfica / 2025', 'art_class' => 'a3', 'video_url' => 'https://www.instagram.com/mizine_8/reels/', 'order' => 3],
-            ['title' => 'Reels de Alta Retenção', 'subtitle' => 'Social Media & Viral / 2026', 'art_class' => 'a4', 'video_url' => 'https://www.instagram.com/mizine_8/reels/', 'order' => 4],
-            ['title' => 'Fashion & Lifestyle', 'subtitle' => 'Editorial Audiovisual / 2025', 'art_class' => 'a5', 'video_url' => 'https://www.instagram.com/mizine_8/reels/', 'order' => 5],
-            ['title' => 'Showcase Corporativo', 'subtitle' => 'Apresentação Empresarial / 2026', 'art_class' => 'a6', 'video_url' => 'https://www.instagram.com/mizine_8/reels/', 'order' => 6],
+            ['title' => 'Branding & Posicionamento', 'subtitle' => 'Comercial & Awareness / 2026', 'art_class' => 'a1', 'image_url' => '/media/reels/reel-1.jpg', 'video_url' => '/media/videos/reel-1.mp4', 'order' => 1],
+            ['title' => 'Cobertura de Evento VIP', 'subtitle' => 'Aftermovie & Dinamismo / 2026', 'art_class' => 'a2', 'image_url' => '/media/reels/reel-2.jpg', 'video_url' => '/media/videos/reel-2.mp4', 'order' => 2],
+            ['title' => 'Storytelling de Marca', 'subtitle' => 'Narrativa Cinematográfica / 2025', 'art_class' => 'a3', 'image_url' => '/media/reels/reel-3.jpg', 'video_url' => '/media/videos/reel-3.mp4', 'order' => 3],
+            ['title' => 'Reels de Alta Retenção', 'subtitle' => 'Social Media & Viral / 2026', 'art_class' => 'a4', 'image_url' => '/media/reels/reel-4.jpg', 'video_url' => '/media/videos/reel-4.mp4', 'order' => 4],
+            ['title' => 'Fashion & Lifestyle', 'subtitle' => 'Editorial Audiovisual / 2025', 'art_class' => 'a5', 'image_url' => '/media/reels/reel-5.jpg', 'video_url' => '/media/videos/reel-5.mp4', 'order' => 5],
+            ['title' => 'Showcase Corporativo', 'subtitle' => 'Apresentação Empresarial / 2026', 'art_class' => 'a6', 'image_url' => '/media/reels/reel-6.jpg', 'video_url' => '/media/videos/reel-6.mp4', 'order' => 6],
         ];
         foreach ($reels as $r) {
             DB::table('reels')->insert(array_merge($r, ['created_at' => now(), 'updated_at' => now()]));
@@ -62,6 +62,7 @@ class MizineContentSeeder extends Seeder
                 'description' => 'Direção criativa, captação 4K e edição dinâmica para lançamento nacional com foco em autoridade e conexão com o público.',
                 'is_wide' => true,
                 'art_class' => 'a3',
+                'image_url' => '/media/projects/proj-1.jpg',
                 'link_url' => 'https://www.instagram.com/mizine_8',
                 'order' => 1
             ],
@@ -70,6 +71,7 @@ class MizineContentSeeder extends Seeder
                 'description' => 'Pacote estratégico de vídeos verticais otimizados para Instagram e TikTok com retenção e estética cinematográfica.',
                 'is_wide' => false,
                 'art_class' => 'a1',
+                'image_url' => '/media/projects/proj-2.jpg',
                 'link_url' => 'https://www.instagram.com/mizine_8',
                 'order' => 2
             ],
@@ -78,6 +80,7 @@ class MizineContentSeeder extends Seeder
                 'description' => 'Captação dinâmica dos melhores momentos, entregando vídeos teaser no próprio dia e aftermovie final memorável.',
                 'is_wide' => false,
                 'art_class' => 'a5',
+                'image_url' => '/media/projects/proj-3.jpg',
                 'link_url' => 'https://www.instagram.com/mizine_8',
                 'order' => 3
             ],

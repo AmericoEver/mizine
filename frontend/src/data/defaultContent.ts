@@ -9,7 +9,7 @@ export const defaultContent: SiteContent = {
     bannerDescription: 'Vídeos curtos, reels dinâmicos e campanhas de impacto para marcas corajosas.',
     intentTitle: 'Cada plano\ntem uma intenção',
     intentSubtitle: 'Do conceito criativo e captação à pós-produção e entrega final.',
-    showreelVideoUrl: 'https://www.instagram.com/mizine_8/reels/',
+    showreelVideoUrl: '/media/videos/showreel.mp4',
     whatsappNumber: '+258 84 000 0000',
     whatsappUrl: 'https://wa.me/258840000000',
     instagramHandle: '@mizine_8',
@@ -28,42 +28,48 @@ export const defaultContent: SiteContent = {
       title: 'Branding & Posicionamento',
       subtitle: 'Comercial & Awareness / 2026',
       artClass: 'a1',
-      videoUrl: 'https://www.instagram.com/mizine_8/reels/'
+      imageUrl: '/media/reels/reel-1.jpg',
+      videoUrl: '/media/videos/reel-1.mp4'
     },
     {
       id: 2,
       title: 'Cobertura de Evento VIP',
       subtitle: 'Aftermovie & Dinamismo / 2026',
       artClass: 'a2',
-      videoUrl: 'https://www.instagram.com/mizine_8/reels/'
+      imageUrl: '/media/reels/reel-2.jpg',
+      videoUrl: '/media/videos/reel-2.mp4'
     },
     {
       id: 3,
       title: 'Storytelling de Marca',
       subtitle: 'Narrativa Cinematográfica / 2025',
       artClass: 'a3',
-      videoUrl: 'https://www.instagram.com/mizine_8/reels/'
+      imageUrl: '/media/reels/reel-3.jpg',
+      videoUrl: '/media/videos/reel-3.mp4'
     },
     {
       id: 4,
       title: 'Reels de Alta Retenção',
       subtitle: 'Social Media & Viral / 2026',
       artClass: 'a4',
-      videoUrl: 'https://www.instagram.com/mizine_8/reels/'
+      imageUrl: '/media/reels/reel-4.jpg',
+      videoUrl: '/media/videos/reel-4.mp4'
     },
     {
       id: 5,
       title: 'Fashion & Lifestyle',
       subtitle: 'Editorial Audiovisual / 2025',
       artClass: 'a5',
-      videoUrl: 'https://www.instagram.com/mizine_8/reels/'
+      imageUrl: '/media/reels/reel-5.jpg',
+      videoUrl: '/media/videos/reel-5.mp4'
     },
     {
       id: 6,
       title: 'Showcase Corporativo',
       subtitle: 'Apresentação Empresarial / 2026',
       artClass: 'a6',
-      videoUrl: 'https://www.instagram.com/mizine_8/reels/'
+      imageUrl: '/media/reels/reel-6.jpg',
+      videoUrl: '/media/videos/reel-6.mp4'
     }
   ],
   projects: [
@@ -73,6 +79,7 @@ export const defaultContent: SiteContent = {
       description: 'Direção criativa, captação 4K e edição dinâmica para lançamento nacional com foco em autoridade e conexão com o público.',
       isWide: true,
       artClass: 'a3',
+      imageUrl: '/media/projects/proj-1.jpg',
       linkUrl: 'https://www.instagram.com/mizine_8'
     },
     {
@@ -81,6 +88,7 @@ export const defaultContent: SiteContent = {
       description: 'Pacote estratégico de vídeos verticais otimizados para Instagram e TikTok com retenção e estética cinematográfica.',
       isWide: false,
       artClass: 'a1',
+      imageUrl: '/media/projects/proj-2.jpg',
       linkUrl: 'https://www.instagram.com/mizine_8'
     },
     {
@@ -89,6 +97,7 @@ export const defaultContent: SiteContent = {
       description: 'Captação dinâmica dos melhores momentos, entregando vídeos teaser no próprio dia e aftermovie final memorável.',
       isWide: false,
       artClass: 'a5',
+      imageUrl: '/media/projects/proj-3.jpg',
       linkUrl: 'https://www.instagram.com/mizine_8'
     }
   ],

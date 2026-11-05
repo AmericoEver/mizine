@@ -423,8 +423,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     border: '1px solid var(--line)',
                     padding: '20px',
                     display: 'grid',
-                    gridTemplateColumns: '60px 1.5fr 1fr 2fr 100px 40px',
-                    gap: '14px',
+                    gridTemplateColumns: '50px 1.2fr 1fr 1.5fr 1.5fr 40px',
+                    gap: '12px',
                     alignItems: 'center'
                   }}>
                     <span style={{ fontWeight: 700, color: 'var(--red)' }}>#{idx + 1}</span>
@@ -447,6 +447,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       }}
                     />
                     <input
+                      placeholder="Caminho/URL da Imagem da Capa"
+                      value={reel.imageUrl || ''}
+                      onChange={(e) => {
+                        const updated = [...content.reels];
+                        updated[idx].imageUrl = e.target.value;
+                        setContent({ ...content, reels: updated });
+                      }}
+                    />
+                    <input
                       placeholder="URL do ficheiro de vídeo (.mp4)"
                       value={reel.videoUrl || ''}
                       onChange={(e) => {
@@ -455,21 +464,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         setContent({ ...content, reels: updated });
                       }}
                     />
-                    <select
-                      value={reel.artClass || 'a1'}
-                      onChange={(e) => {
-                        const updated = [...content.reels];
-                        updated[idx].artClass = e.target.value;
-                        setContent({ ...content, reels: updated });
-                      }}
-                    >
-                      <option value="a1">Estilo A1</option>
-                      <option value="a2">Estilo A2</option>
-                      <option value="a3">Estilo A3</option>
-                      <option value="a4">Estilo A4</option>
-                      <option value="a5">Estilo A5</option>
-                      <option value="a6">Estilo A6</option>
-                    </select>
                     <button
                       onClick={() => removeReel(reel.id)}
                       style={{ background: 'none', border: 0, color: '#ff4d4f', cursor: 'pointer', fontSize: '18px' }}
@@ -510,7 +504,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       </button>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '12px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1.5fr 1.5fr', gap: '12px' }}>
                       <input
                         placeholder="Título do Projeto"
                         value={proj.title}
@@ -531,21 +525,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         <option value="standard">Tamanho Normal (1 Coluna)</option>
                         <option value="wide">Destaque Panorâmico (Wide)</option>
                       </select>
-                      <select
-                        value={proj.artClass || 'a3'}
+                      <input
+                        placeholder="URL/Caminho da Imagem da Capa"
+                        value={proj.imageUrl || ''}
                         onChange={(e) => {
                           const updated = [...content.projects];
-                          updated[idx].artClass = e.target.value;
+                          updated[idx].imageUrl = e.target.value;
                           setContent({ ...content, projects: updated });
                         }}
-                      >
-                        <option value="a1">Estilo Visual A1</option>
-                        <option value="a2">Estilo Visual A2</option>
-                        <option value="a3">Estilo Visual A3</option>
-                        <option value="a4">Estilo Visual A4</option>
-                        <option value="a5">Estilo Visual A5</option>
-                        <option value="a6">Estilo Visual A6</option>
-                      </select>
+                      />
+                      <input
+                        placeholder="Link do Projeto (Instagram/Web)"
+                        value={proj.linkUrl || ''}
+                        onChange={(e) => {
+                          const updated = [...content.projects];
+                          updated[idx].linkUrl = e.target.value;
+                          setContent({ ...content, projects: updated });
+                        }}
+                      />
                     </div>
 
                     <textarea

@@ -26,6 +26,7 @@ export interface ReelItem {
   title: string;
   subtitle: string;
   videoUrl?: string;
+  imageUrl?: string;
   artClass?: string;
   order?: number;
 }
@@ -36,6 +37,7 @@ export interface ProjectItem {
   description: string;
   isWide?: boolean;
   artClass?: string;
+  imageUrl?: string;
   linkUrl?: string;
   order?: number;
 }

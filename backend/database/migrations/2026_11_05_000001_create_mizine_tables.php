@@ -40,6 +40,7 @@ return new class extends Migration
             $table->string('title');
             $table->string('subtitle')->nullable();
             $table->string('video_url')->nullable();
+            $table->string('image_url')->nullable();
             $table->string('art_class')->default('a1');
             $table->integer('order')->default(0);
             $table->boolean('is_active')->default(true);
@@ -52,6 +53,7 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->boolean('is_wide')->default(false);
             $table->string('art_class')->default('a3');
+            $table->string('image_url')->nullable();
             $table->string('link_url')->default('#contacto');
             $table->integer('order')->default(0);
             $table->boolean('is_active')->default(true);

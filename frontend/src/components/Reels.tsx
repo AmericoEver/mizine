@@ -41,9 +41,30 @@ export const Reels: React.FC<ReelsProps> = ({ reels, onOpenReel }) => {
               onClick={() => onOpenReel(reel.title, reel.videoUrl)}
               aria-label={`Ver ${reel.title}`}
             >
-              <div className={`art ${artClass}`} />
-              <span className="play" />
-              <div className="meta">
+              {reel.imageUrl ? (
+                <img
+                  src={reel.imageUrl}
+                  alt={reel.title}
+                  className="art"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              ) : (
+                <div className={`art ${artClass}`} />
+              )}
+              
+              {/* Overlay cinematográfico */}
+              <div
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  background: 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.2) 60%, rgba(225,6,0,0.1) 100%)',
+                  zIndex: 1,
+                  pointerEvents: 'none'
+                }}
+              />
+
+              <span className="play" style={{ zIndex: 3 }} />
+              <div className="meta" style={{ zIndex: 3 }}>
                 <h3>{reel.title}</h3>
                 <span>{reel.subtitle}</span>
               </div>
@@ -54,4 +75,3 @@ export const Reels: React.FC<ReelsProps> = ({ reels, onOpenReel }) => {
     </section>
   );
 };
-

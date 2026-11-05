@@ -88,7 +88,7 @@ class MizineContentSeeder extends Seeder
 
         // Clients
         DB::table('clients')->truncate();
-        $clients = ['GEEK MOÇAMBIQUE', 'MIZINE CELEBRATE', 'MAPUTO CREATIVE', 'STUDIO 8', 'VALOR DIGITAL', 'BRAND MZ'];
+        $clients = ['GEEK EVER', 'MIZINE CELEBRATE', 'MAPUTO CREATIVE', 'STUDIO 8', 'VALOR DIGITAL', 'BRAND MZ', 'XAI ART'];
         foreach ($clients as $idx => $c) {
             DB::table('clients')->insert([
                 'name' => $c,
@@ -137,7 +137,7 @@ class MizineContentSeeder extends Seeder
         DB::table('group_companies')->truncate();
         $group = [
             ['name' => 'Mizine Celebrate', 'description' => 'Convites digitais interativos e cobertura para eventos e casamentos inesquecíveis.', 'button_text' => 'Visitar', 'link_url' => 'https://instagram.com/mizine_celebrate', 'order' => 1],
-            ['name' => 'Geek Moçambique', 'description' => 'Plataforma digital, inovação tecnológica e aplicativos.', 'button_text' => 'Visitar', 'link_url' => 'https://geek.mizine.co.mz', 'order' => 2],
+            ['name' => 'Geek Ever', 'description' => 'Plataforma digital, inovação tecnológica e aplicativos.', 'button_text' => 'Visitar', 'link_url' => 'https://geek.mizine.co.mz', 'order' => 2],
             ['name' => 'Mizine Academy', 'description' => 'Workshops e conteúdos sobre audiovisual, edição e marketing de conteúdo.', 'button_text' => 'Visitar', 'link_url' => 'https://www.instagram.com/mizine_8', 'order' => 3],
         ];
         foreach ($group as $g) {

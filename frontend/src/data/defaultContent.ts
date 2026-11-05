@@ -93,12 +93,13 @@ export const defaultContent: SiteContent = {
     }
   ],
   clients: [
-    { id: 1, name: 'GEEK MOÇAMBIQUE' },
+    { id: 1, name: 'GEEK EVER' },
     { id: 2, name: 'MIZINE CELEBRATE' },
     { id: 3, name: 'MAPUTO CREATIVE' },
     { id: 4, name: 'STUDIO 8' },
     { id: 5, name: 'VALOR DIGITAL' },
-    { id: 6, name: 'BRAND MZ' }
+    { id: 6, name: 'BRAND MZ' },
+    { id: 7, name: 'XAI ART' }
   ],
   testimonials: [
     {
@@ -162,7 +163,7 @@ export const defaultContent: SiteContent = {
     },
     {
       id: 2,
-      name: 'Geek Moçambique',
+      name: 'Geek Ever',
       description: 'Plataforma digital, inovação tecnológica e aplicativos.',
       buttonText: 'Visitar',
       linkUrl: 'https://geek.mizine.co.mz'

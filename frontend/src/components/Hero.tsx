@@ -93,6 +93,15 @@ export const Hero: React.FC<HeroProps> = ({ content, onPlayShowreel }) => {
         </div>
         <span className="scroll-indicator-text">SCROLL PARA EXPLORAR</span>
       </div>
+
+      {/* Cloud Deck Transition Boundary: Masks the seam between dark space & daylight Earth */}
+      <div className="uc-hero-cloud-transition" aria-hidden="true">
+        <svg className="cloud-seam-svg" viewBox="0 0 1440 220" preserveAspectRatio="none" fill="none">
+          <path d="M0,130 C180,60 320,160 480,90 C640,30 780,140 960,70 C1120,20 1280,110 1440,50 L1440,220 L0,220 Z" fill="#f8f9fc" fillOpacity="0.45" />
+          <path d="M0,155 C140,95 290,185 450,115 C610,55 760,155 920,100 C1080,50 1240,135 1440,85 L1440,220 L0,220 Z" fill="#f8f9fc" fillOpacity="0.75" />
+          <path d="M0,180 C200,125 380,200 560,145 C740,90 910,175 1090,130 C1260,85 1370,150 1440,115 L1440,220 L0,220 Z" fill="#f8f9fc" />
+        </svg>
+      </div>
     </section>
   );
 };

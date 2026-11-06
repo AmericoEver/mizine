@@ -9,24 +9,7 @@ interface HeroProps {
 
 export const Hero: React.FC<HeroProps> = ({ content, onPlayShowreel }) => {
   return (
-    <header className="uc-hero-section" id="topo">
-      {/* Top Technical Wire Ticker */}
-      <div className="uc-top-ticker">
-        <div className="wrap uc-ticker-inner">
-          <div className="uc-ticker-left">
-            <span className="ticker-badge">NEWS:</span>
-            <span className="ticker-text">
-              PRODUÇÃO CINEMATOGRÁFICA 4K DCI & REELS DE ALTA RETENÇÃO EM MOÇAMBIQUE E ÁFRICA AUSTRAL...
-            </span>
-          </div>
-          <div className="uc-ticker-right">
-            <a href="#simulador" className="ticker-link">SIMULADOR DE ORÇAMENTO</a>
-            <span className="ticker-sep">|</span>
-            <span className="ticker-code">ESTÚDIO CENTRAL [MZ]</span>
-          </div>
-        </div>
-      </div>
-
+    <section className="uc-hero-section" id="topo">
       {/* Deep Space Starfield & Grid Matrix */}
       <div className="uc-hero-void-bg">
         <div className="uc-hero-stars" />
@@ -107,6 +90,6 @@ export const Hero: React.FC<HeroProps> = ({ content, onPlayShowreel }) => {
         <span className="badge-logo">MZ.</span>
         <span className="badge-vertical-text">ESTÚDIO 2026</span>
       </div>
-    </header>
+    </section>
   );
 };

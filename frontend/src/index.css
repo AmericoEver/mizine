@@ -243,49 +243,62 @@ a {
 }
 
 /* ==========================================================================
-   NAVBAR (UNITED CARRIERS MINIMALIST ARCHITECTURAL SPEC)
+   HEADER & NAVBAR (UNITED CARRIERS SPEC: TICKER TOP + CLEAN NAV)
    ========================================================================== */
 
-.uc-nav-header {
+.uc-main-header {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(2, 2, 4, 0.88);
+  width: 100%;
+  background: rgba(2, 2, 4, 0.94);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
-  transition: background 0.3s ease;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.uc-top-ticker {
+  background: #000000;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.8px;
+  color: var(--mute);
+  padding: 6px 0;
+}
+
+.uc-nav-header {
+  position: relative;
 }
 
 .uc-nav-row {
-  height: 72px;
+  height: 68px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 24px;
+  gap: 32px;
 }
 
 .uc-brand {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   text-decoration: none;
 }
 
-.uc-brand-mark {
-  width: 32px;
-  height: 32px;
+.uc-brand-avatar {
+  width: 34px;
+  height: 34px;
   border-radius: 6px;
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  box-shadow: 0 0 12px rgba(255, 59, 48, 0.3);
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 10px rgba(255, 59, 48, 0.25);
 }
 
-.uc-brand-icon {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
+.uc-brand-group {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
 }
 
 .uc-brand-title {
@@ -296,22 +309,18 @@ a {
   color: #ffffff;
 }
 
-.uc-brand-badge {
+.uc-brand-sub {
   font-family: var(--font-mono);
-  font-size: 8px;
+  font-size: 9px;
   font-weight: 700;
   letter-spacing: 2px;
   color: #ff3b30;
-  background: rgba(255, 59, 48, 0.1);
-  border: 1px solid rgba(255, 59, 48, 0.35);
-  padding: 2px 6px;
-  border-radius: 4px;
 }
 
 .uc-nav-links {
   display: flex;
   align-items: center;
-  gap: 28px;
+  gap: 32px;
   list-style: none;
   margin: 0;
   padding: 0;
@@ -321,15 +330,15 @@ a {
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 1.5px;
+  letter-spacing: 1.6px;
   color: #8f8f9e;
   text-decoration: none;
   position: relative;
   padding: 6px 0;
-  transition: color 0.25s ease;
+  transition: color 0.2s ease;
 }
 
-.uc-nav-links a:hover {
+.uc-nav-links a:hover, .uc-nav-links a.on {
   color: #ffffff;
 }
 
@@ -344,7 +353,7 @@ a {
   transition: width 0.25s ease;
 }
 
-.uc-nav-links a:hover::after {
+.uc-nav-links a:hover::after, .uc-nav-links a.on::after {
   width: 100%;
 }
 

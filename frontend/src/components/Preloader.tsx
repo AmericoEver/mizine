@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import worldMapData from '../data/worldMap2D.json';
 
 interface PreloaderProps {
   onComplete?: () => void;
@@ -26,20 +27,35 @@ const CAPABILITIES = [
   'REDES & DISTRIBUIÇÃO GLOBAL'
 ];
 
+interface PartnerNode {
+  name: string;
+  lon: number;
+  lat: number;
+}
+
+const PARTNER_NODES: PartnerNode[] = [
+  { name: 'Lisboa & Europa', lon: -9.14, lat: 38.72 },
+  { name: 'Londres', lon: -0.12, lat: 51.5 },
+  { name: 'Dubai', lon: 55.27, lat: 25.20 },
+  { name: 'São Paulo', lon: -46.63, lat: -23.55 },
+  { name: 'Joanesburgo', lon: 28.04, lat: -26.20 },
+  { name: 'Sydney', lon: 151.2, lat: -33.86 }
+];
+
 export const Preloader: React.FC<PreloaderProps> = ({ onComplete }) => {
   const [progress, setProgress] = useState(0);
   const [isFading, setIsFading] = useState(false);
   const [isDestroyed, setIsDestroyed] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  // Counter logic: ~4.5 seconds duration with cinematic pacing
+  // Counter logic: ~4.5 to 5.0 seconds duration with cinematic pacing
   useEffect(() => {
     let current = 0;
     let pauseCount = 0;
 
     const interval = setInterval(() => {
       // Intentional micro-pause around 79% (matching United Carriers screenshot)
-      if (current === 79 && pauseCount < 9) {
+      if (current === 79 && pauseCount < 10) {
         pauseCount++;
         return;
       }
@@ -63,15 +79,15 @@ export const Preloader: React.FC<PreloaderProps> = ({ onComplete }) => {
             setIsDestroyed(true);
             if (onComplete) onComplete();
           }, 750);
-        }, 450);
+        }, 500);
       }
       setProgress(Math.min(100, current));
-    }, 42); // 42ms * ~100 steps + pauses = ~4.5 seconds
+    }, 42);
 
     return () => clearInterval(interval);
   }, [onComplete]);
 
-  // World map dotted canvas with prominent Mozambique focus
+  // World map dotted canvas with REAL continental coordinates
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -95,120 +111,96 @@ export const Preloader: React.FC<PreloaderProps> = ({ onComplete }) => {
     resize();
     window.addEventListener('resize', resize);
 
-    const cols = 60;
-    const rows = 30;
-
-    const landZones = [
-      // Americas (North, Central, South)
-      { x1: 0.12, x2: 0.30, y1: 0.18, y2: 0.44 },
-      { x1: 0.20, x2: 0.27, y1: 0.44, y2: 0.54 },
-      { x1: 0.24, x2: 0.35, y1: 0.54, y2: 0.86 },
-      // Europe
-      { x1: 0.46, x2: 0.56, y1: 0.20, y2: 0.40 },
-      // Africa
-      { x1: 0.46, x2: 0.60, y1: 0.40, y2: 0.82 },
-      // Asia
-      { x1: 0.57, x2: 0.86, y1: 0.18, y2: 0.58 },
-      // Australia
-      { x1: 0.76, x2: 0.88, y1: 0.64, y2: 0.86 }
-    ];
-
-    // Global partner hubs
-    const partnerNodes = [
-      { x: 0.48, y: 0.34, name: 'Lisboa' },
-      { x: 0.28, y: 0.70, name: 'Brasil' },
-      { x: 0.63, y: 0.42, name: 'Dubai' },
-      { x: 0.52, y: 0.81, name: 'JHB' },
-      { x: 0.82, y: 0.74, name: 'Sydney' }
-    ];
-
-    // Mozambique HQ
-    const mozHQ = { x: 0.56, y: 0.73, name: 'MAPUTO • SEDE MIZINE' };
+    const mapDots = worldMapData as [number, number, number][];
 
     let t = 0;
     const render = () => {
       t += 0.035;
       ctx.clearRect(0, 0, width, height);
 
-      const cellW = width / cols;
-      const cellH = height / rows;
+      // Fit 2D world map neatly inside canvas area with equirectangular projection
+      const mapW = width * 0.96;
+      const mapH = height * 0.90;
+      const offsetX = (width - mapW) / 2;
+      const offsetY = (height - mapH) / 2;
 
-      // 1. Draw World Continent Dots
-      for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-          const nx = c / cols;
-          const ny = r / rows;
+      const project = (lon: number, lat: number) => ({
+        x: ((lon + 180) / 360) * mapW + offsetX,
+        y: ((80 - lat) / 140) * mapH + offsetY
+      });
 
-          const isLand = landZones.some(z => nx >= z.x1 && nx <= z.x2 && ny >= z.y1 && ny <= z.y2);
-          if (isLand) {
-            const jitter = Math.sin(c * 12.3 + r * 45.6);
-            if (jitter > -0.65) {
-              const px = c * cellW + cellW * 0.5;
-              const py = r * cellH + cellH * 0.5;
-
-              // If point is inside Mozambique territory (around x: 0.54-0.57, y: 0.68-0.75)
-              const isMozTerritory = nx >= 0.54 && nx <= 0.57 && ny >= 0.68 && ny <= 0.76;
-
-              ctx.beginPath();
-              ctx.arc(px, py, isMozTerritory ? 1.8 : 1.1, 0, Math.PI * 2);
-              ctx.fillStyle = isMozTerritory ? 'rgba(255, 59, 48, 0.85)' : 'rgba(255, 255, 255, 0.15)';
-              ctx.fill();
-            }
-          }
-        }
-      }
-
-      const hqX = mozHQ.x * width;
-      const hqY = mozHQ.y * height;
-
-      // 2. Global Arcs reaching out from Maputo HQ to the rest of the world
-      for (let i = 0; i < partnerNodes.length; i++) {
-        const node = partnerNodes[i];
-        const nx = node.x * width;
-        const ny = node.y * height;
-
-        const midX = (hqX + nx) * 0.5;
-        const midY = (hqY + ny) * 0.5 - 28;
+      // 1. Draw Real World Continent Dots (Exact Earth Geography)
+      for (let i = 0; i < mapDots.length; i++) {
+        const [lon, lat, isMoz] = mapDots[i];
+        const p = project(lon, lat);
 
         ctx.beginPath();
-        ctx.moveTo(hqX, hqY);
-        ctx.quadraticCurveTo(midX, midY, nx, ny);
-        ctx.strokeStyle = 'rgba(0, 212, 255, 0.22)';
+        if (isMoz === 1) {
+          // Highlighted Mozambique dots
+          ctx.arc(p.x, p.y, 1.8, 0, Math.PI * 2);
+          ctx.fillStyle = '#ff3b30';
+        } else {
+          // Standard continental dots
+          ctx.arc(p.x, p.y, 1.15, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.22)';
+        }
+        ctx.fill();
+      }
+
+      // Maputo HQ coordinates (-25.96 lat, 32.58 lon)
+      const hq = project(32.58, -25.96);
+
+      // 2. Global Connection Arcs reaching out from Maputo HQ to Partner Cities
+      for (let i = 0; i < PARTNER_NODES.length; i++) {
+        const node = PARTNER_NODES[i];
+        const dest = project(node.lon, node.lat);
+
+        const midX = (hq.x + dest.x) * 0.5;
+        const midY = (hq.y + dest.y) * 0.5 - 24;
+
+        ctx.beginPath();
+        ctx.moveTo(hq.x, hq.y);
+        ctx.quadraticCurveTo(midX, midY, dest.x, dest.y);
+        ctx.strokeStyle = 'rgba(0, 212, 255, 0.28)';
         ctx.lineWidth = 1;
         ctx.stroke();
 
-        // Moving photon packet from Maputo
-        const packetT = (t * 0.8 + i * 0.3) % 1;
+        // Traveling photon packet from Maputo
+        const packetT = (t * 0.75 + i * 0.28) % 1;
         const inv = 1 - packetT;
-        const px = inv * inv * hqX + 2 * inv * packetT * midX + packetT * packetT * nx;
-        const py = inv * inv * hqY + 2 * inv * packetT * midY + packetT * packetT * ny;
+        const px = inv * inv * hq.x + 2 * inv * packetT * midX + packetT * packetT * dest.x;
+        const py = inv * inv * hq.y + 2 * inv * packetT * midY + packetT * packetT * dest.y;
 
         ctx.beginPath();
-        ctx.arc(px, py, 2, 0, Math.PI * 2);
-        ctx.fillStyle = '#00d4ff';
+        ctx.arc(px, py, 2.2, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff';
         ctx.shadowColor = '#00d4ff';
-        ctx.shadowBlur = 6;
+        ctx.shadowBlur = 8;
         ctx.fill();
         ctx.shadowBlur = 0;
 
-        // Partner node dot
+        // Partner City Blue Dot with subtle pulse (United Carriers style)
+        const nodePulse = 1 + Math.sin(t * 3 + i) * 0.2;
         ctx.beginPath();
-        ctx.arc(nx, ny, 2.5, 0, Math.PI * 2);
+        ctx.arc(dest.x, dest.y, 3.2 * nodePulse, 0, Math.PI * 2);
         ctx.fillStyle = '#00d4ff';
+        ctx.shadowColor = '#00d4ff';
+        ctx.shadowBlur = 8;
         ctx.fill();
+        ctx.shadowBlur = 0;
       }
 
-      // 3. PROMINENT MOÇAMBIQUE HQ BEACON PIN
-      const pulse = 1 + Math.sin(t * 3.5) * 0.3;
+      // 3. MOÇAMBIQUE HQ BEACON (BERÇO & SEDE)
+      const pulse = 1 + Math.sin(t * 3.5) * 0.25;
 
-      // Concentric expanding radar waves from Mozambique
+      // Concentric expanding radar rings from Maputo
       for (let w = 0; w < 2; w++) {
-        const wavePhase = (t * 0.7 + w * 0.5) % 1;
-        const waveRadius = 4 + wavePhase * 24;
+        const wavePhase = (t * 0.65 + w * 0.5) % 1;
+        const waveRadius = 4 + wavePhase * 26;
         const waveAlpha = Math.max(0, 1 - wavePhase) * 0.85;
 
         ctx.beginPath();
-        ctx.arc(hqX, hqY, waveRadius, 0, Math.PI * 2);
+        ctx.arc(hq.x, hq.y, waveRadius, 0, Math.PI * 2);
         ctx.strokeStyle = `rgba(255, 59, 48, ${waveAlpha})`;
         ctx.lineWidth = 1.2;
         ctx.stroke();
@@ -216,7 +208,7 @@ export const Preloader: React.FC<PreloaderProps> = ({ onComplete }) => {
 
       // Hot red Mozambique core dot
       ctx.beginPath();
-      ctx.arc(hqX, hqY, 4.5 * pulse, 0, Math.PI * 2);
+      ctx.arc(hq.x, hq.y, 5 * pulse, 0, Math.PI * 2);
       ctx.fillStyle = '#ff3b30';
       ctx.shadowColor = '#ff3b30';
       ctx.shadowBlur = 14;
@@ -225,23 +217,23 @@ export const Preloader: React.FC<PreloaderProps> = ({ onComplete }) => {
 
       // Center white bead
       ctx.beginPath();
-      ctx.arc(hqX, hqY, 2, 0, Math.PI * 2);
+      ctx.arc(hq.x, hq.y, 2, 0, Math.PI * 2);
       ctx.fillStyle = '#ffffff';
       ctx.fill();
 
-      // Technical label leader line
-      const lineEndX = hqX + 26;
-      const lineEndY = hqY + 18;
+      // Technical HUD Leader Line
+      const lineEndX = hq.x + 28;
+      const lineEndY = hq.y + 18;
 
       ctx.beginPath();
-      ctx.moveTo(hqX, hqY);
+      ctx.moveTo(hq.x, hq.y);
       ctx.lineTo(lineEndX, lineEndY);
       ctx.lineTo(lineEndX + 45, lineEndY);
       ctx.strokeStyle = '#ff3b30';
       ctx.lineWidth = 1;
       ctx.stroke();
 
-      ctx.font = '700 9px "Space Grotesk", sans-serif';
+      ctx.font = '700 9.5px "Space Grotesk", sans-serif';
       ctx.fillStyle = '#ffffff';
       ctx.fillText('🇲🇿 MOÇAMBIQUE [SEDE]', lineEndX + 4, lineEndY - 3);
 
@@ -294,7 +286,7 @@ export const Preloader: React.FC<PreloaderProps> = ({ onComplete }) => {
           </div>
         </div>
 
-        {/* Center: Dotted World Map Canvas with Mozambique Focus */}
+        {/* Center: Dotted World Map Canvas with Exact Continents */}
         <div className="uc-preloader-col uc-preloader-center">
           <canvas ref={canvasRef} className="uc-preloader-map-canvas" />
         </div>

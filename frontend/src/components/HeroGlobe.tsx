@@ -78,6 +78,15 @@ const GLOBAL_ARCS = [
   { fromLat: -25.96, fromLon: 32.58, toLat: -29.0, toLon: 26.0, color: '#ff3b30' } // Maputo -> South Africa
 ];
 
+interface CameraFlashStar {
+  xNorm: number; // 0 to 1 inside cosmic void
+  yNorm: number;
+  lastFlash: number;
+  interval: number;
+  color: string;
+  size: number;
+}
+
 export const HeroGlobe: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -91,7 +100,7 @@ export const HeroGlobe: React.FC = () => {
     let width = 0;
     let height = 0;
 
-    // Stable planetary tilt: natural Earth axial tilt (~16 deg)
+    // Stable planetary tilt (~16 deg)
     let rotX = -0.16;
     // Initial Y rotation so Mozambique (-25.96 lat, 32.58 lon) faces front & center
     let rotY = -Math.PI * 0.10;
@@ -101,18 +110,18 @@ export const HeroGlobe: React.FC = () => {
     let lastMouseX = 0;
     let lastMouseY = 0;
 
-    // Mouse parallax tilt angles (independent from continuous spin)
+    // Mouse parallax tilt angles
     let mouseTiltX = 0;
     let mouseTiltY = 0;
     let targetMouseTiltX = 0;
     let targetMouseTiltY = 0;
 
     // Counter-rotation speeds:
-    // Planet rotates continuously to the LEFT (negative rotY)
+    // Planet rotates to the LEFT (negative rotY)
     const planetRotateSpeed = -0.0020;
-    // Film reel orbits continuously to the RIGHT (opposite direction)
+    // Film reel orbits to the RIGHT (opposite direction)
     let filmOrbitAngle = 0;
-    const filmOrbitSpeed = 0.0038;
+    const filmOrbitSpeed = 0.0036;
 
     // Mathematically correct conversion: North Pole at TOP (-Y in screen space), South Pole at BOTTOM (+Y)
     const latLonToVec = (lat: number, lon: number) => {
@@ -121,7 +130,7 @@ export const HeroGlobe: React.FC = () => {
       const cosPhi = Math.cos(phi);
       return {
         x: cosPhi * Math.sin(theta),
-        y: -Math.sin(phi), // Negative so North (+lat) points UP on screen
+        y: -Math.sin(phi),
         z: cosPhi * Math.cos(theta)
       };
     };
@@ -138,7 +147,21 @@ export const HeroGlobe: React.FC = () => {
       vec: latLonToVec(m.lat, m.lon)
     }));
 
-    // Canvas resize to parent container (full-bleed universe)
+    // Initialize Camera LED Flash Stars in the cosmic void between moon and planet
+    const flashStars: CameraFlashStar[] = [];
+    const flashColors = ['#ffffff', '#e0f7ff', '#fff3e0', '#ffeb3b'];
+    for (let i = 0; i < 22; i++) {
+      flashStars.push({
+        xNorm: Math.random(),
+        yNorm: 0.08 + Math.random() * 0.84,
+        lastFlash: -Math.random() * 5,
+        interval: 1.8 + Math.random() * 3.5,
+        color: flashColors[i % flashColors.length],
+        size: 2.5 + Math.random() * 2.5
+      });
+    }
+
+    // Canvas resize to parent container
     const handleResize = () => {
       if (!canvas) return;
       const parent = canvas.parentElement;
@@ -153,7 +176,7 @@ export const HeroGlobe: React.FC = () => {
     handleResize();
     window.addEventListener('resize', handleResize);
 
-    // Mouse & Touch interaction across the full viewport
+    // Mouse & Touch interaction
     const onMouseDown = (e: MouseEvent) => {
       isDragging = true;
       lastMouseX = e.clientX;
@@ -241,79 +264,57 @@ export const HeroGlobe: React.FC = () => {
 
       ctx.clearRect(0, 0, width, height);
 
-      // COLOSSAL SCALE & PLACEMENT (No boundary box - covers screen smoothly)
+      // --- FULL SPHERE VISIBILITY ALIGNED TO THE RIGHT ---
+      // The whole sphere is 100% visible, fully circular, aligned to the right margin!
       const isMobile = width < 900;
-      const cx = isMobile ? width * 0.50 : width * 0.66;
-      const cy = isMobile ? height * 0.45 : height * 0.50;
       const radius = isMobile
-        ? Math.min(width, height) * 0.44
-        : Math.max(height * 0.58, Math.min(width * 0.44, 760));
+        ? Math.min(width * 0.42, height * 0.32)
+        : Math.min(height * 0.39, width * 0.26);
+
+      const cx = isMobile ? width * 0.50 : width - radius - 70;
+      const cy = isMobile ? height * 0.36 : height * 0.50;
 
       const cosY = Math.cos(rotY);
       const sinY = Math.sin(rotY);
       const cosX = Math.cos(rotX);
       const sinX = Math.sin(rotX);
 
-      // --- LAYER 1: DEEP SPACE STARS & ATMOSPHERIC NEON RIM GLOWS ---
-      // Fiery Orange/Amber Solar Rim (Top-Right)
-      const orangeGlow = ctx.createRadialGradient(
-        cx + radius * 0.35, cy - radius * 0.45, radius * 0.25,
-        cx, cy, radius * 1.35
-      );
-      orangeGlow.addColorStop(0, 'rgba(255, 120, 0, 0.45)');
-      orangeGlow.addColorStop(0.45, 'rgba(255, 55, 0, 0.18)');
-      orangeGlow.addColorStop(0.85, 'rgba(255, 20, 0, 0.03)');
-      orangeGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
-      ctx.fillStyle = orangeGlow;
-      ctx.fillRect(0, 0, width, height);
-
-      // Electric Cyan/Blue Deep Rim Crescent (Bottom-Left)
-      const blueGlow = ctx.createRadialGradient(
-        cx - radius * 0.45, cy + radius * 0.4, radius * 0.2,
-        cx, cy, radius * 1.40
-      );
-      blueGlow.addColorStop(0, 'rgba(0, 160, 255, 0.55)');
-      blueGlow.addColorStop(0.45, 'rgba(0, 210, 255, 0.22)');
-      blueGlow.addColorStop(0.8, 'rgba(0, 90, 220, 0.05)');
-      blueGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
-      ctx.fillStyle = blueGlow;
-      ctx.fillRect(0, 0, width, height);
-
-      // --- LAYER 2: CELESTIAL MOON AS [ 🔴 REC ] (Videomaker Space Feature) ---
-      const moonX = isMobile ? width * 0.80 : cx - radius * 0.48;
-      const moonY = isMobile ? height * 0.14 : cy - radius * 0.68;
-      const moonR = isMobile ? 12 : 16;
+      // --- LAYER 1: CELESTIAL MOON AS [ 🔴 REC ] ALIGNED TO THE LEFT ---
+      const wrapMargin = Math.max(30, (width - 1340) / 2);
+      const moonX = isMobile ? 55 : Math.max(65, wrapMargin + 30);
+      const moonY = isMobile ? 110 : 135;
+      const moonR = isMobile ? 14 : 18;
 
       // Soft Deep Cosmic Red Lunar Halo
-      const moonHalo = ctx.createRadialGradient(moonX, moonY, moonR * 0.4, moonX, moonY, moonR * 3.8);
-      moonHalo.addColorStop(0, 'rgba(255, 59, 48, 0.38)');
-      moonHalo.addColorStop(0.45, 'rgba(255, 45, 85, 0.12)');
+      const moonHalo = ctx.createRadialGradient(moonX, moonY, moonR * 0.3, moonX, moonY, moonR * 3.5);
+      moonHalo.addColorStop(0, 'rgba(255, 59, 48, 0.45)');
+      moonHalo.addColorStop(0.5, 'rgba(255, 45, 85, 0.16)');
       moonHalo.addColorStop(1, 'rgba(0, 0, 0, 0)');
       ctx.beginPath();
-      ctx.arc(moonX, moonY, moonR * 3.8, 0, Math.PI * 2);
+      ctx.arc(moonX, moonY, moonR * 3.5, 0, Math.PI * 2);
       ctx.fillStyle = moonHalo;
       ctx.fill();
 
-      // Glowing Lunar Sphere (Crimson Cinema Red)
-      const moonGrad = ctx.createRadialGradient(moonX - 4, moonY - 4, 2, moonX, moonY, moonR);
+      // Glowing Lunar Sphere (Crimson Cinema Red with surface texture)
+      const moonGrad = ctx.createRadialGradient(moonX - 5, moonY - 5, 2, moonX, moonY, moonR);
       moonGrad.addColorStop(0, '#ff453a');
       moonGrad.addColorStop(0.65, '#d32f2f');
-      moonGrad.addColorStop(1, '#550303');
+      moonGrad.addColorStop(1, '#500202');
       ctx.beginPath();
       ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2);
       ctx.fillStyle = moonGrad;
       ctx.fill();
 
-      // Camera Viewfinder Corners [ 🔴 REC ]
-      const vfW = isMobile ? 70 : 86;
-      const vfH = isMobile ? 44 : 52;
+      // Camera Viewfinder Corners around the Moon [ 🔴 REC ]
+      const vfW = isMobile ? 74 : 88;
+      const vfH = isMobile ? 46 : 54;
       const vfX = moonX - vfW / 2;
       const vfY = moonY - vfH / 2;
-      const cLen = 9;
+      const cLen = 10;
 
       ctx.save();
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.80)';
-      ctx.lineWidth = 1.2;
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+      ctx.lineWidth = 1.3;
 
       // Top-Left [
       ctx.beginPath();
@@ -343,30 +344,123 @@ export const HeroGlobe: React.FC = () => {
       ctx.lineTo(vfX + vfW, vfY + vfH - cLen);
       ctx.stroke();
 
-      // Blinking REC Text
-      const isRecBlink = Math.sin(time * 3.5) > -0.25;
-      ctx.font = '700 11px "JetBrains Mono", monospace';
+      // Bold Blinking REC Label with glowing indicator
+      const isRecBlink = Math.sin(time * 3.6) > -0.2;
+      ctx.font = '800 11.5px "JetBrains Mono", monospace';
       ctx.fillStyle = isRecBlink ? '#ffffff' : 'rgba(255, 255, 255, 0.35)';
       ctx.textAlign = 'left';
-      ctx.fillText('REC', moonX + moonR + 8, moonY + 4);
+      ctx.fillText('REC', moonX + moonR + 9, moonY + 4);
 
       // Micro Camera Telemetry
-      ctx.font = '600 7.5px "JetBrains Mono", monospace';
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+      ctx.font = '600 8px "JetBrains Mono", monospace';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
       const sec = Math.floor(time) % 60;
       const fr = Math.floor((time * 24) % 24);
       const tcStr = `TC 00:04:${sec.toString().padStart(2, '0')}:${fr.toString().padStart(2, '0')}`;
-      ctx.fillText(`● LUA / REC • 4K DCI`, vfX, vfY + vfH + 12);
-      ctx.fillText(tcStr, vfX, vfY + vfH + 21);
+      ctx.fillText(`● LUA / REC • 4K DCI`, vfX, vfY + vfH + 13);
+      ctx.fillText(tcStr, vfX, vfY + vfH + 23);
       ctx.restore();
 
-      // --- LAYER 3: 35MM FILM REEL INDEPENDENT COUNTER-ORBIT ---
-      // The film orbits RIGHT (opposite to the planet spinning left)
-      // Note: we do NOT multiply by rotY, ensuring independent rotation!
+      // --- LAYER 2: CAMERA LED FLASH STARS (Pop in the void between Moon and Planet) ---
+      const voidMinX = moonX + vfW * 0.6;
+      const voidMaxX = cx - radius - 20;
+
+      if (voidMaxX > voidMinX) {
+        for (let i = 0; i < flashStars.length; i++) {
+          const star = flashStars[i];
+          const starX = voidMinX + star.xNorm * (voidMaxX - voidMinX);
+          const starY = star.yNorm * height;
+
+          // Check if star should trigger a flash
+          if (time - star.lastFlash > star.interval) {
+            star.lastFlash = time;
+            star.interval = 1.5 + Math.random() * 3.5;
+          }
+
+          const flashAge = time - star.lastFlash;
+          const flashDuration = 0.32; // Quick camera strobe flash
+
+          if (flashAge >= 0 && flashAge < flashDuration) {
+            const progress = flashAge / flashDuration;
+            // Sudden bright rise, exponential decay
+            const flashIntensity = Math.pow(1 - progress, 2.5);
+
+            ctx.save();
+            // 1. Soft Circular Flash Corona
+            const coronaR = (star.size * 5) * flashIntensity;
+            const coronaGrad = ctx.createRadialGradient(starX, starY, 0, starX, starY, coronaR);
+            coronaGrad.addColorStop(0, 'rgba(255, 255, 255, 0.95)');
+            coronaGrad.addColorStop(0.3, star.color);
+            coronaGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            ctx.fillStyle = coronaGrad;
+            ctx.beginPath();
+            ctx.arc(starX, starY, coronaR, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 2. Anamorphic Horizontal Lens Flare Ray
+            const rayW = (32 + star.size * 8) * flashIntensity;
+            ctx.strokeStyle = 'rgba(255, 255, 255, ' + (0.9 * flashIntensity) + ')';
+            ctx.lineWidth = 1.2;
+            ctx.beginPath();
+            ctx.moveTo(starX - rayW, starY);
+            ctx.lineTo(starX + rayW, starY);
+            ctx.stroke();
+
+            // 3. Vertical Cross Flare Spikes
+            const rayH = (14 + star.size * 4) * flashIntensity;
+            ctx.beginPath();
+            ctx.moveTo(starX, starY - rayH);
+            ctx.lineTo(starX, starY + rayH);
+            ctx.stroke();
+
+            // 4. Center Hot White Core
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(starX, starY, star.size * 0.9 * flashIntensity, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+          } else {
+            // Subtle resting twinkle star
+            const twinkle = 0.25 + Math.sin(time * 2 + i) * 0.15;
+            ctx.fillStyle = 'rgba(255, 255, 255, ' + twinkle + ')';
+            ctx.beginPath();
+            ctx.arc(starX, starY, 0.8, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      }
+
+      // --- LAYER 3: ATMOSPHERIC NEON RIM GLOWS FOR THE SPHERE ---
+      // Solar Orange Rim (Top-Right)
+      const orangeGlow = ctx.createRadialGradient(
+        cx + radius * 0.35, cy - radius * 0.45, radius * 0.25,
+        cx, cy, radius * 1.35
+      );
+      orangeGlow.addColorStop(0, 'rgba(255, 120, 0, 0.45)');
+      orangeGlow.addColorStop(0.45, 'rgba(255, 55, 0, 0.18)');
+      orangeGlow.addColorStop(0.85, 'rgba(255, 20, 0, 0.03)');
+      orangeGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = orangeGlow;
+      ctx.fillRect(0, 0, width, height);
+
+      // Deep Blue Rim Crescent (Bottom-Left)
+      const blueGlow = ctx.createRadialGradient(
+        cx - radius * 0.45, cy + radius * 0.4, radius * 0.2,
+        cx, cy, radius * 1.40
+      );
+      blueGlow.addColorStop(0, 'rgba(0, 160, 255, 0.55)');
+      blueGlow.addColorStop(0.45, 'rgba(0, 210, 255, 0.22)');
+      blueGlow.addColorStop(0.8, 'rgba(0, 90, 220, 0.05)');
+      blueGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = blueGlow;
+      ctx.fillRect(0, 0, width, height);
+
+      // --- LAYER 4: 35MM FILM REEL INDEPENDENT COUNTER-ORBIT ---
       const filmFrames = 54;
       const filmOrbitRadius = radius * 1.18;
       const filmWidth = radius * 0.076;
-      const filmInclination = -0.26; // Stable celestial tilt (~15 deg)
+      const filmInclination = -0.26; // Stable celestial tilt
 
       interface FilmQuad {
         tl: { x: number; y: number; z: number };
@@ -395,7 +489,6 @@ export const HeroGlobe: React.FC = () => {
           const y0 = oz * Math.sin(filmInclination) + offset * Math.cos(filmInclination);
           const z0 = oz * Math.cos(filmInclination) - offset * Math.sin(filmInclination);
 
-          // Apply only camera tilt, NOT continuous planet spin
           const xCam = x0 * cosMouseY + z0 * sinMouseY;
           const zCamTemp = -x0 * sinMouseY + z0 * cosMouseY;
           const yCam = y0 * cosMouseX - zCamTemp * sinMouseX;
@@ -490,7 +583,6 @@ export const HeroGlobe: React.FC = () => {
       }
 
       // --- PHASE B: SOLID PLANET SPHERE CORE ---
-      // Opaque planetary sphere naturally masks back of film without hard cuts!
       const coreGrad = ctx.createRadialGradient(cx, cy, radius * 0.3, cx, cy, radius);
       coreGrad.addColorStop(0, 'rgba(2, 3, 6, 0.99)');
       coreGrad.addColorStop(0.75, 'rgba(2, 3, 7, 0.97)');
@@ -504,7 +596,7 @@ export const HeroGlobe: React.FC = () => {
       ctx.save();
       ctx.beginPath();
       ctx.arc(cx, cy, radius, 0.35 * Math.PI, 1.2 * Math.PI);
-      ctx.lineWidth = 3.5;
+      ctx.lineWidth = 3.2;
       ctx.strokeStyle = 'rgba(0, 210, 255, 0.85)';
       ctx.shadowColor = '#00d4ff';
       ctx.shadowBlur = 18;
@@ -515,14 +607,14 @@ export const HeroGlobe: React.FC = () => {
       ctx.save();
       ctx.beginPath();
       ctx.arc(cx, cy, radius, 1.3 * Math.PI, 1.95 * Math.PI);
-      ctx.lineWidth = 2.5;
+      ctx.lineWidth = 2.4;
       ctx.strokeStyle = 'rgba(255, 140, 20, 0.9)';
       ctx.shadowColor = '#ff6b00';
       ctx.shadowBlur = 16;
       ctx.stroke();
       ctx.restore();
 
-      // --- PHASE C: 7,900+ REAL CONTINENT & COASTLINE POINTS ---
+      // --- PHASE C: 8,000+ REAL CONTINENT & AUTHENTIC MOZAMBIQUE BORDER POINTS ---
       interface ProjPt {
         px: number;
         py: number;
@@ -556,14 +648,17 @@ export const HeroGlobe: React.FC = () => {
         const depth = pt.z;
 
         if (pt.moz) {
-          // Clean, crisp Mozambique dot - NOT an opaque blob!
-          const rMoz = 1.45 * (0.65 + depth * 0.55);
+          // AUTHENTIC MOZAMBIQUE: Both ocean and continental border dots
+          const isBorder = pt.coast;
+          const rMoz = (isBorder ? 1.55 : 1.2) * (0.65 + depth * 0.55);
           ctx.beginPath();
           ctx.arc(pt.px, pt.py, rMoz, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(255, 65, 54, ${Math.min(1, 0.95 * depth + 0.1)})`;
+          ctx.fillStyle = isBorder
+            ? `rgba(255, 60, 48, ${Math.min(1, 0.98 * depth + 0.15)})`
+            : `rgba(255, 95, 80, ${Math.min(1, 0.82 * depth + 0.10)})`;
           ctx.fill();
         } else {
-          // Standard Continent Dot (Coastline perimeter dots are brighter and crisper!)
+          // Standard Continent Dot
           const isCoast = pt.coast;
           const r = (isCoast ? 1.35 : 1.05) * (0.6 + depth * 0.55);
           let alpha = (isCoast ? 0.95 : 0.65) * Math.pow(depth, 1.4);
@@ -580,7 +675,7 @@ export const HeroGlobe: React.FC = () => {
         }
       }
 
-      // --- PHASE D: GLOBAL CONNECTION ARCS (Orange Parabolic Trajectories) ---
+      // --- PHASE D: GLOBAL CONNECTION ARCS ---
       for (let i = 0; i < GLOBAL_ARCS.length; i++) {
         const arc = GLOBAL_ARCS[i];
         const fromVec = latLonToVec(arc.fromLat, arc.fromLon);
@@ -652,7 +747,7 @@ export const HeroGlobe: React.FC = () => {
           ctx.globalAlpha = alpha;
 
           if (m.isHQ) {
-            // PROMINENT MOÇAMBIQUE HQ BEACON PIN
+            // MOÇAMBIQUE HQ BEACON PIN
             const pulse = 1 + Math.sin(time * 3.5) * 0.25;
 
             // Concentric radar waves
@@ -676,7 +771,7 @@ export const HeroGlobe: React.FC = () => {
             ctx.fillStyle = '#ffffff';
             ctx.fill();
 
-            // HUD Leader Line angled downwards to prevent overlap with orbital film
+            // Leader line angled safely away from the orbital film
             const lineEndX = mx + 28;
             const lineEndY = my + 26;
             ctx.beginPath();
@@ -715,7 +810,7 @@ export const HeroGlobe: React.FC = () => {
             ctx.fillStyle = '#a3a3b2';
             ctx.fillText('Conexão Global • 4K • Redes Sociais', boxX + padX, boxY + 39);
           } else {
-            // Standard Rectangular Black Location Tag (United Carriers style)
+            // Standard Rectangular Black Location Tag
             const pulse = 1 + Math.sin(time * 3 + i) * 0.2;
             ctx.beginPath();
             ctx.arc(mx, my, 4 * pulse, 0, Math.PI * 2);

@@ -16,10 +16,10 @@ export const Projects: React.FC<ProjectsProps> = ({ projects }) => {
   ];
 
   return (
-    <section className="uc-projects-section" id="trabalhos" style={{ paddingTop: 0 }}>
+    <section className="uc-projects-section theme-daylight-section" id="trabalhos">
       <div className="wrap">
         <div className="uc-section-header reveal-up">
-          <div className="uc-meta-tag">
+          <div className="uc-meta-tag daylight-meta">
             <span className="meta-bracket">[</span>
             <span className="meta-index">PORTFÓLIO</span>
             <span className="meta-bracket">]</span>
@@ -27,18 +27,18 @@ export const Projects: React.FC<ProjectsProps> = ({ projects }) => {
             <span className="meta-title">PRODUÇÕES & CAMPANHAS EM DESTAQUE</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '20px' }}>
-            <h2 className="uc-section-title" style={{ margin: 0 }}>
+            <h2 className="uc-section-title daylight-title" style={{ margin: 0 }}>
               Trabalho ousado.<br />
               <span className="text-red">Execução sem medo.</span>
             </h2>
 
             {/* Filter Pills */}
-            <div className="uc-filter-pills">
+            <div className="uc-filter-pills daylight-filters">
               {filters.map((f) => (
                 <button
                   key={f.id}
                   type="button"
-                  className={`uc-filter-btn ${activeFilter === f.id ? 'active' : ''}`}
+                  className={`uc-filter-btn daylight-filter-btn ${activeFilter === f.id ? 'active' : ''}`}
                   onClick={() => setActiveFilter(f.id as any)}
                 >
                   {f.label}

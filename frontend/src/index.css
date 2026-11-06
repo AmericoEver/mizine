@@ -2922,3 +2922,866 @@ a {
 .uc-reticle-dot.is-visible {
   opacity: 1;
 }
+
+/* ==========================================================================
+   DAYLIGHT THEME (POUSO EM MOÇAMBIQUE • DIA ENSOLARADO [ 12:00 ] ☀️)
+   ========================================================================== */
+
+.theme-daylight-section {
+  background: #f8f9fc !important;
+  color: #111218 !important;
+  position: relative;
+  transition: background-color 0.4s ease;
+}
+
+.daylight-meta {
+  border-color: rgba(17, 18, 24, 0.18) !important;
+  background: rgba(255, 255, 255, 0.85) !important;
+  color: #111218 !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+}
+
+.daylight-meta .meta-index {
+  color: #ff3b30 !important;
+}
+
+.daylight-meta .meta-title {
+  color: #111218 !important;
+  font-weight: 700;
+}
+
+.daylight-sub {
+  color: #626578 !important;
+}
+
+.daylight-text {
+  color: #0c0d14 !important;
+  font-weight: 800 !important;
+  letter-spacing: -1px;
+}
+
+.daylight-subtext {
+  color: #44475a !important;
+  line-height: 1.75;
+}
+
+.daylight-origin-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: #ffffff;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  margin-top: 18px;
+}
+
+.daylight-origin-badge .origin-flag {
+  font-size: 16px;
+}
+
+.daylight-origin-badge .origin-text {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: #1a1b24;
+}
+
+.daylight-title {
+  color: #0c0d14 !important;
+  font-weight: 800 !important;
+}
+
+.daylight-desc {
+  color: #4a4d62 !important;
+}
+
+/* ==========================================================================
+   24MM PHOTOGRAPHIC FILM REEL // MARCAS CORAJOSAS (MODO CLARO)
+   ========================================================================== */
+
+.film-reel-24mm-daylight {
+  margin: 50px 0 70px 0;
+  background: #111218;
+  border-radius: 12px;
+  padding: 20px 0;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+
+.film-reel-meta-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 24px 14px 24px;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.12);
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.film-reel-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: #ffffff;
+}
+
+.rec-tally-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ff3b30;
+  box-shadow: 0 0 10px #ff3b30;
+  animation: recBlink 1.4s ease-in-out infinite;
+}
+
+@keyframes recBlink {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.3; transform: scale(0.85); }
+}
+
+.film-reel-spec {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  letter-spacing: 1.2px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.film-strip-viewport {
+  width: 100%;
+  overflow: hidden;
+  padding: 16px 0;
+  mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+}
+
+.film-strip-track {
+  display: flex;
+  gap: 20px;
+  width: max-content;
+  animation: filmMarquee 32s linear infinite;
+}
+
+.film-strip-track:hover {
+  animation-play-state: paused;
+}
+
+@keyframes filmMarquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.film-frame-24mm {
+  width: 195px;
+  background: #191a24;
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+
+.film-frame-24mm:hover,
+.film-frame-24mm.is-hovered {
+  border-color: #ff3b30;
+  transform: translateY(-4px) scale(1.03);
+  box-shadow: 0 12px 28px rgba(255, 59, 48, 0.25);
+  background: #202230;
+}
+
+/* Sprocket Perforations */
+.film-sprockets {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 6px;
+}
+
+.sprocket-hole {
+  width: 10px;
+  height: 6px;
+  background: #08090d;
+  border-radius: 1.5px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.film-frame-window {
+  background: #ffffff;
+  border-radius: 4px;
+  padding: 14px 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 96px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.frame-header-indicator {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 7.5px;
+  font-weight: 700;
+  color: #727588;
+}
+
+.frame-rec-status {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #ff3b30;
+}
+
+.mini-rec-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #ff3b30;
+}
+
+.film-logo-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.film-brand-logo {
+  max-height: 28px;
+  max-width: 110px;
+  object-fit: contain;
+  filter: contrast(1.1);
+}
+
+.film-brand-name {
+  font-family: var(--font-display);
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #111218;
+  text-align: center;
+}
+
+.film-brand-category {
+  font-family: var(--font-mono);
+  font-size: 7.5px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: #ff3b30;
+  text-align: center;
+}
+
+/* ==========================================================================
+   CAMERA ON TRIPOD & MOISÉS MABUNDA FOUNDER VIGNETTE
+   ========================================================================== */
+
+.camera-tripod-founder-set {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr;
+  gap: 40px;
+  align-items: center;
+  margin: 60px 0 30px 0;
+  padding: 40px;
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 20px 50px rgba(10, 15, 30, 0.05);
+}
+
+@media (max-width: 960px) {
+  .camera-tripod-founder-set {
+    grid-template-columns: 1fr;
+    padding: 24px;
+    gap: 30px;
+  }
+}
+
+.cinema-camera-rig {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.camera-tally-bar {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #111218;
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 59, 48, 0.4);
+}
+
+.tally-rec-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ff3b30;
+  box-shadow: 0 0 8px #ff3b30;
+}
+
+.tally-text {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: #ffffff;
+}
+
+.camera-viewfinder-screen {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  aspect-ratio: 16 / 9;
+  background: #000000;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 3px solid #1a1b24;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.25);
+}
+
+.vf-grid-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.vf-grid-overlay .grid-line {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.vf-grid-overlay .h1 { top: 33.33%; left: 0; right: 0; height: 1px; }
+.vf-grid-overlay .h2 { top: 66.66%; left: 0; right: 0; height: 1px; }
+.vf-grid-overlay .v1 { left: 33.33%; top: 0; bottom: 0; width: 1px; }
+.vf-grid-overlay .v2 { left: 66.66%; top: 0; bottom: 0; width: 1px; }
+
+.vf-grid-overlay .center-crosshair {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 16px;
+  height: 16px;
+  transform: translate(-50%, -50%);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 50%;
+}
+
+.vf-subject-shot {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at center, #232738 0%, #0a0b12 85%);
+}
+
+.vf-subject-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: contrast(1.15) brightness(0.95);
+}
+
+.vf-subject-fallback {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: #ffffff;
+}
+
+.vf-founder-icon {
+  font-size: 32px;
+}
+
+.vf-founder-tag {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #00d4ff;
+}
+
+.vf-hud-top {
+  position: absolute;
+  top: 8px;
+  left: 12px;
+  right: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 700;
+  color: #ffffff;
+  z-index: 4;
+}
+
+.vf-rec-badge {
+  color: #ff3b30;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.vf-hud-bottom {
+  position: absolute;
+  bottom: 8px;
+  left: 12px;
+  right: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 7.5px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(0, 0, 0, 0.65);
+  padding: 3px 8px;
+  border-radius: 4px;
+  z-index: 4;
+}
+
+.vf-audio {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.audio-meter {
+  width: 24px;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.meter-level {
+  display: block;
+  width: 75%;
+  height: 100%;
+  background: #34c759;
+  animation: meterBlink 0.6s ease-in-out infinite alternate;
+}
+
+@keyframes meterBlink {
+  0% { width: 45%; }
+  100% { width: 90%; }
+}
+
+.camera-tripod-graphic {
+  width: 100%;
+  max-width: 320px;
+  height: 130px;
+}
+
+.tripod-svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Founder Narrative & Metrics */
+.founder-profile-card {
+  margin-bottom: 28px;
+}
+
+.founder-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.founder-badge {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: #ffffff;
+  background: #ff3b30;
+  padding: 3px 10px;
+  border-radius: 4px;
+}
+
+.founder-status-live {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 700;
+  color: #34c759;
+}
+
+.founder-name {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 800;
+  color: #0c0d14;
+  margin: 0 0 4px 0;
+  letter-spacing: -0.5px;
+}
+
+.founder-role {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #ff3b30;
+  display: block;
+  margin-bottom: 14px;
+}
+
+.founder-quote {
+  font-size: 14px;
+  line-height: 1.7;
+  color: #424558;
+  font-style: italic;
+  border-left: 3px solid #ff3b30;
+  padding-left: 14px;
+  margin: 0 0 16px 0;
+}
+
+.founder-tags-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.f-tag {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  background: #f0f2f8;
+  color: #111218;
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.daylight-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 580px) {
+  .daylight-metrics-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.daylight-metric-card {
+  background: #f8f9fc;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  padding: 18px;
+  transition: all 0.3s ease;
+}
+
+.daylight-metric-card:hover {
+  transform: translateY(-3px);
+  border-color: #ff3b30;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.06);
+}
+
+.daylight-metric-card.highlight-card {
+  background: #ffffff;
+  border-color: #ff3b30;
+  box-shadow: 0 8px 20px rgba(255, 59, 48, 0.1);
+}
+
+.d-metric-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.d-metric-badge {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: #727588;
+}
+
+.d-metric-dot {
+  font-size: 8px;
+  color: #a0a3b5;
+}
+
+.d-metric-dot.red { color: #ff3b30; }
+.d-metric-dot.green { color: #34c759; }
+
+.d-metric-number {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 900;
+  color: #0c0d14;
+  line-height: 1;
+  margin-bottom: 6px;
+  letter-spacing: -1px;
+}
+
+.d-metric-unit {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: #ff3b30;
+  margin-left: 4px;
+}
+
+.d-metric-label {
+  font-size: 11px;
+  color: #585c72;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* ==========================================================================
+   CREATIVE WHITE CARDS // PILARES (MODO CLARO)
+   ========================================================================== */
+
+.daylight-white-card {
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 10px 30px rgba(10, 15, 30, 0.04) !important;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.daylight-white-card:hover,
+.daylight-white-card.is-active {
+  border-color: #ff3b30 !important;
+  transform: translateY(-6px) !important;
+  box-shadow: 0 20px 48px rgba(255, 59, 48, 0.12) !important;
+}
+
+.daylight-code {
+  color: #ff3b30 !important;
+  font-weight: 800 !important;
+}
+
+.daylight-badge {
+  background: #f0f2f8 !important;
+  color: #111218 !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+.daylight-cat {
+  color: #727588 !important;
+}
+
+.daylight-p-title {
+  color: #0c0d14 !important;
+  font-weight: 800 !important;
+}
+
+.daylight-p-desc {
+  color: #4a4d62 !important;
+}
+
+.daylight-deliv {
+  background: #f8f9fc !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  border-radius: 10px !important;
+}
+
+.daylight-deliv-title {
+  color: #111218 !important;
+  font-weight: 800 !important;
+}
+
+.daylight-deliv li span {
+  color: #313444 !important;
+}
+
+.daylight-link {
+  color: #0c0d14 !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+  background: #f4f5fa !important;
+}
+
+.daylight-white-card:hover .daylight-link,
+.daylight-white-card.is-active .daylight-link {
+  background: #ff3b30 !important;
+  color: #ffffff !important;
+  border-color: #ff3b30 !important;
+}
+
+/* Daylight Filters for Projects */
+.daylight-filter-btn {
+  background: #ffffff !important;
+  color: #4a4d62 !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+}
+
+.daylight-filter-btn.active,
+.daylight-filter-btn:hover {
+  background: #111218 !important;
+  color: #ffffff !important;
+  border-color: #111218 !important;
+}
+
+/* ==========================================================================
+   COSMIC BLACK HOLE GARGANTUA // REELS (DEEP SPACE DARK MODE)
+   ========================================================================== */
+
+.cosmic-black-hole-section {
+  background: #020204 !important;
+  color: #ffffff !important;
+  position: relative;
+  overflow: hidden;
+  padding: 80px 0 60px 0 !important;
+}
+
+.cosmic-meta {
+  border-color: rgba(255, 140, 20, 0.3) !important;
+  background: rgba(18, 10, 5, 0.6) !important;
+}
+
+.cosmic-desc {
+  color: #a1a1b2 !important;
+  max-width: 650px;
+  margin-top: 8px;
+}
+
+.reels-black-hole-container {
+  width: 100%;
+  margin: 30px 0 50px 0;
+  position: relative;
+}
+
+.black-hole-vortex-universe {
+  position: relative;
+  width: 100%;
+  min-height: 520px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.black-hole-canvas {
+  width: 100%;
+  height: 520px;
+  display: block;
+  cursor: grab;
+}
+
+.black-hole-canvas:active {
+  cursor: grabbing;
+}
+
+.black-hole-core-manifesto {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+  width: 90%;
+  max-width: 720px;
+  background: rgba(8, 8, 14, 0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 140, 20, 0.35);
+  border-radius: 14px;
+  padding: 16px 24px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 20px rgba(255, 100, 20, 0.15);
+  pointer-events: none;
+}
+
+.singularity-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #ff9500;
+}
+
+.singularity-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ff3b30;
+  box-shadow: 0 0 8px #ff3b30;
+}
+
+.singularity-quote {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+  line-height: 1.5;
+  letter-spacing: 0.2px;
+}
+
+.singularity-hint {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: #00d4ff;
+}
+
+/* 24mm Film Sprockets on Reels Cards */
+.film-card-24mm {
+  position: relative;
+  padding-top: 18px !important;
+  padding-bottom: 18px !important;
+}
+
+.reel-sprocket-row {
+  position: absolute;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-around;
+  padding: 0 14px;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.reel-sprocket-row.top {
+  top: 5px;
+}
+
+.reel-sprocket-row.bottom {
+  bottom: 5px;
+}
+
+.r-sprocket {
+  width: 10px;
+  height: 6px;
+  background: #000000;
+  border-radius: 1px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+

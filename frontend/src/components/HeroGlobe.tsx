@@ -104,6 +104,7 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
     let rotY = -Math.PI * 0.10;
     let targetRotY = rotY;
     let targetRotX = rotX;
+    let dragRotY = 0;
     let isDragging = false;
     let lastMouseX = 0;
     let lastMouseY = 0;
@@ -124,35 +125,51 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
     let smoothScrollProgress = 0;
 
     const onScroll = () => {
-      const heroEl = document.getElementById('topo');
-      const maxScroll = heroEl ? Math.max(heroEl.offsetHeight * 0.85, 450) : window.innerHeight * 0.85;
-      targetScrollProgress = Math.min(1, Math.max(0, window.scrollY / maxScroll));
+      const scrollY = window.scrollY || document.documentElement.scrollTop || 0;
+      // Generous dead-zone at the top (0 to 90px): Hero stays 100% at rest!
+      if (scrollY <= 90) {
+        targetScrollProgress = 0;
+        return;
+      }
+      const maxScroll = Math.max(window.innerHeight * 0.72, 500);
+      targetScrollProgress = Math.min(1, Math.max(0, (scrollY - 90) / maxScroll));
     };
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 
-    // Procedural atmospheric clouds (billowing volumetric puffs during entry)
-    interface CloudParticle {
+    // Procedural atmospheric clouds (realistic multi-lobe volumetric cloud banks)
+    interface RealisticCloud {
       xRel: number;
       yRel: number;
-      baseRadius: number;
-      speedPhase: number;
-      opacityMul: number;
-      isCyan?: boolean;
+      baseR: number;
+      driftSpeed: number;
+      depthLayer: number; // 0: high cirrus, 1: mid cumulus, 2: low dense deck
+      lobeCount: number;
+      lobes: { dx: number; dy: number; rMul: number; alphaMul: number }[];
     }
-    const clouds: CloudParticle[] = [];
-    for (let i = 0; i < 30; i++) {
+    const clouds: RealisticCloud[] = [];
+    for (let i = 0; i < 24; i++) {
+      const lobeCount = 4 + Math.floor(Math.random() * 4);
+      const lobes = [];
+      for (let l = 0; l < lobeCount; l++) {
+        lobes.push({
+          dx: (Math.random() - 0.5) * 120,
+          dy: (Math.random() - 0.5) * 60,
+          rMul: 0.65 + Math.random() * 0.55,
+          alphaMul: 0.75 + Math.random() * 0.25
+        });
+      }
       clouds.push({
         xRel: (Math.random() - 0.5) * 1.5,
         yRel: (Math.random() - 0.5) * 1.3,
-        baseRadius: 160 + Math.random() * 240,
-        speedPhase: Math.random() * Math.PI * 2,
-        opacityMul: 0.60 + Math.random() * 0.40,
-        isCyan: i % 3 === 0
+        baseR: 180 + Math.random() * 220,
+        driftSpeed: 0.4 + Math.random() * 0.8,
+        depthLayer: i % 3,
+        lobeCount,
+        lobes
       });
     }
 
-    const planetRotateSpeed = -0.0020;
     let filmOrbitAngle = 0;
     const filmOrbitSpeed = 0.0036;
 
@@ -245,7 +262,7 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
       if (isDragging) {
         const dx = e.clientX - lastMouseX;
         const dy = e.clientY - lastMouseY;
-        targetRotY += dx * 0.005;
+        dragRotY += dx * 0.005;
         targetRotX += dy * 0.003;
         lastMouseX = e.clientX;
         lastMouseY = e.clientY;
@@ -253,7 +270,7 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
         const nx = e.clientX / width - 0.5;
         const ny = e.clientY / height - 0.5;
         targetRotX = -0.16 + ny * 0.12;
-        targetRotY += nx * 0.0004;
+        dragRotY += nx * 0.0003;
 
         targetMouseTiltX = ny * 0.08;
         targetMouseTiltY = nx * 0.12;
@@ -285,7 +302,7 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
       if (isDragging && e.touches.length === 1) {
         const dx = e.touches[0].clientX - lastMouseX;
         const dy = e.touches[0].clientY - lastMouseY;
-        targetRotY += dx * 0.006;
+        dragRotY += dx * 0.006;
         targetRotX += dy * 0.003;
         lastMouseX = e.touches[0].clientX;
         lastMouseY = e.touches[0].clientY;
@@ -316,8 +333,15 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
     const render = () => {
       time += 0.015;
 
-      targetRotY += planetRotateSpeed;
       filmOrbitAngle += filmOrbitSpeed;
+
+      if (!isDragging) {
+        dragRotY *= 0.95; // smoothly relaxes back to showcase Africa & Mozambique in front
+        const baseHeroRotY = -0.45 + Math.sin(time * 0.25) * 0.16;
+        targetRotY = baseHeroRotY + dragRotY;
+      } else {
+        targetRotY = -0.45 + dragRotY;
+      }
 
       rotY += (targetRotY - rotY) * 0.08;
       rotX += (targetRotX - rotX) * 0.08;
@@ -329,28 +353,38 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
       ctx.clearRect(0, 0, width, height);
 
       // --- SCROLL INTERPOLATION & ZOOM INTO MOÇAMBIQUE ---
-      if (Math.abs(targetScrollProgress - smoothScrollProgress) < 0.002) {
-        smoothScrollProgress = targetScrollProgress;
+      if (targetScrollProgress === 0) {
+        if (smoothScrollProgress < 0.05) {
+          smoothScrollProgress = 0;
+        } else {
+          smoothScrollProgress += (0 - smoothScrollProgress) * 0.28;
+        }
       } else {
         smoothScrollProgress += (targetScrollProgress - smoothScrollProgress) * 0.12;
       }
-      const sp = smoothScrollProgress < 0.003 ? 0 : smoothScrollProgress;
+      const sp = smoothScrollProgress <= 0.001 ? 0 : smoothScrollProgress;
 
       // Update Hero Viewport Left Elements directly (smooth 60fps hardware accelerated)
       if (viewportRef?.current) {
         const vp = viewportRef.current;
-        const fadeOut = Math.max(0, 1 - sp * 2.0);
-        vp.style.opacity = fadeOut.toFixed(3);
-        vp.style.transform = `translateY(${(-sp * 80).toFixed(1)}px)`;
-        vp.style.pointerEvents = fadeOut < 0.1 ? 'none' : 'auto';
+        if (sp === 0) {
+          vp.style.opacity = '1';
+          vp.style.transform = 'translateY(0px)';
+          vp.style.pointerEvents = 'auto';
+        } else {
+          const fadeOut = Math.max(0, 1 - sp * 1.7);
+          vp.style.opacity = fadeOut.toFixed(3);
+          vp.style.transform = `translateY(${(-sp * 60).toFixed(1)}px)`;
+          vp.style.pointerEvents = fadeOut < 0.1 ? 'none' : 'auto';
+        }
       }
       const badge = document.querySelector('.uc-floating-badge') as HTMLElement;
       if (badge) {
-        badge.style.opacity = Math.max(0, 1 - sp * 2.2).toFixed(3);
+        badge.style.opacity = sp === 0 ? '1' : Math.max(0, 1 - sp * 1.8).toFixed(3);
       }
       const scrollInd = document.querySelector('.uc-hero-scroll-indicator') as HTMLElement;
       if (scrollInd) {
-        scrollInd.style.opacity = Math.max(0, 1 - sp * 3.0).toFixed(3);
+        scrollInd.style.opacity = sp === 0 ? '1' : Math.max(0, 1 - sp * 2.2).toFixed(3);
       }
 
       const easeP = sp * sp * (3 - 2 * sp); // Hermite smoothstep
@@ -375,12 +409,8 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
       // Mathematically robust alignment to Mozambique (lon: 32.58°, lat: -25.96°)
       // Zero jump, zero drift, and 100% perfect reconstruction on scroll back!
       const targetMozRotY = -0.5686; // -(32.58 * Math.PI / 180)
-      const twoPi = Math.PI * 2;
-      const rawDiffY = ((targetMozRotY - rotY) % twoPi + twoPi) % twoPi;
-      const shortestDiffY = rawDiffY > Math.PI ? rawDiffY - twoPi : rawDiffY;
-
-      const currentRotY = rotY + shortestDiffY * easeP;
-      const currentRotX = rotX + (0.35 - rotX) * easeP;
+      const currentRotY = rotY * (1 - easeP) + targetMozRotY * easeP;
+      const currentRotX = rotX * (1 - easeP) + 0.35 * easeP;
 
       const cosY = Math.cos(currentRotY);
       const sinY = Math.sin(currentRotY);
@@ -1085,12 +1115,12 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
       // --- PHASE G: ATMOSPHERIC BLUE PENETRATION & VOLUMETRIC CLOUDS ---
       // "ao entrar no ponto moçambique azul ficam as nuvens"
       if (sp > 0.38) {
-        const blueEntryProgress = Math.max(0, Math.min(1, (sp - 0.38) / 0.42));
+        const blueEntryProgress = Math.max(0, Math.min(1, (sp - 0.35) / 0.45));
         const auraR = radius * (1.1 + blueEntryProgress * 0.4);
         const blueGlow = ctx.createRadialGradient(cx, cy, radius * 0.05, cx, cy, auraR);
-        blueGlow.addColorStop(0, `rgba(0, 212, 255, ${0.82 * blueEntryProgress})`);
-        blueGlow.addColorStop(0.35, `rgba(0, 130, 255, ${0.62 * blueEntryProgress})`);
-        blueGlow.addColorStop(0.70, `rgba(2, 10, 35, ${0.45 * blueEntryProgress})`);
+        blueGlow.addColorStop(0, `rgba(0, 212, 255, ${0.85 * blueEntryProgress})`);
+        blueGlow.addColorStop(0.35, `rgba(0, 130, 255, ${0.68 * blueEntryProgress})`);
+        blueGlow.addColorStop(0.70, `rgba(2, 10, 35, ${0.48 * blueEntryProgress})`);
         blueGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
         ctx.save();
         ctx.fillStyle = blueGlow;
@@ -1099,69 +1129,140 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
       }
 
       let cloudAlpha = 0;
-      if (sp >= 0.52 && sp <= 0.88) {
-        cloudAlpha = (sp - 0.52) / 0.36; // 0 to 1
+      if (sp >= 0.48 && sp <= 0.88) {
+        cloudAlpha = (sp - 0.48) / 0.40; // 0 to 1
       } else if (sp > 0.88 && sp <= 1.0) {
-        cloudAlpha = 1 - (sp - 0.88) / 0.12; // 1 to 0 (dissolving into Section 2)
+        cloudAlpha = 1 - (sp - 0.88) / 0.12; // 1 to 0 (transitioning to daylight!)
       }
       cloudAlpha = Math.max(0, Math.min(1, cloudAlpha));
 
       if (cloudAlpha > 0.01) {
         ctx.save();
+        // High-altitude atmospheric haze bands
+        for (let b = 0; b < 3; b++) {
+          const bandY = height * (0.2 + b * 0.3) + Math.sin(time * 0.4 + b) * 15;
+          const bandH = height * 0.32;
+          const bandGrad = ctx.createLinearGradient(0, bandY - bandH / 2, 0, bandY + bandH / 2);
+          const bandA = cloudAlpha * 0.42;
+          bandGrad.addColorStop(0, 'rgba(255, 255, 255, 0)');
+          bandGrad.addColorStop(0.5, `rgba(180, 230, 255, ${bandA})`);
+          bandGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+          ctx.fillStyle = bandGrad;
+          ctx.fillRect(0, bandY - bandH / 2, width, bandH);
+        }
+
+        // Multi-lobe Realistic Volumetric Cumulus Clusters
         for (let i = 0; i < clouds.length; i++) {
           const cl = clouds[i];
-          const expandMul = 1 + (sp - 0.52) * 2.0;
-          const clX = width * 0.5 + cl.xRel * width * 0.65 * expandMul + Math.sin(time * 0.6 + cl.speedPhase) * 20;
-          const clY = height * 0.5 + cl.yRel * height * 0.65 * expandMul + Math.cos(time * 0.6 + cl.speedPhase) * 15;
-          const clR = cl.baseRadius * expandMul;
+          const expandMul = 1 + (sp - 0.48) * 2.2;
+          const clusterCX = width * 0.5 + cl.xRel * width * 0.68 * expandMul + Math.sin(time * cl.driftSpeed) * 25;
+          const clusterCY = height * 0.5 + cl.yRel * height * 0.68 * expandMul + Math.cos(time * cl.driftSpeed * 0.8) * 18;
 
-          const cGrad = ctx.createRadialGradient(clX, clY, 0, clX, clY, clR);
-          const cAlpha = cloudAlpha * cl.opacityMul * 0.90;
-          if (cl.isCyan) {
-            cGrad.addColorStop(0, `rgba(225, 248, 255, ${cAlpha})`);
-            cGrad.addColorStop(0.4, `rgba(130, 210, 255, ${cAlpha * 0.75})`);
-            cGrad.addColorStop(0.8, `rgba(15, 60, 140, ${cAlpha * 0.35})`);
+          for (let l = 0; l < cl.lobes.length; l++) {
+            const lobe = cl.lobes[l];
+            const lx = clusterCX + lobe.dx * expandMul;
+            const ly = clusterCY + lobe.dy * expandMul;
+            const lr = cl.baseR * lobe.rMul * expandMul;
+
+            const cGrad = ctx.createRadialGradient(lx - lr * 0.2, ly - lr * 0.2, lr * 0.05, lx, ly, lr);
+            const a = cloudAlpha * lobe.alphaMul * 0.85;
+
+            // Sunlight scattering on upper rim (sun-facing)
+            cGrad.addColorStop(0, `rgba(255, 255, 255, ${a * 0.98})`);
+            cGrad.addColorStop(0.35, `rgba(230, 245, 255, ${a * 0.85})`);
+            cGrad.addColorStop(0.70, `rgba(150, 215, 255, ${a * 0.45})`);
+            cGrad.addColorStop(0.95, `rgba(10, 45, 110, ${a * 0.12})`);
             cGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-          } else {
-            cGrad.addColorStop(0, `rgba(255, 255, 255, ${cAlpha})`);
-            cGrad.addColorStop(0.45, `rgba(235, 245, 255, ${cAlpha * 0.80})`);
-            cGrad.addColorStop(0.85, `rgba(170, 205, 240, ${cAlpha * 0.30})`);
-            cGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+            ctx.fillStyle = cGrad;
+            ctx.beginPath();
+            ctx.arc(lx, ly, lr, 0, Math.PI * 2);
+            ctx.fill();
           }
-
-          ctx.fillStyle = cGrad;
-          ctx.beginPath();
-          ctx.arc(clX, clY, clR, 0, Math.PI * 2);
-          ctx.fill();
         }
         ctx.restore();
       }
 
-      // Aerospace HUD Telemetry during descent into Mozambique
-      if (sp > 0.42 && sp < 0.92) {
-        const hudAlpha = Math.sin(Math.PI * ((sp - 0.42) / 0.50));
+      // --- PHASE H: DAYLIGHT TRANSITION UPON ENTERING MOÇAMBIQUE [HQ] ---
+      if (sp > 0.82) {
+        const daylightWash = Math.min(1, (sp - 0.82) / 0.18);
+        ctx.save();
+        ctx.fillStyle = `rgba(248, 249, 252, ${daylightWash * 0.98})`;
+        ctx.fillRect(0, 0, width, height);
+        ctx.restore();
+      }
+
+      // --- BOLD INTEGRATED AEROSPACE TELEMETRY HUD // POUSO EM MOÇAMBIQUE [HQ] ---
+      if (sp > 0.36 && sp < 0.94) {
+        const hudAlpha = Math.sin(Math.PI * ((sp - 0.36) / 0.58));
         ctx.save();
         ctx.globalAlpha = hudAlpha;
-        const hudW = Math.min(width * 0.88, 380);
-        const hudH = 50;
-        const hudX = (width - hudW) / 2;
-        const hudY = height - 90;
 
-        ctx.fillStyle = 'rgba(2, 6, 18, 0.88)';
-        ctx.strokeStyle = '#00d4ff';
-        ctx.lineWidth = 1.2;
+        const hudW = Math.min(width * 0.92, 540);
+        const hudH = 78;
+        const hudX = (width - hudW) / 2;
+        const hudY = height - 105;
+
+        // Glassmorphism HUD Backdrop
+        ctx.fillStyle = 'rgba(2, 6, 18, 0.92)';
         ctx.fillRect(hudX, hudY, hudW, hudH);
+
+        // Neon Cyan Border with Corner Brackets
+        ctx.strokeStyle = '#00d4ff';
+        ctx.lineWidth = 1.4;
         ctx.strokeRect(hudX, hudY, hudW, hudH);
 
-        ctx.font = '800 10.5px "Space Grotesk", sans-serif';
-        ctx.fillStyle = '#ffffff';
-        ctx.textAlign = 'center';
-        ctx.fillText('🇲🇿 ENTRADA EM MOÇAMBIQUE [HQ]', width / 2, hudY + 18);
+        // Glowing Corner Brackets
+        const cLen = 14;
+        ctx.lineWidth = 2.5;
+        // TL
+        ctx.beginPath(); ctx.moveTo(hudX, hudY + cLen); ctx.lineTo(hudX, hudY); ctx.lineTo(hudX + cLen, hudY); ctx.stroke();
+        // TR
+        ctx.beginPath(); ctx.moveTo(hudX + hudW - cLen, hudY); ctx.lineTo(hudX + hudW, hudY); ctx.lineTo(hudX + hudW, hudY + cLen); ctx.stroke();
+        // BL
+        ctx.beginPath(); ctx.moveTo(hudX, hudY + hudH - cLen); ctx.lineTo(hudX, hudY + hudH); ctx.lineTo(hudX + cLen, hudY + hudH); ctx.stroke();
+        // BR
+        ctx.beginPath(); ctx.moveTo(hudX + hudW - cLen, hudY + hudH); ctx.lineTo(hudX + hudW, hudY + hudH); ctx.lineTo(hudX + hudW, hudY + hudH - cLen); ctx.stroke();
 
-        ctx.font = '600 8.5px "JetBrains Mono", monospace';
+        // Top Telemetry Header Row
+        const isBlink = Math.sin(time * 6) > 0;
+        ctx.font = '700 9px "JetBrains Mono", monospace';
+        ctx.fillStyle = isBlink ? '#ff3b30' : 'rgba(255, 59, 48, 0.4)';
+        ctx.textAlign = 'left';
+        ctx.fillText('● REC', hudX + 16, hudY + 18);
+
         ctx.fillStyle = '#00d4ff';
-        const altKm = Math.max(1, Math.round((1 - (sp - 0.42) / 0.50) * 650));
-        ctx.fillText(`ALTITUDE: ${altKm}.000 KM • DESCIDA NA SEDE MIZINE • 25°57'S 32°35'E`, width / 2, hudY + 34);
+        ctx.fillText('// TELEMETRIA AEROESPACIAL MIZINE • ENTRADA ATMOSFÉRICA', hudX + 62, hudY + 18);
+
+        // Big Altitude Readout
+        const altProgress = (sp - 0.36) / 0.58;
+        const altKm = Math.max(0.8, (1 - altProgress) * 12.85).toFixed(altProgress > 0.85 ? 2 : 1);
+        const altDisplay = altProgress > 0.92 ? `${Math.round((1 - altProgress) * 12850)} M` : `${altKm} KM`;
+
+        ctx.font = '900 22px "Space Grotesk", sans-serif';
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(`ALTITUDE: ${altDisplay}`, hudX + 16, hudY + 46);
+
+        // Mach Speed & Target Coordinates
+        ctx.font = '600 9.5px "JetBrains Mono", monospace';
+        ctx.fillStyle = '#ff9500';
+        const mach = Math.max(1.2, (24.4 - altProgress * 21.8)).toFixed(1);
+        ctx.fillText(`VELOCIDADE: MACH ${mach}`, hudX + 16, hudY + 64);
+
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+        ctx.textAlign = 'right';
+        ctx.fillText('ALVO: MOÇAMBIQUE [HQ] • 25°57\'S 32°35\'E', hudX + hudW - 16, hudY + 44);
+
+        ctx.fillStyle = '#34c759';
+        ctx.fillText('● DIA ENSOLARADO NA TERRA // MODO CLARO ATIVO ☀️', hudX + hudW - 16, hudY + 64);
+
+        // Descent Progress Bar at Bottom of HUD
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+        ctx.fillRect(hudX + 16, hudY + hudH - 5, hudW - 32, 2.5);
+
+        ctx.fillStyle = '#00d4ff';
+        ctx.fillRect(hudX + 16, hudY + hudH - 5, (hudW - 32) * altProgress, 2.5);
+
         ctx.restore();
       }
 

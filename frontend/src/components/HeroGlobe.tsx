@@ -84,9 +84,10 @@ interface CameraFlashStar {
 
 interface HeroGlobeProps {
   onPlayVideo?: (title: string, videoUrl: string) => void;
+  viewportRef?: React.RefObject<HTMLDivElement | null>;
 }
 
-export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo }) => {
+export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
@@ -117,6 +118,46 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo }) => {
     let isHoveringMoon = false;
     let hoveredFilmIndex = -1;
     let shutterFlash = 0;
+
+    // --- SCROLL-DRIVEN TRANSITION: ENTRANDO EM MOÇAMBIQUE [HQ] ---
+    let targetScrollProgress = 0;
+    let smoothScrollProgress = 0;
+
+    const onScroll = () => {
+      const track = document.getElementById('hero-scroll-track');
+      if (track) {
+        const rect = track.getBoundingClientRect();
+        const scrollTotal = rect.height - window.innerHeight;
+        if (scrollTotal > 0) {
+          targetScrollProgress = Math.max(0, Math.min(1, -rect.top / scrollTotal));
+        } else {
+          targetScrollProgress = 0;
+        }
+      }
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+
+    // Procedural atmospheric clouds (billowing volumetric puffs during entry)
+    interface CloudParticle {
+      xRel: number;
+      yRel: number;
+      baseRadius: number;
+      speedPhase: number;
+      opacityMul: number;
+      isCyan?: boolean;
+    }
+    const clouds: CloudParticle[] = [];
+    for (let i = 0; i < 30; i++) {
+      clouds.push({
+        xRel: (Math.random() - 0.5) * 1.5,
+        yRel: (Math.random() - 0.5) * 1.3,
+        baseRadius: 160 + Math.random() * 240,
+        speedPhase: Math.random() * Math.PI * 2,
+        opacityMul: 0.60 + Math.random() * 0.40,
+        isCyan: i % 3 === 0
+      });
+    }
 
     const planetRotateSpeed = -0.0020;
     let filmOrbitAngle = 0;
@@ -294,30 +335,77 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo }) => {
 
       ctx.clearRect(0, 0, width, height);
 
-      // --- 100% PERFECT CIRCUMFERENCE ALIGNED TO THE RIGHT ---
+      // --- SCROLL INTERPOLATION & ZOOM INTO MOÇAMBIQUE ---
+      smoothScrollProgress += (targetScrollProgress - smoothScrollProgress) * 0.085;
+      const sp = smoothScrollProgress;
+
+      // Update Hero Viewport Left Elements directly (smooth 60fps hardware accelerated)
+      if (viewportRef?.current) {
+        const vp = viewportRef.current;
+        const fadeOut = Math.max(0, 1 - sp * 2.4);
+        vp.style.opacity = fadeOut.toFixed(3);
+        vp.style.transform = `translateY(${(-sp * 100).toFixed(1)}px)`;
+        vp.style.pointerEvents = fadeOut < 0.1 ? 'none' : 'auto';
+      }
+      const badge = document.querySelector('.uc-floating-badge') as HTMLElement;
+      if (badge) {
+        badge.style.opacity = Math.max(0, 1 - sp * 2.5).toFixed(3);
+      }
+      const scrollInd = document.querySelector('.uc-hero-scroll-indicator') as HTMLElement;
+      if (scrollInd) {
+        scrollInd.style.opacity = Math.max(0, 1 - sp * 3.5).toFixed(3);
+      }
+
+      const easeP = sp * sp * (3 - 2 * sp); // Hermite smoothstep
+
+      // --- 100% PERFECT CIRCUMFERENCE ALIGNED TO THE RIGHT AT REST, ZOOMING TO FULLSCREEN ---
       const isMobile = width < 900;
-      const targetRadius = isMobile
+      const baseRadius = isMobile
         ? Math.min(width * 0.42, height * 0.32)
         : Math.min(height * 0.39, width * 0.26);
-      const radius = targetRadius; // Stable radius (eliminates repeated animation pop bug!)
 
-      const cx = isMobile ? width * 0.50 : width - radius - 75;
-      const cy = isMobile ? height * 0.36 : height * 0.50;
+      // Colossal growth into Mozambique: up to 5.6x radius on scroll!
+      const radius = baseRadius * (1 + easeP * 4.6);
 
-      const cosY = Math.cos(rotY);
-      const sinY = Math.sin(rotY);
-      const cosX = Math.cos(rotX);
-      const sinX = Math.sin(rotX);
+      const defaultCX = isMobile ? width * 0.50 : width - baseRadius - 75;
+      const defaultCY = isMobile ? height * 0.36 : height * 0.50;
+      const targetCX = width * 0.50;
+      const targetCY = height * 0.50;
+
+      const cx = defaultCX + (targetCX - defaultCX) * easeP;
+      const cy = defaultCY + (targetCY - defaultCY) * easeP;
+
+      // Lock camera rotation into Mozambique (Maputo: lat -25.96, lon 32.58)
+      const rotY_moz = -0.5686; // -(32.58 * Math.PI / 180)
+      const rotX_moz = 0.4531;  // -(-25.96 * Math.PI / 180)
+      const twoPi = Math.PI * 2;
+      const diffY = ((rotY_moz - targetRotY) % twoPi + twoPi * 1.5) % twoPi - Math.PI;
+      const alignedTargetRotY = targetRotY + diffY;
+
+      const currentRotY = rotY + (alignedTargetRotY - rotY) * easeP;
+      const currentRotX = rotX + (rotX_moz - rotX) * easeP;
+
+      const cosY = Math.cos(currentRotY);
+      const sinY = Math.sin(currentRotY);
+      const cosX = Math.cos(currentRotX);
+      const sinX = Math.sin(currentRotX);
 
       // --- LAYER 1: ENLARGED MOON WITH DISCREET LUNAR PHASES & EASTER EGG ---
       const textPaddingLeft = Math.min(100, Math.max(40, width * 0.06));
       const moonX = isMobile ? 60 : textPaddingLeft + 25;
       const moonY = isMobile ? 65 : 75; // Placed high at top-left to guarantee ZERO text collision!
       const baseMoonR = isMobile ? 18 : 24;
+      const vfW = isMobile ? 86 : (isHoveringMoon ? 120 : 105);
+      const vfH = isMobile ? 54 : (isHoveringMoon ? 70 : 60);
 
-      const distToMoon = Math.hypot(currentMouseX - moonX, currentMouseY - moonY);
-      isHoveringMoon = distToMoon < baseMoonR * 1.8;
-      const moonR = isHoveringMoon ? baseMoonR * 1.15 : baseMoonR;
+      const moonAlpha = Math.max(0, 1 - sp * 2.8);
+      if (moonAlpha > 0.01) {
+        ctx.save();
+        ctx.globalAlpha = moonAlpha;
+
+        const distToMoon = Math.hypot(currentMouseX - moonX, currentMouseY - moonY);
+        isHoveringMoon = sp < 0.2 && distToMoon < baseMoonR * 1.8;
+        const moonR = isHoveringMoon ? baseMoonR * 1.15 : baseMoonR;
 
       // Lunar Phase Calculation (Subtle, discreet, slow: 1 complete cycle every ~95s)
       const moonCycleSpeed = 0.035;
@@ -381,8 +469,6 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo }) => {
       ctx.restore();
 
       // Camera Viewfinder Corners around the Moon [ 🔴 REC ]
-      const vfW = isMobile ? 86 : (isHoveringMoon ? 120 : 105);
-      const vfH = isMobile ? 54 : (isHoveringMoon ? 70 : 60);
       const vfX = moonX - vfW / 2;
       const vfY = moonY - vfH / 2;
       const cLen = isHoveringMoon ? 12 : 10;
@@ -443,10 +529,17 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo }) => {
         ctx.fillText(tcStr, vfX, vfY + vfH + 24);
       }
       ctx.restore();
+      ctx.restore();
+    }
 
       // --- LAYER 2: CAMERA LED FLASH STARS IN THE COSMIC VOID ---
-      const voidMinX = moonX + vfW * 0.65;
-      const voidMaxX = cx - radius - 20;
+      const starsAlpha = Math.max(0, 1 - sp * 2.5);
+      if (starsAlpha > 0.01) {
+        ctx.save();
+        ctx.globalAlpha = starsAlpha;
+
+        const voidMinX = moonX + vfW * 0.65;
+        const voidMaxX = cx - radius - 20;
 
       if (voidMaxX > voidMinX) {
         for (let i = 0; i < flashStars.length; i++) {
@@ -504,13 +597,16 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo }) => {
             ctx.fill();
           }
         }
+        ctx.restore();
       }
+    }
 
       // --- LAYER 3: 35MM FILM REEL INDEPENDENT COUNTER-ORBIT & INTERACTION ---
       const filmFrames = 54;
-      const filmOrbitRadius = radius * 1.18;
+      const filmOrbitRadius = radius * (1.18 + sp * 0.45);
       const filmWidth = radius * 0.076;
       const filmInclination = -0.26;
+      const filmAlpha = Math.max(0, 1 - sp * 2.2);
 
       interface FilmQuad {
         tl: { x: number; y: number; z: number };
@@ -561,14 +657,16 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo }) => {
       }
 
       hoveredFilmIndex = -1;
-      let closestDist = 32;
-      for (let i = 0; i < filmQuads.length; i++) {
-        const q = filmQuads[i];
-        if (q.centerZ > 0) {
-          const d = Math.hypot(currentMouseX - q.screenCenterX, currentMouseY - q.screenCenterY);
-          if (d < closestDist) {
-            closestDist = d;
-            hoveredFilmIndex = q.index;
+      if (sp < 0.2) {
+        let closestDist = 32;
+        for (let i = 0; i < filmQuads.length; i++) {
+          const q = filmQuads[i];
+          if (q.centerZ > 0) {
+            const d = Math.hypot(currentMouseX - q.screenCenterX, currentMouseY - q.screenCenterY);
+            if (d < closestDist) {
+              closestDist = d;
+              hoveredFilmIndex = q.index;
+            }
           }
         }
       }
@@ -580,6 +678,7 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo }) => {
       }
 
       const drawFilmQuad = (q: FilmQuad, isBack: boolean) => {
+        if (filmAlpha < 0.01) return;
         const isHovered = q.index === hoveredFilmIndex;
         const scale = isHovered ? 1.35 : 1.0;
 
@@ -597,6 +696,7 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo }) => {
         const pBL = scalePoint(q.bl);
 
         ctx.save();
+        ctx.globalAlpha = isBack ? filmAlpha * 0.5 : filmAlpha;
 
         ctx.beginPath();
         ctx.moveTo(pTL.px, pTL.py);
@@ -930,6 +1030,13 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo }) => {
             ctx.fillStyle = '#a3a3b2';
             ctx.fillText('Epicentro • Tudo Sai Daqui Para o Mundo', boxX + padX, boxY + 39);
           } else {
+            const destFade = Math.max(0, 1 - sp * 2.2);
+            if (destFade < 0.01) {
+              ctx.restore();
+              continue;
+            }
+            ctx.globalAlpha = alpha * destFade;
+
             // Global Social Media & Audiovisual Destination Tags
             const pulse = 1 + Math.sin(time * 3 + i) * 0.2;
             ctx.beginPath();
@@ -978,6 +1085,89 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo }) => {
         }
       }
 
+      // --- PHASE G: ATMOSPHERIC BLUE PENETRATION & VOLUMETRIC CLOUDS ---
+      // "ao entrar no ponto moçambique azul ficam as nuvens"
+      if (sp > 0.38) {
+        const blueEntryProgress = Math.max(0, Math.min(1, (sp - 0.38) / 0.42));
+        const auraR = radius * (1.1 + blueEntryProgress * 0.4);
+        const blueGlow = ctx.createRadialGradient(cx, cy, radius * 0.05, cx, cy, auraR);
+        blueGlow.addColorStop(0, `rgba(0, 212, 255, ${0.82 * blueEntryProgress})`);
+        blueGlow.addColorStop(0.35, `rgba(0, 130, 255, ${0.62 * blueEntryProgress})`);
+        blueGlow.addColorStop(0.70, `rgba(2, 10, 35, ${0.45 * blueEntryProgress})`);
+        blueGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.save();
+        ctx.fillStyle = blueGlow;
+        ctx.fillRect(0, 0, width, height);
+        ctx.restore();
+      }
+
+      let cloudAlpha = 0;
+      if (sp >= 0.52 && sp <= 0.88) {
+        cloudAlpha = (sp - 0.52) / 0.36; // 0 to 1
+      } else if (sp > 0.88 && sp <= 1.0) {
+        cloudAlpha = 1 - (sp - 0.88) / 0.12; // 1 to 0 (dissolving into Section 2)
+      }
+      cloudAlpha = Math.max(0, Math.min(1, cloudAlpha));
+
+      if (cloudAlpha > 0.01) {
+        ctx.save();
+        for (let i = 0; i < clouds.length; i++) {
+          const cl = clouds[i];
+          const expandMul = 1 + (sp - 0.52) * 2.0;
+          const clX = width * 0.5 + cl.xRel * width * 0.65 * expandMul + Math.sin(time * 0.6 + cl.speedPhase) * 20;
+          const clY = height * 0.5 + cl.yRel * height * 0.65 * expandMul + Math.cos(time * 0.6 + cl.speedPhase) * 15;
+          const clR = cl.baseRadius * expandMul;
+
+          const cGrad = ctx.createRadialGradient(clX, clY, 0, clX, clY, clR);
+          const cAlpha = cloudAlpha * cl.opacityMul * 0.90;
+          if (cl.isCyan) {
+            cGrad.addColorStop(0, `rgba(225, 248, 255, ${cAlpha})`);
+            cGrad.addColorStop(0.4, `rgba(130, 210, 255, ${cAlpha * 0.75})`);
+            cGrad.addColorStop(0.8, `rgba(15, 60, 140, ${cAlpha * 0.35})`);
+            cGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          } else {
+            cGrad.addColorStop(0, `rgba(255, 255, 255, ${cAlpha})`);
+            cGrad.addColorStop(0.45, `rgba(235, 245, 255, ${cAlpha * 0.80})`);
+            cGrad.addColorStop(0.85, `rgba(170, 205, 240, ${cAlpha * 0.30})`);
+            cGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          }
+
+          ctx.fillStyle = cGrad;
+          ctx.beginPath();
+          ctx.arc(clX, clY, clR, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+
+      // Aerospace HUD Telemetry during descent into Mozambique
+      if (sp > 0.42 && sp < 0.92) {
+        const hudAlpha = Math.sin(Math.PI * ((sp - 0.42) / 0.50));
+        ctx.save();
+        ctx.globalAlpha = hudAlpha;
+        const hudW = Math.min(width * 0.88, 380);
+        const hudH = 50;
+        const hudX = (width - hudW) / 2;
+        const hudY = height - 90;
+
+        ctx.fillStyle = 'rgba(2, 6, 18, 0.88)';
+        ctx.strokeStyle = '#00d4ff';
+        ctx.lineWidth = 1.2;
+        ctx.fillRect(hudX, hudY, hudW, hudH);
+        ctx.strokeRect(hudX, hudY, hudW, hudH);
+
+        ctx.font = '800 10.5px "Space Grotesk", sans-serif';
+        ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'center';
+        ctx.fillText('🇲🇿 ENTRADA EM MOÇAMBIQUE [HQ]', width / 2, hudY + 18);
+
+        ctx.font = '600 8.5px "JetBrains Mono", monospace';
+        ctx.fillStyle = '#00d4ff';
+        const altKm = Math.max(1, Math.round((1 - (sp - 0.42) / 0.50) * 650));
+        ctx.fillText(`ALTITUDE: ${altKm}.000 KM • DESCIDA NA SEDE MIZINE • 25°57'S 32°35'E`, width / 2, hudY + 34);
+        ctx.restore();
+      }
+
       if (shutterFlash > 0.02) {
         ctx.fillStyle = `rgba(255, 255, 255, ${shutterFlash * 0.85})`;
         ctx.fillRect(0, 0, width, height);
@@ -992,6 +1182,7 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo }) => {
     return () => {
       cancelAnimationFrame(animationFrameId);
       window.removeEventListener('resize', handleResize);
+      window.removeEventListener('scroll', onScroll);
       window.removeEventListener('mousedown', onMouseDown);
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('mouseup', onMouseUp);

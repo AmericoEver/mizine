@@ -1,29 +1,67 @@
 import React, { useEffect, useRef } from 'react';
+import worldData from '../data/worldPoints.json';
 
-interface Point3D {
-  x: number;
-  y: number;
-  z: number;
-  baseRadius: number;
-  alpha: number;
-  colorType: 'blue' | 'orange' | 'white';
+interface WorldPoint {
+  lat: number;
+  lon: number;
+  moz?: boolean;
+  reg?: string;
 }
 
 interface Marker3D {
   name: string;
   sub: string;
-  lat: number; // -90 to 90
-  lon: number; // -180 to 180
+  lat: number;
+  lon: number;
   color: string;
+  isHQ?: boolean;
 }
 
 const MARKERS: Marker3D[] = [
-  { name: 'MAPUTO [HQ]', sub: 'Base de Operações 4K', lat: -25.9, lon: 32.5, color: '#ff3b30' },
-  { name: '4K DCI / 24FPS', sub: 'Cinema & Publicidade', lat: 10.0, lon: 15.0, color: '#ff9500' },
-  { name: 'VIRAL REELS', sub: 'Gestão & Retenção', lat: -15.0, lon: 45.0, color: '#00d4ff' },
-  { name: 'CELEBRATE', sub: 'Convites Digitais VIP', lat: -30.0, lon: 20.0, color: '#ff2d55' },
-  { name: 'ÁFRICA & MUNDO', sub: 'Produção Global', lat: 35.0, lon: -20.0, color: '#5856d6' },
-  { name: 'STUDIO 8', sub: 'Subdivisão Multimédia', lat: 2.0, lon: -40.0, color: '#ff9500' }
+  {
+    name: 'MOÇAMBIQUE [SEDE]',
+    sub: 'Berço & QG Mizine Multimédia',
+    lat: -25.96,
+    lon: 32.58,
+    color: '#ff3b30',
+    isHQ: true
+  },
+  {
+    name: 'EUROPA & UK',
+    sub: 'Audiovisual & Parcerias',
+    lat: 48.85,
+    lon: 2.35,
+    color: '#00d4ff'
+  },
+  {
+    name: 'AMÉRICAS',
+    sub: 'Reels & Viral Retenção',
+    lat: -23.55,
+    lon: -46.63,
+    color: '#ff9500'
+  },
+  {
+    name: 'MÉDIO ORIENTE & ASIA',
+    sub: 'Campanhas & Expansão',
+    lat: 25.20,
+    lon: 55.27,
+    color: '#5856d6'
+  },
+  {
+    name: 'ÁFRICA AUSTRAL',
+    sub: 'Cobertura Regional 4K',
+    lat: -26.20,
+    lon: 28.04,
+    color: '#34c759'
+  }
+];
+
+// Arcs connecting Mozambique HQ to the world
+const GLOBAL_ARCS = [
+  { targetLat: 48.85, targetLon: 2.35, color: '#00d4ff' },   // Europe
+  { targetLat: -23.55, targetLon: -46.63, color: '#ff9500' }, // Americas
+  { targetLat: 25.20, targetLon: 55.27, color: '#af52de' },  // Middle East
+  { targetLat: -26.20, targetLon: 28.04, color: '#34c759' }  // Regional Africa
 ];
 
 export const HeroGlobe: React.FC = () => {
@@ -39,49 +77,18 @@ export const HeroGlobe: React.FC = () => {
     let width = 0;
     let height = 0;
 
-    // Rotation angles
-    let rotX = 0.22; // subtle tilt
-    let rotY = 0;
-    let targetRotY = 0;
-    let targetRotX = 0.22;
+    // Initial rotation: tilt to showcase Africa / Mozambique front & center
+    let rotX = 0.28;
+    // Maputo is at lon 32.5. To make it front-facing at start:
+    let rotY = -Math.PI * 0.45;
+    let targetRotY = rotY;
+    let targetRotX = rotX;
     let isDragging = false;
     let lastMouseX = 0;
     let lastMouseY = 0;
-    let autoRotateSpeed = 0.0035;
+    const autoRotateSpeed = 0.0028;
 
-    // Generate ~1400 points evenly on a sphere (Fibonacci lattice)
-    const NUM_POINTS = 1350;
-    const points: Point3D[] = [];
-    const goldenRatio = (1 + Math.sqrt(5)) / 2;
-
-    for (let i = 0; i < NUM_POINTS; i++) {
-      const theta = 2 * Math.PI * i / goldenRatio;
-      const phi = Math.acos(1 - 2 * (i + 0.5) / NUM_POINTS);
-      
-      const x = Math.sin(phi) * Math.cos(theta);
-      const y = Math.cos(phi);
-      const z = Math.sin(phi) * Math.sin(theta);
-
-      // Color variation: upper hemisphere gets more fiery orange, lower gets cyan/blue
-      const colorRand = Math.random();
-      let colorType: 'blue' | 'orange' | 'white' = 'white';
-      if (y > 0.1 && colorRand > 0.4) {
-        colorType = 'orange';
-      } else if (y < -0.1 && colorRand > 0.3) {
-        colorType = 'blue';
-      }
-
-      points.push({
-        x,
-        y,
-        z,
-        baseRadius: 1 + Math.random() * 1.4,
-        alpha: 0.3 + Math.random() * 0.7,
-        colorType
-      });
-    }
-
-    // Convert lat/long to unit 3D sphere coordinate
+    // Convert lat/long to 3D unit sphere coordinate
     const latLonToVec = (lat: number, lon: number) => {
       const phi = (90 - lat) * (Math.PI / 180);
       const theta = (lon + 180) * (Math.PI / 180);
@@ -92,10 +99,19 @@ export const HeroGlobe: React.FC = () => {
       };
     };
 
+    // Precalculate 3D vectors for real continent points
+    const worldPoints = (worldData as WorldPoint[]).map(pt => ({
+      ...pt,
+      vec: latLonToVec(pt.lat, pt.lon)
+    }));
+
+    // Precalculate marker vectors
     const markerVectors = MARKERS.map(m => ({
       ...m,
       vec: latLonToVec(m.lat, m.lon)
     }));
+
+    const hqVec = latLonToVec(-25.96, 32.58);
 
     // Resize handler
     const handleResize = () => {
@@ -128,12 +144,11 @@ export const HeroGlobe: React.FC = () => {
         lastMouseX = e.clientX;
         lastMouseY = e.clientY;
       } else {
-        // Subtle parallax from pointer
         const rect = canvas.getBoundingClientRect();
         const nx = (e.clientX - rect.left) / width - 0.5;
         const ny = (e.clientY - rect.top) / height - 0.5;
-        targetRotX = 0.22 + ny * 0.25;
-        targetRotY += nx * 0.0015;
+        targetRotX = 0.28 + ny * 0.2;
+        targetRotY += nx * 0.001;
       }
     };
 
@@ -171,63 +186,66 @@ export const HeroGlobe: React.FC = () => {
     window.addEventListener('touchmove', onTouchMove, { passive: true });
     window.addEventListener('touchend', onTouchEnd);
 
-    // Animation Loop
+    // 3D Rotation helper
+    const rotate3D = (v: { x: number; y: number; z: number }, cosY: number, sinY: number, cosX: number, sinX: number) => {
+      const x1 = v.x * cosY + v.z * sinY;
+      const z1 = -v.x * sinY + v.z * cosY;
+      const y2 = v.y * cosX - z1 * sinX;
+      const z2 = v.y * sinX + z1 * cosX;
+      return { x: x1, y: y2, z: z2 };
+    };
+
     let time = 0;
+
     const render = () => {
       time += 0.015;
       targetRotY += autoRotateSpeed;
 
-      // Smooth damping
       rotY += (targetRotY - rotY) * 0.08;
       rotX += (targetRotX - rotX) * 0.08;
-
-      // Clamp vertical tilt so it doesn't flip
-      rotX = Math.max(-0.6, Math.min(0.6, rotX));
+      rotX = Math.max(-0.65, Math.min(0.65, rotX));
 
       ctx.clearRect(0, 0, width, height);
 
-      const cx = width * 0.55;
+      const cx = width * 0.54;
       const cy = height * 0.52;
-      const radius = Math.min(width, height) * 0.44;
+      const radius = Math.min(width, height) * 0.43;
 
       const cosY = Math.cos(rotY);
       const sinY = Math.sin(rotY);
       const cosX = Math.cos(rotX);
       const sinX = Math.sin(rotX);
 
-      // --- 1. ATMOSPHERIC NEON RIM GLOWS (Matching United Carriers exactly) ---
-      // Fiery Orange/Amber Solar Rim (Top Right)
+      // --- 1. ATMOSPHERIC NEON RIM GLOWS (United Carriers dual lighting) ---
+      // Fiery Orange/Crimson Upper Flare
       const orangeGlow = ctx.createRadialGradient(
-        cx + radius * 0.35, cy - radius * 0.4, radius * 0.3,
-        cx, cy, radius * 1.25
+        cx + radius * 0.35, cy - radius * 0.45, radius * 0.25,
+        cx, cy, radius * 1.3
       );
-      orangeGlow.addColorStop(0, 'rgba(255, 120, 0, 0.42)');
-      orangeGlow.addColorStop(0.5, 'rgba(255, 60, 0, 0.18)');
-      orangeGlow.addColorStop(0.85, 'rgba(255, 30, 0, 0.05)');
+      orangeGlow.addColorStop(0, 'rgba(255, 110, 0, 0.45)');
+      orangeGlow.addColorStop(0.45, 'rgba(255, 50, 0, 0.18)');
+      orangeGlow.addColorStop(0.85, 'rgba(255, 20, 0, 0.04)');
       orangeGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
-      
       ctx.fillStyle = orangeGlow;
       ctx.fillRect(0, 0, width, height);
 
-      // Electric Cyan/Blue Deep Rim (Bottom Left Crescent)
+      // Electric Cyan/Blue Deep Rim Crescent
       const blueGlow = ctx.createRadialGradient(
         cx - radius * 0.45, cy + radius * 0.4, radius * 0.2,
-        cx, cy, radius * 1.3
+        cx, cy, radius * 1.35
       );
-      blueGlow.addColorStop(0, 'rgba(0, 150, 255, 0.55)');
-      blueGlow.addColorStop(0.45, 'rgba(0, 200, 255, 0.25)');
-      blueGlow.addColorStop(0.8, 'rgba(0, 80, 200, 0.06)');
+      blueGlow.addColorStop(0, 'rgba(0, 160, 255, 0.58)');
+      blueGlow.addColorStop(0.45, 'rgba(0, 210, 255, 0.25)');
+      blueGlow.addColorStop(0.8, 'rgba(0, 90, 220, 0.06)');
       blueGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
-
       ctx.fillStyle = blueGlow;
       ctx.fillRect(0, 0, width, height);
 
-      // Globe Void Core (Deep pitch black circle with subtle inner vignette)
+      // Globe Void Core
       const coreGrad = ctx.createRadialGradient(cx, cy, radius * 0.3, cx, cy, radius);
       coreGrad.addColorStop(0, 'rgba(3, 4, 8, 0.98)');
-      coreGrad.addColorStop(0.8, 'rgba(2, 3, 6, 0.95)');
-      coreGrad.addColorStop(1, 'rgba(4, 8, 16, 0.7)');
-
+      coreGrad.addColorStop(0.75, 'rgba(2, 3, 6, 0.96)');
+      coreGrad.addColorStop(1, 'rgba(4, 8, 16, 0.72)');
       ctx.beginPath();
       ctx.arc(cx, cy, radius, 0, Math.PI * 2);
       ctx.fillStyle = coreGrad;
@@ -255,148 +273,367 @@ export const HeroGlobe: React.FC = () => {
       ctx.stroke();
       ctx.restore();
 
-      // --- 2. ORBITAL PARTICLE ARCS (United Carriers trajectory trails) ---
-      const numRings = 2;
-      for (let r = 0; r < numRings; r++) {
-        const ringTilt = (r === 0 ? 0.45 : -0.35) + Math.sin(time * 0.2 + r) * 0.04;
-        const ringRad = radius * (1.08 + r * 0.12);
+      // --- 2. 3D 35MM FILM REEL ORBITAL RING ("Fita de gravação de vídeo") ---
+      // We render a 3D cinematographic film strip ribbon orbiting the globe!
+      const filmFrames = 54;
+      const filmOrbitRadius = radius * 1.28;
+      const filmWidth = radius * 0.095;
+      const filmTilt = 0.42; // Orbit inclination angle (~24 deg)
+      const filmSpeed = time * 0.22; // smooth film reel translation
+
+      // Calculate 3D quads for film frames
+      interface FilmQuad {
+        tl: { x: number; y: number; z: number };
+        tr: { x: number; y: number; z: number };
+        br: { x: number; y: number; z: number };
+        bl: { x: number; y: number; z: number };
+        centerZ: number;
+        index: number;
+      }
+
+      const quads: FilmQuad[] = [];
+
+      for (let i = 0; i < filmFrames; i++) {
+        const a1 = (i / filmFrames) * Math.PI * 2 + filmSpeed;
+        const a2 = ((i + 0.85) / filmFrames) * Math.PI * 2 + filmSpeed;
+
+        const getFilmEdge = (angle: number, offset: number) => {
+          // Point in orbital plane
+          const ox = filmOrbitRadius * Math.cos(angle);
+          const oz = filmOrbitRadius * Math.sin(angle);
+          // Tilt around X
+          const x0 = ox;
+          const y0 = oz * Math.sin(filmTilt) + offset * Math.cos(filmTilt);
+          const z0 = oz * Math.cos(filmTilt) - offset * Math.sin(filmTilt);
+          // Rotate by globe rotation
+          return rotate3D({ x: x0, y: y0, z: z0 }, cosY, sinY, cosX, sinX);
+        };
+
+        const tl = getFilmEdge(a1, filmWidth * 0.5);
+        const tr = getFilmEdge(a2, filmWidth * 0.5);
+        const br = getFilmEdge(a2, -filmWidth * 0.5);
+        const bl = getFilmEdge(a1, -filmWidth * 0.5);
+
+        const centerZ = (tl.z + tr.z + br.z + bl.z) / 4;
+        quads.push({ tl, tr, br, bl, centerZ, index: i });
+      }
+
+      // Draw film frames sorted by depth (back to front)
+      quads.sort((a, b) => a.centerZ - b.centerZ);
+
+      const projectPoint = (p: { x: number; y: number }) => ({
+        px: cx + p.x,
+        py: cy + p.y
+      });
+
+      for (let i = 0; i < quads.length; i++) {
+        const q = quads[i];
+        const isBack = q.centerZ < 0;
+
+        // Skip or dim back frames when occluded by the solid sphere
+        const pTL = projectPoint(q.tl);
+        const pTR = projectPoint(q.tr);
+        const pBR = projectPoint(q.br);
+        const pBL = projectPoint(q.bl);
+
+        const frameAlpha = isBack ? 0.22 : 0.95;
+
         ctx.save();
+
+        // Celluloid Film Frame Body (Dark Film Base)
         ctx.beginPath();
-        ctx.ellipse(cx, cy, ringRad, ringRad * 0.32, ringTilt, 0, Math.PI * 2);
-        ctx.strokeStyle = r === 0 ? 'rgba(255, 120, 40, 0.18)' : 'rgba(0, 180, 255, 0.14)';
+        ctx.moveTo(pTL.px, pTL.py);
+        ctx.lineTo(pTR.px, pTR.py);
+        ctx.lineTo(pBR.px, pBR.py);
+        ctx.lineTo(pBL.px, pBL.py);
+        ctx.closePath();
+
+        ctx.fillStyle = isBack
+          ? 'rgba(10, 10, 15, 0.4)'
+          : 'rgba(15, 15, 22, 0.88)';
+        ctx.fill();
+
+        ctx.strokeStyle = isBack
+          ? 'rgba(255, 140, 20, 0.2)'
+          : 'rgba(255, 140, 40, 0.7)';
         ctx.lineWidth = 1;
         ctx.stroke();
 
-        // Pulsing satellite particle on the ring
-        const satAngle = time * (0.8 + r * 0.4) + r * Math.PI;
-        const satX = cx + Math.cos(satAngle) * ringRad * Math.cos(ringTilt) - Math.sin(satAngle) * ringRad * 0.32 * Math.sin(ringTilt);
-        const satY = cy + Math.cos(satAngle) * ringRad * Math.sin(ringTilt) + Math.sin(satAngle) * ringRad * 0.32 * Math.cos(ringTilt);
+        // Inner Film Exposure Window (Glowing Screen / Frame)
+        const inset = 0.22;
+        const wTLx = pTL.px + (pBL.px - pTL.px) * inset + (pTR.px - pTL.px) * 0.15;
+        const wTLy = pTL.py + (pBL.py - pTL.py) * inset + (pTR.py - pTL.py) * 0.15;
+        const wTRx = pTR.px + (pBR.px - pTR.px) * inset - (pTR.px - pTL.px) * 0.15;
+        const wTRy = pTR.py + (pBR.py - pTR.py) * inset - (pTR.py - pTL.py) * 0.15;
+        const wBRx = pBR.px - (pBR.px - pTR.px) * inset - (pTR.px - pTL.px) * 0.15;
+        const wBRy = pBR.py - (pBR.py - pTR.py) * inset - (pTR.py - pTL.py) * 0.15;
+        const wBLx = pBL.px - (pBL.px - pTL.px) * inset + (pTR.px - pTL.px) * 0.15;
+        const wBLy = pBL.py - (pBL.py - pTL.py) * inset + (pTR.py - pTL.py) * 0.15;
 
         ctx.beginPath();
-        ctx.arc(satX, satY, 2.5, 0, Math.PI * 2);
-        ctx.fillStyle = r === 0 ? '#ff8c00' : '#00e5ff';
-        ctx.shadowColor = r === 0 ? '#ff5500' : '#00d4ff';
-        ctx.shadowBlur = 8;
+        ctx.moveTo(wTLx, wTLy);
+        ctx.lineTo(wTRx, wTRy);
+        ctx.lineTo(wBRx, wBRy);
+        ctx.lineTo(wBLx, wBLy);
+        ctx.closePath();
+
+        // Cinema Light inside the frame (alternating amber / cyan)
+        const isCyanFrame = q.index % 2 === 0;
+        ctx.fillStyle = isCyanFrame
+          ? `rgba(0, 212, 255, ${0.12 * frameAlpha})`
+          : `rgba(255, 120, 0, ${0.14 * frameAlpha})`;
         ctx.fill();
+
+        // 35mm Film Sprocket Holes (Perforações da fita de cinema)
+        if (!isBack) {
+          ctx.fillStyle = '#020204';
+          // Top perforation
+          const spTopX = pTL.px + (pTR.px - pTL.px) * 0.5 + (pBL.px - pTL.px) * 0.1;
+          const spTopY = pTL.py + (pTR.py - pTL.py) * 0.5 + (pBL.py - pTL.py) * 0.1;
+          ctx.beginPath();
+          ctx.arc(spTopX, spTopY, 1.2, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Bottom perforation
+          const spBotX = pBL.px + (pBR.px - pBL.px) * 0.5 - (pBL.px - pTL.px) * 0.1;
+          const spBotY = pBL.py + (pBR.py - pBL.py) * 0.5 - (pBL.py - pTL.py) * 0.1;
+          ctx.beginPath();
+          ctx.arc(spBotX, spBotY, 1.2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
         ctx.restore();
       }
 
-      // --- 3. 3D PARTICLE PROJECTION ---
-      // Rotate and project points
-      const projected = [];
-      for (let i = 0; i < points.length; i++) {
-        const p = points[i];
+      // --- 3. REAL CONTINENT PARTICLES PROJECTION (World Continents + Mozambique) ---
+      interface ProjPt {
+        px: number;
+        py: number;
+        z: number;
+        moz?: boolean;
+        reg?: string;
+      }
 
-        // Rotate Y
-        const x1 = p.x * cosY + p.z * sinY;
-        const z1 = -p.x * sinY + p.z * cosY;
+      const projectedPoints: ProjPt[] = [];
 
-        // Rotate X
-        const y2 = p.y * cosX - z1 * sinX;
-        const z2 = p.y * sinX + z1 * cosX;
+      for (let i = 0; i < worldPoints.length; i++) {
+        const pt = worldPoints[i];
+        const rot = rotate3D(pt.vec, cosY, sinY, cosX, sinX);
 
-        // Depth sorting
-        projected.push({
-          px: cx + x1 * radius,
-          py: cy + y2 * radius,
-          z: z2,
-          baseRadius: p.baseRadius,
-          alpha: p.alpha,
-          colorType: p.colorType
+        projectedPoints.push({
+          px: cx + rot.x * radius,
+          py: cy + rot.y * radius,
+          z: rot.z,
+          moz: pt.moz,
+          reg: pt.reg
         });
       }
 
-      // Draw back particles first, then front
-      projected.sort((a, b) => a.z - b.z);
+      // Sort points back-to-front
+      projectedPoints.sort((a, b) => a.z - b.z);
 
-      for (let i = 0; i < projected.length; i++) {
-        const pt = projected[i];
-        
-        // Depth scale & fade
-        const depth = (pt.z + 1) / 2; // 0 (back) to 1 (front)
-        if (depth < 0.15) continue; // cull far back
+      for (let i = 0; i < projectedPoints.length; i++) {
+        const pt = projectedPoints[i];
 
-        const r = pt.baseRadius * (0.6 + depth * 0.7);
-        let alpha = pt.alpha * Math.pow(depth, 1.8);
+        // Depth scale (cull far back)
+        if (pt.z < -0.15) continue;
+        const depth = (pt.z + 1) / 2;
 
-        // Boost visibility on rims
-        const distFromCenter = Math.hypot(pt.px - cx, pt.py - cy) / radius;
-        if (distFromCenter > 0.85) {
-          alpha = Math.min(1, alpha * 1.4);
-        }
+        // Base continent dots
+        if (pt.moz) {
+          // --- MOÇAMBIQUE HIGHLIGHT (Sede & Berço Mizine) ---
+          const pulse = 1 + Math.sin(time * 4) * 0.3;
+          const rMoz = 3.2 * pulse * (0.8 + depth * 0.4);
 
-        ctx.beginPath();
-        ctx.arc(pt.px, pt.py, r, 0, Math.PI * 2);
-
-        if (pt.colorType === 'orange') {
-          ctx.fillStyle = `rgba(255, 140, 40, ${alpha * 0.9})`;
-        } else if (pt.colorType === 'blue') {
-          ctx.fillStyle = `rgba(0, 200, 255, ${alpha * 0.95})`;
-        } else {
-          ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 0.75})`;
-        }
-        ctx.fill();
-      }
-
-      // --- 4. PRODUCTION COORDINATE MARKERS (Maputo, 4K, Reels, Celebrate) ---
-      for (let i = 0; i < markerVectors.length; i++) {
-        const m = markerVectors[i];
-        const v = m.vec;
-
-        // Rotate Y
-        const x1 = v.x * cosY + v.z * sinY;
-        const z1 = -v.x * sinY + v.z * cosY;
-
-        // Rotate X
-        const y2 = v.y * cosX - z1 * sinX;
-        const z2 = v.y * sinX + z1 * cosX;
-
-        // Only draw when on the front hemisphere
-        if (z2 > 0.08) {
-          const mx = cx + x1 * radius;
-          const my = cy + y2 * radius;
-          const markerAlpha = Math.min(1, (z2 - 0.08) * 2.5);
-
+          // Glowing beacon aura around Mozambique
           ctx.save();
-          ctx.globalAlpha = markerAlpha;
-
-          // Glowing Hotspot Dot
-          const pulse = 1 + Math.sin(time * 3 + i) * 0.25;
           ctx.beginPath();
-          ctx.arc(mx, my, 4 * pulse, 0, Math.PI * 2);
-          ctx.fillStyle = m.color;
-          ctx.shadowColor = m.color;
-          ctx.shadowBlur = 10;
+          ctx.arc(pt.px, pt.py, rMoz * 2.2, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255, 59, 48, ${0.35 * depth})`;
           ctx.fill();
 
-          // Outer ring ripple
+          // Solid bright red core
           ctx.beginPath();
-          ctx.arc(mx, my, 8 * pulse, 0, Math.PI * 2);
-          ctx.strokeStyle = m.color;
+          ctx.arc(pt.px, pt.py, rMoz, 0, Math.PI * 2);
+          ctx.fillStyle = '#ff3b30';
+          ctx.shadowColor = '#ff2d55';
+          ctx.shadowBlur = 12;
+          ctx.fill();
+          ctx.restore();
+        } else {
+          // Regular continent dot
+          const r = 1.35 * (0.6 + depth * 0.6);
+          let alpha = Math.pow(depth, 1.6) * 0.85;
+
+          // Rim lighting boost
+          const dist = Math.hypot(pt.px - cx, pt.py - cy) / radius;
+          if (dist > 0.85) alpha = Math.min(1, alpha * 1.5);
+
+          ctx.beginPath();
+          ctx.arc(pt.px, pt.py, r, 0, Math.PI * 2);
+
+          // Give Africa and near-Maputo points a slightly warmer golden tint
+          if (pt.reg === 'africa') {
+            ctx.fillStyle = `rgba(255, 180, 80, ${alpha * 0.95})`;
+          } else if (pt.reg === 'europe') {
+            ctx.fillStyle = `rgba(0, 210, 255, ${alpha * 0.9})`;
+          } else if (pt.reg === 'north_america' || pt.reg === 'south_america') {
+            ctx.fillStyle = `rgba(255, 140, 40, ${alpha * 0.9})`;
+          } else {
+            ctx.fillStyle = `rgba(235, 240, 255, ${alpha * 0.8})`;
+          }
+          ctx.fill();
+        }
+      }
+
+      // --- 4. GLOBAL CONNECTION ARCS (From Maputo HQ to the World) ---
+      const rotHQ = rotate3D(hqVec, cosY, sinY, cosX, sinX);
+      const hqPX = cx + rotHQ.x * radius;
+      const hqPY = cy + rotHQ.y * radius;
+
+      for (let i = 0; i < GLOBAL_ARCS.length; i++) {
+        const arc = GLOBAL_ARCS[i];
+        const destVec = latLonToVec(arc.targetLat, arc.targetLon);
+        const rotDest = rotate3D(destVec, cosY, sinY, cosX, sinX);
+
+        // Only draw if either HQ or Dest is on front hemisphere
+        if (rotHQ.z > -0.2 || rotDest.z > -0.2) {
+          const destPX = cx + rotDest.x * radius;
+          const destPY = cy + rotDest.y * radius;
+
+          // Midpoint elevated off surface to form 3D ballistic arc
+          const midVec = {
+            x: (rotHQ.x + rotDest.x) * 0.5 * 1.32,
+            y: (rotHQ.y + rotDest.y) * 0.5 * 1.32,
+            z: (rotHQ.z + rotDest.z) * 0.5 * 1.32
+          };
+          const midPX = cx + midVec.x * radius;
+          const midPY = cy + midVec.y * radius;
+
+          const arcAlpha = Math.max(0.1, (rotHQ.z + rotDest.z + 1.2) / 2.4);
+
+          ctx.save();
+          ctx.beginPath();
+          ctx.moveTo(hqPX, hqPY);
+          ctx.quadraticCurveTo(midPX, midPY, destPX, destPY);
+          ctx.strokeStyle = arc.color;
+          ctx.globalAlpha = 0.28 * arcAlpha;
           ctx.lineWidth = 1;
           ctx.stroke();
 
-          // Technical Leader Line
-          const lineEndX = mx + (x1 >= 0 ? 28 : -28);
-          const lineEndY = my - 16;
-          ctx.beginPath();
-          ctx.moveTo(mx, my);
-          ctx.lineTo(lineEndX, lineEndY);
-          ctx.lineTo(lineEndX + (x1 >= 0 ? 14 : -14), lineEndY);
-          ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-          ctx.lineWidth = 1;
-          ctx.stroke();
+          // Traveling photon packet from Maputo to World
+          const packetPhase = (time * 0.6 + i * 0.25) % 1;
+          const inv = 1 - packetPhase;
+          const curPX = inv * inv * hqPX + 2 * inv * packetPhase * midPX + packetPhase * packetPhase * destPX;
+          const curPY = inv * inv * hqPY + 2 * inv * packetPhase * midPY + packetPhase * packetPhase * destPY;
 
-          // Text Label
-          ctx.font = '600 10px "JetBrains Mono", monospace';
+          ctx.beginPath();
+          ctx.arc(curPX, curPY, 2.5, 0, Math.PI * 2);
           ctx.fillStyle = '#ffffff';
-          ctx.textAlign = x1 >= 0 ? 'left' : 'right';
-          const labelX = lineEndX + (x1 >= 0 ? 18 : -18);
-          ctx.fillText(m.name, labelX, lineEndY + 3);
+          ctx.shadowColor = arc.color;
+          ctx.shadowBlur = 8;
+          ctx.globalAlpha = arcAlpha;
+          ctx.fill();
 
-          ctx.font = '400 9px "Inter", sans-serif';
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
-          ctx.fillText(m.sub, labelX, lineEndY + 15);
+          ctx.restore();
+        }
+      }
+
+      // --- 5. TECHNICAL PINS & PRODUCTION LABELS (Highlight on Mozambique) ---
+      for (let i = 0; i < markerVectors.length; i++) {
+        const m = markerVectors[i];
+        const rot = rotate3D(m.vec, cosY, sinY, cosX, sinX);
+
+        if (rot.z > 0.05) {
+          const mx = cx + rot.x * radius;
+          const my = cy + rot.y * radius;
+          const alpha = Math.min(1, (rot.z - 0.05) * 2.8);
+
+          ctx.save();
+          ctx.globalAlpha = alpha;
+
+          if (m.isHQ) {
+            // --- SPECIAL PROMINENT PIN: MOÇAMBIQUE HQ ---
+            const pulse = 1 + Math.sin(time * 3.5) * 0.3;
+
+            // Concentric Radar Waves
+            const wave1 = (time * 1.8) % 1.5;
+            ctx.beginPath();
+            ctx.arc(mx, my, 8 + wave1 * 22, 0, Math.PI * 2);
+            ctx.strokeStyle = `rgba(255, 59, 48, ${Math.max(0, 1 - wave1 / 1.5)})`;
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // Center Pin Head
+            ctx.beginPath();
+            ctx.arc(mx, my, 5 * pulse, 0, Math.PI * 2);
+            ctx.fillStyle = '#ff3b30';
+            ctx.shadowColor = '#ff3b30';
+            ctx.shadowBlur = 16;
+            ctx.fill();
+
+            // White Inner Core
+            ctx.beginPath();
+            ctx.arc(mx, my, 2, 0, Math.PI * 2);
+            ctx.fillStyle = '#ffffff';
+            ctx.fill();
+
+            // Technical HUD Leader Line
+            const lineEndX = mx + 42;
+            const lineEndY = my - 24;
+            ctx.beginPath();
+            ctx.moveTo(mx, my);
+            ctx.lineTo(lineEndX, lineEndY);
+            ctx.lineTo(lineEndX + 45, lineEndY);
+            ctx.strokeStyle = '#ff3b30';
+            ctx.lineWidth = 1.2;
+            ctx.stroke();
+
+            // Mozambique Flag Badge + Text
+            ctx.font = '700 11px "Space Grotesk", sans-serif';
+            ctx.fillStyle = '#ffffff';
+            ctx.textAlign = 'left';
+            ctx.fillText('🇲🇿 MOÇAMBIQUE [HQ]', lineEndX + 4, lineEndY - 6);
+
+            ctx.font = '600 9px "JetBrains Mono", monospace';
+            ctx.fillStyle = '#ff3b30';
+            ctx.fillText('SEDE & BERÇO DA MIZINE', lineEndX + 4, lineEndY + 10);
+
+            ctx.font = '400 8.5px "Inter", sans-serif';
+            ctx.fillStyle = '#a3a3a3';
+            ctx.fillText('Conexão Global • 4K • Redes Sociais', lineEndX + 4, lineEndY + 22);
+          } else {
+            // Standard Global Markers
+            const pulse = 1 + Math.sin(time * 3 + i) * 0.2;
+            ctx.beginPath();
+            ctx.arc(mx, my, 3.5 * pulse, 0, Math.PI * 2);
+            ctx.fillStyle = m.color;
+            ctx.shadowColor = m.color;
+            ctx.shadowBlur = 8;
+            ctx.fill();
+
+            const isRight = rot.x >= 0;
+            const lineEndX = mx + (isRight ? 24 : -24);
+            const lineEndY = my - 14;
+
+            ctx.beginPath();
+            ctx.moveTo(mx, my);
+            ctx.lineTo(lineEndX, lineEndY);
+            ctx.lineTo(lineEndX + (isRight ? 12 : -12), lineEndY);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            ctx.font = '600 9.5px "JetBrains Mono", monospace';
+            ctx.fillStyle = '#ffffff';
+            ctx.textAlign = isRight ? 'left' : 'right';
+            const labelX = lineEndX + (isRight ? 16 : -16);
+            ctx.fillText(m.name, labelX, lineEndY + 3);
+
+            ctx.font = '400 8px "Inter", sans-serif';
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+            ctx.fillText(m.sub, labelX, lineEndY + 14);
+          }
 
           ctx.restore();
         }

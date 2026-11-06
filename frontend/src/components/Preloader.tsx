@@ -5,14 +5,14 @@ interface PreloaderProps {
 }
 
 const LOCATIONS = [
-  'MAPUTO, MZ [HQ]',
+  'MAPUTO, MZ [HQ - BERÇO]',
   'MOÇAMBIQUE',
   'ÁFRICA AUSTRAL',
   'JOHANNESBURG',
-  'LUANDA',
-  'LISBOA',
-  'DUBAI',
-  'GLOBAL REACH'
+  'LISBOA & EUROPA',
+  'DUBAI & EMIRADOS',
+  'SÃO PAULO & AMÉRICAS',
+  'ALCANCE GLOBAL 100%'
 ];
 
 const CAPABILITIES = [
@@ -23,7 +23,7 @@ const CAPABILITIES = [
   'COLOR GRADING CINEMA',
   'COBERTURA DE EVENTOS VIP',
   'DRONE & CAPTAÇÃO AÉREA',
-  'DESIGN & IDENTIDADE'
+  'REDES & DISTRIBUIÇÃO GLOBAL'
 ];
 
 export const Preloader: React.FC<PreloaderProps> = ({ onComplete }) => {
@@ -32,16 +32,25 @@ export const Preloader: React.FC<PreloaderProps> = ({ onComplete }) => {
   const [isDestroyed, setIsDestroyed] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  // Counter logic (0 -> 100%)
+  // Counter logic: ~4.5 seconds duration with cinematic pacing
   useEffect(() => {
     let current = 0;
+    let pauseCount = 0;
+
     const interval = setInterval(() => {
-      // Non-linear realistic progress
-      if (current < 35) {
-        current += Math.floor(Math.random() * 4) + 2;
-      } else if (current < 75) {
-        current += Math.floor(Math.random() * 3) + 1;
-      } else if (current < 92) {
+      // Intentional micro-pause around 79% (matching United Carriers screenshot)
+      if (current === 79 && pauseCount < 9) {
+        pauseCount++;
+        return;
+      }
+
+      if (current < 25) {
+        current += Math.floor(Math.random() * 2) + 1;
+      } else if (current < 55) {
+        current += Math.floor(Math.random() * 2) + 1;
+      } else if (current < 79) {
+        current += 1;
+      } else if (current < 95) {
         current += Math.floor(Math.random() * 2) + 1;
       } else if (current < 100) {
         current += 1;
@@ -53,16 +62,16 @@ export const Preloader: React.FC<PreloaderProps> = ({ onComplete }) => {
           setTimeout(() => {
             setIsDestroyed(true);
             if (onComplete) onComplete();
-          }, 700);
-        }, 300);
+          }, 750);
+        }, 450);
       }
       setProgress(Math.min(100, current));
-    }, 28);
+    }, 42); // 42ms * ~100 steps + pauses = ~4.5 seconds
 
     return () => clearInterval(interval);
   }, [onComplete]);
 
-  // World map dotted canvas
+  // World map dotted canvas with prominent Mozambique focus
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -86,11 +95,9 @@ export const Preloader: React.FC<PreloaderProps> = ({ onComplete }) => {
     resize();
     window.addEventListener('resize', resize);
 
-    // Dotted world map rough grid
-    const cols = 58;
-    const rows = 28;
-    
-    // Normalized landmass approximations [xMin, xMax, yMin, yMax]
+    const cols = 60;
+    const rows = 30;
+
     const landZones = [
       // Americas (North, Central, South)
       { x1: 0.12, x2: 0.30, y1: 0.18, y2: 0.44 },
@@ -106,25 +113,27 @@ export const Preloader: React.FC<PreloaderProps> = ({ onComplete }) => {
       { x1: 0.76, x2: 0.88, y1: 0.64, y2: 0.86 }
     ];
 
-    // Pulsing bright cyan/blue coordinates (matching United Carriers screenshot)
-    const hotspots = [
-      { x: 0.55, y: 0.73, name: 'Maputo' },   // Maputo
-      { x: 0.52, y: 0.62, name: 'Luanda' },   // Angola
-      { x: 0.50, y: 0.80, name: 'Cape Town' },// SA
-      { x: 0.48, y: 0.34, name: 'Lisbon' },   // Europe
-      { x: 0.62, y: 0.42, name: 'Dubai' },    // Middle East
-      { x: 0.82, y: 0.74, name: 'Sydney' }    // Australia
+    // Global partner hubs
+    const partnerNodes = [
+      { x: 0.48, y: 0.34, name: 'Lisboa' },
+      { x: 0.28, y: 0.70, name: 'Brasil' },
+      { x: 0.63, y: 0.42, name: 'Dubai' },
+      { x: 0.52, y: 0.81, name: 'JHB' },
+      { x: 0.82, y: 0.74, name: 'Sydney' }
     ];
+
+    // Mozambique HQ
+    const mozHQ = { x: 0.56, y: 0.73, name: 'MAPUTO • SEDE MIZINE' };
 
     let t = 0;
     const render = () => {
-      t += 0.04;
+      t += 0.035;
       ctx.clearRect(0, 0, width, height);
 
-      // Draw faint dot matrix for world map
       const cellW = width / cols;
       const cellH = height / rows;
 
+      // 1. Draw World Continent Dots
       for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
           const nx = c / cols;
@@ -132,44 +141,113 @@ export const Preloader: React.FC<PreloaderProps> = ({ onComplete }) => {
 
           const isLand = landZones.some(z => nx >= z.x1 && nx <= z.x2 && ny >= z.y1 && ny <= z.y2);
           if (isLand) {
-            // Subtle noise variation
             const jitter = Math.sin(c * 12.3 + r * 45.6);
             if (jitter > -0.65) {
+              const px = c * cellW + cellW * 0.5;
+              const py = r * cellH + cellH * 0.5;
+
+              // If point is inside Mozambique territory (around x: 0.54-0.57, y: 0.68-0.75)
+              const isMozTerritory = nx >= 0.54 && nx <= 0.57 && ny >= 0.68 && ny <= 0.76;
+
               ctx.beginPath();
-              ctx.arc(c * cellW + cellW * 0.5, r * cellH + cellH * 0.5, 1.1, 0, Math.PI * 2);
-              ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+              ctx.arc(px, py, isMozTerritory ? 1.8 : 1.1, 0, Math.PI * 2);
+              ctx.fillStyle = isMozTerritory ? 'rgba(255, 59, 48, 0.85)' : 'rgba(255, 255, 255, 0.15)';
               ctx.fill();
             }
           }
         }
       }
 
-      // Draw pulsing electric blue hotspots and radar ripples
-      for (let i = 0; i < hotspots.length; i++) {
-        const h = hotspots[i];
-        const hx = h.x * width;
-        const hy = h.y * height;
+      const hqX = mozHQ.x * width;
+      const hqY = mozHQ.y * height;
 
-        // Expanding radar rings
-        const ringPhase = (t + i * 1.2) % 2;
-        const ringRad = 4 + ringPhase * 16;
-        const ringAlpha = Math.max(0, 1 - ringPhase / 2) * 0.7;
+      // 2. Global Arcs reaching out from Maputo HQ to the rest of the world
+      for (let i = 0; i < partnerNodes.length; i++) {
+        const node = partnerNodes[i];
+        const nx = node.x * width;
+        const ny = node.y * height;
+
+        const midX = (hqX + nx) * 0.5;
+        const midY = (hqY + ny) * 0.5 - 28;
 
         ctx.beginPath();
-        ctx.arc(hx, hy, ringRad, 0, Math.PI * 2);
-        ctx.strokeStyle = `rgba(0, 180, 255, ${ringAlpha})`;
+        ctx.moveTo(hqX, hqY);
+        ctx.quadraticCurveTo(midX, midY, nx, ny);
+        ctx.strokeStyle = 'rgba(0, 212, 255, 0.22)';
         ctx.lineWidth = 1;
         ctx.stroke();
 
-        // Glowing center core dot
+        // Moving photon packet from Maputo
+        const packetT = (t * 0.8 + i * 0.3) % 1;
+        const inv = 1 - packetT;
+        const px = inv * inv * hqX + 2 * inv * packetT * midX + packetT * packetT * nx;
+        const py = inv * inv * hqY + 2 * inv * packetT * midY + packetT * packetT * ny;
+
         ctx.beginPath();
-        ctx.arc(hx, hy, 3, 0, Math.PI * 2);
+        ctx.arc(px, py, 2, 0, Math.PI * 2);
         ctx.fillStyle = '#00d4ff';
         ctx.shadowColor = '#00d4ff';
-        ctx.shadowBlur = 8;
+        ctx.shadowBlur = 6;
         ctx.fill();
         ctx.shadowBlur = 0;
+
+        // Partner node dot
+        ctx.beginPath();
+        ctx.arc(nx, ny, 2.5, 0, Math.PI * 2);
+        ctx.fillStyle = '#00d4ff';
+        ctx.fill();
       }
+
+      // 3. PROMINENT MOÇAMBIQUE HQ BEACON PIN
+      const pulse = 1 + Math.sin(t * 3.5) * 0.3;
+
+      // Concentric expanding radar waves from Mozambique
+      for (let w = 0; w < 2; w++) {
+        const wavePhase = (t * 0.7 + w * 0.5) % 1;
+        const waveRadius = 4 + wavePhase * 24;
+        const waveAlpha = Math.max(0, 1 - wavePhase) * 0.85;
+
+        ctx.beginPath();
+        ctx.arc(hqX, hqY, waveRadius, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(255, 59, 48, ${waveAlpha})`;
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+      }
+
+      // Hot red Mozambique core dot
+      ctx.beginPath();
+      ctx.arc(hqX, hqY, 4.5 * pulse, 0, Math.PI * 2);
+      ctx.fillStyle = '#ff3b30';
+      ctx.shadowColor = '#ff3b30';
+      ctx.shadowBlur = 14;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      // Center white bead
+      ctx.beginPath();
+      ctx.arc(hqX, hqY, 2, 0, Math.PI * 2);
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+
+      // Technical label leader line
+      const lineEndX = hqX + 26;
+      const lineEndY = hqY + 18;
+
+      ctx.beginPath();
+      ctx.moveTo(hqX, hqY);
+      ctx.lineTo(lineEndX, lineEndY);
+      ctx.lineTo(lineEndX + 45, lineEndY);
+      ctx.strokeStyle = '#ff3b30';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      ctx.font = '700 9px "Space Grotesk", sans-serif';
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText('🇲🇿 MOÇAMBIQUE [SEDE]', lineEndX + 4, lineEndY - 3);
+
+      ctx.font = '500 7.5px "JetBrains Mono", monospace';
+      ctx.fillStyle = '#ff3b30';
+      ctx.fillText('BERÇO MIZINE MULTIMÉDIA', lineEndX + 4, lineEndY + 9);
 
       animId = requestAnimationFrame(render);
     };
@@ -216,7 +294,7 @@ export const Preloader: React.FC<PreloaderProps> = ({ onComplete }) => {
           </div>
         </div>
 
-        {/* Center: Dotted World Map Canvas */}
+        {/* Center: Dotted World Map Canvas with Mozambique Focus */}
         <div className="uc-preloader-col uc-preloader-center">
           <canvas ref={canvasRef} className="uc-preloader-map-canvas" />
         </div>
@@ -232,7 +310,7 @@ export const Preloader: React.FC<PreloaderProps> = ({ onComplete }) => {
             {CAPABILITIES.map((cap, idx) => (
               <div
                 key={cap}
-                className={`uc-preloader-item ${progress > (idx + 1) * 12 ? 'is-active' : ''}`}
+                className={`uc-preloader-item ${progress > (idx + 1) * 11 ? 'is-active' : ''}`}
                 style={{ animationDelay: `${idx * 0.08}s` }}
               >
                 <span className="item-text">{cap}</span>

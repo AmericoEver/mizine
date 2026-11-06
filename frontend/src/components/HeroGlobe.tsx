@@ -17,65 +17,60 @@ interface Marker3D {
   isHQ?: boolean;
 }
 
+// "TUDO SAI DE MOÇAMBIQUE PARA O MUNDO" — GESTÃO DE REDES SOCIAIS & AUDIOVISUAL GLOBAL
 const MARKERS: Marker3D[] = [
   {
     name: 'MOÇAMBIQUE [HQ]',
-    sub: 'Sede & Berço da Mizine',
+    sub: 'Sede & Berço • Epicentro Global',
     lat: -25.96,
     lon: 32.58,
     color: '#ff3b30',
     isHQ: true
   },
   {
-    name: 'SOUTH AFRICA',
-    sub: 'África Austral',
-    lat: -29.0,
-    lon: 26.0,
-    color: '#ff9500'
-  },
-  {
-    name: 'KENYA',
-    sub: 'África Oriental',
-    lat: -1.28,
-    lon: 36.82,
-    color: '#ff9500'
-  },
-  {
-    name: 'EGYPT',
-    sub: 'Norte de África',
-    lat: 30.04,
-    lon: 31.23,
-    color: '#ff9500'
-  },
-  {
-    name: 'EUROPE & UK',
-    sub: 'Parcerias Audiovisuais',
-    lat: 51.5,
-    lon: -0.12,
-    color: '#00d4ff'
-  },
-  {
-    name: 'AMÉRICAS',
-    sub: 'Reels & Viral Retenção',
+    name: 'REELS VIRAIS [AMÉRICAS]',
+    sub: 'Gestão de Redes • +100k Reach',
     lat: -23.55,
     lon: -46.63,
     color: '#ff9500'
   },
   {
-    name: 'TURKEY & ASIA',
-    sub: 'Expansão & Audiovisual',
+    name: 'PRODUÇÃO 4K [EUROPA]',
+    sub: 'Showreels & Cinema de Marca',
+    lat: 51.5,
+    lon: -0.12,
+    color: '#00d4ff'
+  },
+  {
+    name: 'CAMPANHAS [ORIENTE]',
+    sub: 'Tráfego Pago & Estratégia',
+    lat: 25.20,
+    lon: 55.27,
+    color: '#af52de'
+  },
+  {
+    name: 'MIZINE CELEBRATE [ÁFRICA]',
+    sub: 'Convites Digitais Interativos',
+    lat: -26.20,
+    lon: 28.04,
+    color: '#ff3b30'
+  },
+  {
+    name: 'DISTRIBUIÇÃO [GLOBAL]',
+    sub: 'Alcance Multimédia 24/7',
     lat: 39.93,
     lon: 32.85,
-    color: '#af52de'
+    color: '#34c759'
   }
 ];
 
+// TODOS OS ARCOS PARTEM ESTRITAMENTE DE MOÇAMBIQUE PARA O MUNDO!
 const GLOBAL_ARCS = [
-  { fromLat: -25.96, fromLon: 32.58, toLat: 51.5, toLon: -0.12, color: '#ff9500' },
-  { fromLat: -25.96, fromLon: 32.58, toLat: -23.55, toLon: -46.63, color: '#ff9500' },
-  { fromLat: 30.04, fromLon: 31.23, toLat: -1.28, toLon: 36.82, color: '#ff9500' },
-  { fromLat: 51.5, fromLon: -0.12, toLat: 39.93, toLon: 32.85, color: '#ff9500' },
-  { fromLat: -25.96, fromLon: 32.58, toLat: -29.0, toLon: 26.0, color: '#ff3b30' }
+  { fromLat: -25.96, fromLon: 32.58, toLat: -23.55, toLon: -46.63, color: '#ff9500' }, // Maputo -> Américas (Reels Virais)
+  { fromLat: -25.96, fromLon: 32.58, toLat: 51.5, toLon: -0.12, color: '#00d4ff' },    // Maputo -> Europa (Produção 4K)
+  { fromLat: -25.96, fromLon: 32.58, toLat: 25.20, toLon: 55.27, color: '#af52de' },    // Maputo -> Médio Oriente (Campanhas)
+  { fromLat: -25.96, fromLon: 32.58, toLat: -26.20, toLon: 28.04, color: '#ff3b30' },   // Maputo -> África Austral (Celebrate)
+  { fromLat: -25.96, fromLon: 32.58, toLat: 39.93, toLon: 32.85, color: '#34c759' }    // Maputo -> Ásia / Turquia (Distribuição)
 ];
 
 interface CameraFlashStar {
@@ -117,12 +112,11 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo }) => {
     let targetMouseTiltX = 0;
     let targetMouseTiltY = 0;
 
-    // Track mouse position on canvas
     let currentMouseX = -9999;
     let currentMouseY = -9999;
     let isHoveringMoon = false;
     let hoveredFilmIndex = -1;
-    let shutterFlash = 0; // Camera shutter trigger
+    let shutterFlash = 0;
 
     const planetRotateSpeed = -0.0020;
     let filmOrbitAngle = 0;
@@ -184,7 +178,6 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo }) => {
       const rect = canvas.getBoundingClientRect();
       const clickX = e.clientX - rect.left;
 
-      // Click on Moon Easter Egg
       if (isHoveringMoon) {
         shutterFlash = 1.0;
         onPlayVideo?.(
@@ -194,7 +187,6 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo }) => {
         return;
       }
 
-      // Click on Film Reel Frame Easter Egg
       if (hoveredFilmIndex >= 0) {
         shutterFlash = 1.0;
         onPlayVideo?.(
@@ -204,8 +196,7 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo }) => {
         return;
       }
 
-      // Only start drag if not clicking buttons/links
-      if (clickX > width * 0.40) {
+      if (clickX > width * 0.38) {
         isDragging = true;
         lastMouseX = e.clientX;
         lastMouseY = e.clientY;
@@ -303,11 +294,14 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo }) => {
 
       ctx.clearRect(0, 0, width, height);
 
-      // --- 100% PERFECT MATHEMATICAL CIRCLE ALIGNED TO RIGHT ---
+      // --- 100% PERFECT CIRCUMFERENCE ALIGNED TO THE RIGHT ---
       const isMobile = width < 900;
-      const radius = isMobile
+      // Smooth entrance scaling from preloader transition
+      const entranceScale = Math.min(1, 0.88 + time * 0.16);
+      const targetRadius = isMobile
         ? Math.min(width * 0.42, height * 0.32)
-        : Math.min(height * 0.39, width * 0.25);
+        : Math.min(height * 0.39, width * 0.26);
+      const radius = targetRadius * entranceScale;
 
       const cx = isMobile ? width * 0.50 : width - radius - 75;
       const cy = isMobile ? height * 0.36 : height * 0.50;
@@ -317,13 +311,12 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo }) => {
       const cosX = Math.cos(rotX);
       const sinX = Math.sin(rotX);
 
-      // --- LAYER 1: ENLARGED MOON AS [ 🔴 REC ] WITH EASTER EGG (ALIGNED LEFT) ---
-      const wrapMargin = Math.max(30, (width - 1340) / 2);
-      const moonX = isMobile ? 60 : Math.max(70, wrapMargin + 30);
-      const moonY = isMobile ? 110 : 140;
-      const baseMoonR = isMobile ? 18 : 24; // ENLARGED as requested
+      // --- LAYER 1: ENLARGED MOON AS [ 🔴 REC ] ALIGNED STRICTLY WITH LEFT CONTENT ---
+      const textPaddingLeft = Math.min(100, Math.max(40, width * 0.06));
+      const moonX = isMobile ? 60 : textPaddingLeft + 25;
+      const moonY = isMobile ? 110 : 130;
+      const baseMoonR = isMobile ? 18 : 24;
 
-      // Check hover on Moon
       const distToMoon = Math.hypot(currentMouseX - moonX, currentMouseY - moonY);
       isHoveringMoon = distToMoon < baseMoonR * 1.8;
       const moonR = isHoveringMoon ? baseMoonR * 1.18 : baseMoonR;
@@ -403,7 +396,6 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo }) => {
       const tcStr = `TC 00:04:${sec.toString().padStart(2, '0')}:${fr.toString().padStart(2, '0')}`;
       
       if (isHoveringMoon) {
-        // EASTER EGG ON HOVER
         ctx.fillStyle = '#ff3b30';
         ctx.fillText(`● ESTÚDIO AO VIVO • CLIQUE PARA ASSISTIR ▶`, vfX - 8, vfY + vfH + 15);
         ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
@@ -530,9 +522,8 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo }) => {
         filmQuads.push({ tl, tr, br, bl, centerZ, index: i, screenCenterX, screenCenterY });
       }
 
-      // Check hover on front film frames
       hoveredFilmIndex = -1;
-      let closestDist = 32; // hover threshold in px
+      let closestDist = 32;
       for (let i = 0; i < filmQuads.length; i++) {
         const q = filmQuads[i];
         if (q.centerZ > 0) {
@@ -544,19 +535,16 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo }) => {
         }
       }
 
-      // Canvas cursor hint
       if (isHoveringMoon || hoveredFilmIndex >= 0) {
         canvas.style.cursor = 'pointer';
       } else {
         canvas.style.cursor = isDragging ? 'grabbing' : 'default';
       }
 
-
       const drawFilmQuad = (q: FilmQuad, isBack: boolean) => {
         const isHovered = q.index === hoveredFilmIndex;
         const scale = isHovered ? 1.35 : 1.0;
 
-        // Apply scale around frame center if hovered
         const centerX = (q.tl.x + q.tr.x + q.br.x + q.bl.x) / 4;
         const centerY = (q.tl.y + q.tr.y + q.br.y + q.bl.y) / 4;
 
@@ -572,7 +560,6 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo }) => {
 
         ctx.save();
 
-        // Celluloid Film Frame Body
         ctx.beginPath();
         ctx.moveTo(pTL.px, pTL.py);
         ctx.lineTo(pTR.px, pTR.py);
@@ -596,7 +583,6 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo }) => {
         ctx.stroke();
         ctx.shadowBlur = 0;
 
-        // Inner Film Exposure Window
         const inset = 0.18;
         const wTLx = pTL.px + (pBL.px - pTL.px) * inset + (pTR.px - pTL.px) * 0.15;
         const wTLy = pTL.py + (pBL.py - pTL.py) * inset + (pTR.py - pTL.py) * 0.15;
@@ -622,7 +608,6 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo }) => {
             : (isBack ? 'rgba(255, 120, 0, 0.10)' : 'rgba(255, 120, 0, 0.25)'));
         ctx.fill();
 
-        // If hovered, draw PLAY ICON inside the frame!
         if (isHovered) {
           ctx.fillStyle = '#ffffff';
           ctx.beginPath();
@@ -634,7 +619,6 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo }) => {
           ctx.closePath();
           ctx.fill();
 
-          // Tooltip callout above hovered frame
           ctx.font = '800 9.5px "Space Grotesk", sans-serif';
           const tipText = '▶ VER APRESENTAÇÃO MIZINE 4K';
           const tipW = ctx.measureText(tipText).width + 16;
@@ -649,7 +633,6 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo }) => {
           ctx.fillText(tipText, midX, midY - 18);
         }
 
-        // 35mm Sprocket Holes
         ctx.fillStyle = '#020205';
         const spTopX = pTL.px + (pTR.px - pTL.px) * 0.5 + (pBL.px - pTL.px) * 0.08;
         const spTopY = pTL.py + (pTR.py - pTL.py) * 0.5 + (pBL.py - pTL.py) * 0.08;
@@ -683,7 +666,7 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo }) => {
       ctx.fillStyle = coreGrad;
       ctx.fill();
 
-      // Complete 360-degree Mathematical Circumference Outline (Guarantees exact circle perception)
+      // Complete 360-degree Mathematical Circumference Outline
       ctx.save();
       ctx.beginPath();
       ctx.arc(cx, cy, radius, 0, Math.PI * 2);
@@ -710,7 +693,7 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo }) => {
       ctx.stroke();
       ctx.restore();
 
-      // --- PHASE C: 8,000+ REAL CONTINENT & AUTHENTIC MOZAMBIQUE BORDER POINTS ---
+      // --- PHASE C: REAL CONTINENTS & AUTHENTIC MOZAMBIQUE BORDER ---
       interface ProjPt {
         px: number;
         py: number;
@@ -768,7 +751,7 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo }) => {
         }
       }
 
-      // --- PHASE D: GLOBAL CONNECTION ARCS ---
+      // --- PHASE D: "TUDO SAI DE MOÇAMBIQUE PARA O MUNDO" ARCS & STREAMING PACKETS ---
       for (let i = 0; i < GLOBAL_ARCS.length; i++) {
         const arc = GLOBAL_ARCS[i];
         const fromVec = latLonToVec(arc.fromLat, arc.fromLon);
@@ -793,27 +776,32 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo }) => {
 
           const arcAlpha = Math.max(0.1, (rotFrom.z + rotTo.z + 1.2) / 2.4);
 
+          // Glowing Distribution Trajectory Arc
           ctx.save();
           ctx.beginPath();
           ctx.moveTo(fromPX, fromPY);
           ctx.quadraticCurveTo(midPX, midPY, toPX, toPY);
           ctx.strokeStyle = arc.color;
-          ctx.globalAlpha = 0.42 * arcAlpha;
-          ctx.lineWidth = 1.2;
+          ctx.globalAlpha = 0.44 * arcAlpha;
+          ctx.lineWidth = 1.3;
           ctx.stroke();
 
-          const packetPhase = (time * 0.6 + i * 0.22) % 1;
-          const inv = 1 - packetPhase;
-          const curPX = inv * inv * fromPX + 2 * inv * packetPhase * midPX + packetPhase * packetPhase * toPX;
-          const curPY = inv * inv * fromPY + 2 * inv * packetPhase * midPY + packetPhase * packetPhase * toPY;
+          // 2 Traveling Content/Social Media Packets Streaming FROM MOÇAMBIQUE OUTWARDS!
+          for (let p = 0; p < 2; p++) {
+            const packetPhase = (time * 0.65 + p * 0.5 + i * 0.18) % 1;
+            const inv = 1 - packetPhase;
+            const curPX = inv * inv * fromPX + 2 * inv * packetPhase * midPX + packetPhase * packetPhase * toPX;
+            const curPY = inv * inv * fromPY + 2 * inv * packetPhase * midPY + packetPhase * packetPhase * toPY;
 
-          ctx.beginPath();
-          ctx.arc(curPX, curPY, 2.4, 0, Math.PI * 2);
-          ctx.fillStyle = '#ffffff';
-          ctx.shadowColor = arc.color;
-          ctx.shadowBlur = 8;
-          ctx.globalAlpha = arcAlpha;
-          ctx.fill();
+            ctx.beginPath();
+            ctx.arc(curPX, curPY, 2.6, 0, Math.PI * 2);
+            ctx.fillStyle = '#ffffff';
+            ctx.shadowColor = arc.color;
+            ctx.shadowBlur = 10;
+            ctx.globalAlpha = arcAlpha;
+            ctx.fill();
+          }
+
           ctx.restore();
         }
       }
@@ -825,7 +813,7 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo }) => {
         }
       }
 
-      // --- PHASE F: TECHNICAL LOCATION BADGES ---
+      // --- PHASE F: TECHNICAL LOCATION BADGES (ORIGINATING IN MOÇAMBIQUE) ---
       for (let i = 0; i < markerVectors.length; i++) {
         const m = markerVectors[i];
         const rot = rotate3D(m.vec, cosY, sinY, cosX, sinX);
@@ -839,20 +827,25 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo }) => {
           ctx.globalAlpha = alpha;
 
           if (m.isHQ) {
+            // MOÇAMBIQUE HQ BEACON PIN (BROADCASTING EPICENTER)
             const pulse = 1 + Math.sin(time * 3.5) * 0.25;
 
-            const wave1 = (time * 1.6) % 1.5;
-            ctx.beginPath();
-            ctx.arc(mx, my, 8 + wave1 * 22, 0, Math.PI * 2);
-            ctx.strokeStyle = `rgba(255, 59, 48, ${Math.max(0, 1 - wave1 / 1.5)})`;
-            ctx.lineWidth = 1.5;
-            ctx.stroke();
+            // 3 Concentric broadcast waves radiating from Mozambique
+            for (let w = 0; w < 3; w++) {
+              const wavePhase = (time * 1.4 + w * 0.45) % 1.5;
+              ctx.beginPath();
+              ctx.arc(mx, my, 6 + wavePhase * 24, 0, Math.PI * 2);
+              ctx.strokeStyle = `rgba(255, 59, 48, ${Math.max(0, 1 - wavePhase / 1.5)})`;
+              ctx.lineWidth = 1.3;
+              ctx.stroke();
+            }
 
+            // Center Pin
             ctx.beginPath();
             ctx.arc(mx, my, 5 * pulse, 0, Math.PI * 2);
             ctx.fillStyle = '#ff3b30';
             ctx.shadowColor = '#ff3b30';
-            ctx.shadowBlur = 16;
+            ctx.shadowBlur = 18;
             ctx.fill();
 
             ctx.beginPath();
@@ -860,6 +853,7 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo }) => {
             ctx.fillStyle = '#ffffff';
             ctx.fill();
 
+            // Leader line angled safely downwards
             const lineEndX = mx + 28;
             const lineEndY = my + 26;
             ctx.beginPath();
@@ -870,11 +864,12 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo }) => {
             ctx.lineWidth = 1.2;
             ctx.stroke();
 
+            // Mozambique HQ Badge Box
             const padX = 10;
             ctx.font = '800 11px "Space Grotesk", sans-serif';
             const hqTitle = 'MOÇAMBIQUE [HQ]';
             const textWidth = ctx.measureText(hqTitle).width;
-            const boxW = Math.max(textWidth + padX * 2, 175);
+            const boxW = Math.max(textWidth + padX * 2, 185);
             const boxH = 46;
             const boxX = lineEndX + 4;
             const boxY = lineEndY - 14;
@@ -895,34 +890,36 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo }) => {
 
             ctx.font = '500 7.5px "JetBrains Mono", monospace';
             ctx.fillStyle = '#a3a3b2';
-            ctx.fillText('Conexão Global • 4K • Redes Sociais', boxX + padX, boxY + 39);
+            ctx.fillText('Epicentro • Tudo Sai Daqui Para o Mundo', boxX + padX, boxY + 39);
           } else {
+            // Global Social Media & Audiovisual Destination Tags
             const pulse = 1 + Math.sin(time * 3 + i) * 0.2;
             ctx.beginPath();
             ctx.arc(mx, my, 4 * pulse, 0, Math.PI * 2);
             ctx.fillStyle = m.color;
             ctx.shadowColor = m.color;
-            ctx.shadowBlur = 8;
+            ctx.shadowBlur = 10;
             ctx.fill();
 
             const isRight = rot.x >= 0;
-            const lineEndX = mx + (isRight ? 22 : -22);
-            const lineEndY = my - 12;
+            const lineEndX = mx + (isRight ? 24 : -24);
+            const lineEndY = my - 14;
 
             ctx.beginPath();
             ctx.moveTo(mx, my);
             ctx.lineTo(lineEndX, lineEndY);
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
             ctx.lineWidth = 1;
             ctx.stroke();
 
-            const padX = 7;
+            // Destination badge box with service details
+            const padX = 8;
             ctx.font = '700 9px "JetBrains Mono", monospace';
             const textWidth = ctx.measureText(m.name).width;
             const boxW = textWidth + padX * 2;
-            const boxH = 19;
+            const boxH = 28;
             const boxX = isRight ? lineEndX + 3 : lineEndX - boxW - 3;
-            const boxY = lineEndY - 9;
+            const boxY = lineEndY - 14;
 
             ctx.fillStyle = '#030408';
             ctx.strokeStyle = m.color;
@@ -932,14 +929,17 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo }) => {
 
             ctx.fillStyle = '#ffffff';
             ctx.textAlign = 'left';
-            ctx.fillText(m.name, boxX + padX, boxY + 13);
+            ctx.fillText(m.name, boxX + padX, boxY + 12);
+
+            ctx.font = '500 7px "JetBrains Mono", monospace';
+            ctx.fillStyle = m.color;
+            ctx.fillText(m.sub, boxX + padX, boxY + 22);
           }
 
           ctx.restore();
         }
       }
 
-      // Camera shutter flash effect
       if (shutterFlash > 0.02) {
         ctx.fillStyle = `rgba(255, 255, 255, ${shutterFlash * 0.85})`;
         ctx.fillRect(0, 0, width, height);

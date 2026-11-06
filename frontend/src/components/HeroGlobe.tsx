@@ -296,12 +296,10 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo }) => {
 
       // --- 100% PERFECT CIRCUMFERENCE ALIGNED TO THE RIGHT ---
       const isMobile = width < 900;
-      // Smooth entrance scaling from preloader transition
-      const entranceScale = Math.min(1, 0.88 + time * 0.16);
       const targetRadius = isMobile
         ? Math.min(width * 0.42, height * 0.32)
         : Math.min(height * 0.39, width * 0.26);
-      const radius = targetRadius * entranceScale;
+      const radius = targetRadius; // Stable radius (eliminates repeated animation pop bug!)
 
       const cx = isMobile ? width * 0.50 : width - radius - 75;
       const cy = isMobile ? height * 0.36 : height * 0.50;
@@ -311,36 +309,76 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo }) => {
       const cosX = Math.cos(rotX);
       const sinX = Math.sin(rotX);
 
-      // --- LAYER 1: ENLARGED MOON AS [ 🔴 REC ] ALIGNED STRICTLY WITH LEFT CONTENT ---
+      // --- LAYER 1: ENLARGED MOON WITH DISCREET LUNAR PHASES & EASTER EGG ---
       const textPaddingLeft = Math.min(100, Math.max(40, width * 0.06));
       const moonX = isMobile ? 60 : textPaddingLeft + 25;
-      const moonY = isMobile ? 110 : 130;
+      const moonY = isMobile ? 65 : 75; // Placed high at top-left to guarantee ZERO text collision!
       const baseMoonR = isMobile ? 18 : 24;
 
       const distToMoon = Math.hypot(currentMouseX - moonX, currentMouseY - moonY);
       isHoveringMoon = distToMoon < baseMoonR * 1.8;
-      const moonR = isHoveringMoon ? baseMoonR * 1.18 : baseMoonR;
+      const moonR = isHoveringMoon ? baseMoonR * 1.15 : baseMoonR;
 
-      // Soft Deep Cosmic Red Lunar Halo
-      const haloMul = isHoveringMoon ? 4.5 : 3.6;
+      // Lunar Phase Calculation (Subtle, discreet, slow: 1 complete cycle every ~95s)
+      const moonCycleSpeed = 0.035;
+      const phaseNorm = (time * moonCycleSpeed) % 1; // 0 to 1
+      const phaseAngle = phaseNorm * Math.PI * 2;
+      const k = Math.cos(phaseAngle); // -1 (New Moon) -> +1 (Full Moon) -> -1 (New Moon)
+
+      // Halo adapts subtly with the lunar phase illumination
+      const illumFraction = (k + 1) * 0.5; // 0 (New) to 1 (Full)
+      const haloAlpha = 0.20 + illumFraction * 0.25 + (isHoveringMoon ? 0.25 : 0);
+      const haloMul = isHoveringMoon ? 4.5 : (3.2 + illumFraction * 0.5);
+
       const moonHalo = ctx.createRadialGradient(moonX, moonY, moonR * 0.3, moonX, moonY, moonR * haloMul);
-      moonHalo.addColorStop(0, isHoveringMoon ? 'rgba(255, 40, 20, 0.65)' : 'rgba(255, 59, 48, 0.45)');
-      moonHalo.addColorStop(0.5, 'rgba(255, 45, 85, 0.18)');
+      moonHalo.addColorStop(0, `rgba(255, 59, 48, ${haloAlpha})`);
+      moonHalo.addColorStop(0.5, `rgba(255, 45, 85, ${haloAlpha * 0.35})`);
       moonHalo.addColorStop(1, 'rgba(0, 0, 0, 0)');
       ctx.beginPath();
       ctx.arc(moonX, moonY, moonR * haloMul, 0, Math.PI * 2);
       ctx.fillStyle = moonHalo;
       ctx.fill();
 
-      // Glowing Lunar Sphere (Crimson Cinema Red with 3D gradient)
+      // Draw Moon Sphere with Lunar Phase
+      ctx.save();
+      // 1. Dark side base
+      ctx.beginPath();
+      ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2);
+      ctx.fillStyle = '#180202';
+      ctx.fill();
+
+      // 2. Illuminated portion (terminator curve)
+      ctx.beginPath();
+      ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2);
+      ctx.clip(); // Constrain inside lunar disk
+
+      ctx.beginPath();
+      if (phaseNorm < 0.5) {
+        // Waxing (crescente à direita)
+        ctx.arc(moonX, moonY, moonR, -Math.PI / 2, Math.PI / 2, false);
+        ctx.ellipse(moonX, moonY, Math.max(0.1, Math.abs(k) * moonR), moonR, 0, Math.PI / 2, -Math.PI / 2, k < 0);
+      } else {
+        // Waning (minguante à esquerda)
+        ctx.arc(moonX, moonY, moonR, Math.PI / 2, -Math.PI / 2, false);
+        ctx.ellipse(moonX, moonY, Math.max(0.1, Math.abs(k) * moonR), moonR, 0, -Math.PI / 2, Math.PI / 2, k < 0);
+      }
+      ctx.closePath();
+
       const moonGrad = ctx.createRadialGradient(moonX - moonR * 0.3, moonY - moonR * 0.3, 2, moonX, moonY, moonR);
       moonGrad.addColorStop(0, isHoveringMoon ? '#ff6961' : '#ff453a');
       moonGrad.addColorStop(0.65, '#d32f2f');
-      moonGrad.addColorStop(1, '#4a0202');
-      ctx.beginPath();
-      ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2);
+      moonGrad.addColorStop(1, '#500202');
       ctx.fillStyle = moonGrad;
       ctx.fill();
+
+      // Subtle lunar crater texture
+      ctx.beginPath();
+      ctx.arc(moonX - moonR * 0.25, moonY - moonR * 0.2, moonR * 0.2, 0, Math.PI * 2);
+      ctx.arc(moonX + moonR * 0.3, moonY + moonR * 0.15, moonR * 0.25, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
+      ctx.fill();
+
+      ctx.restore();
 
       // Camera Viewfinder Corners around the Moon [ 🔴 REC ]
       const vfW = isMobile ? 86 : (isHoveringMoon ? 120 : 105);

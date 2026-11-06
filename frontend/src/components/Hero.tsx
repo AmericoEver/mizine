@@ -10,15 +10,13 @@ interface HeroProps {
 export const Hero: React.FC<HeroProps> = ({ content, onPlayShowreel }) => {
   return (
     <section className="uc-hero-section" id="topo">
-      {/* Deep Space Void Canvas & Subdued Matrix */}
-      <div className="uc-hero-void-bg">
-        <div className="uc-hero-stars" />
-        <div className="uc-hero-wiregrid" />
+      {/* Full-bleed Deep Space Canvas Universe: No boundary box, covers entire section */}
+      <div className="uc-hero-canvas-universe">
+        <HeroGlobe />
       </div>
 
-      {/* Main 2-Column United Carriers Composition */}
+      {/* Typography & CTAs floating seamlessly ON TOP of the Colossal Globe */}
       <div className="wrap uc-hero-viewport">
-        {/* Left Column: Typography & CTAs */}
         <div className="uc-hero-left">
           {/* Eyebrow Pill / Monospace Tag */}
           <div className="uc-hero-eyebrow reveal-up">
@@ -79,11 +77,6 @@ export const Hero: React.FC<HeroProps> = ({ content, onPlayShowreel }) => {
               <span className="telemetry-lbl">Sede & Operação Global</span>
             </div>
           </div>
-        </div>
-
-        {/* Right Column: GIANT 3D GLOWING PARTICLE SPHERE */}
-        <div className="uc-hero-right reveal-fade">
-          <HeroGlobe />
         </div>
       </div>
 

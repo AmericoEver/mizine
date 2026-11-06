@@ -89,10 +89,10 @@ for lat_i in range(-70, 78, 2):
 
 print(f"Total points with interior: {len(globe_points)}")
 
-# 3. Dense Mozambique Points
-for m_lat_i in range(-268, -100, 3):
+# 3. Clean Mozambique Points (Clean spacing without overlapping blobs)
+for m_lat_i in range(-268, -100, 14):
     m_lat = m_lat_i / 10.0
-    for m_lon_i in range(300, 415, 3):
+    for m_lon_i in range(300, 415, 14):
         m_lon = m_lon_i / 10.0
         if is_land(m_lon, m_lat):
             globe_points.append({
@@ -102,9 +102,11 @@ for m_lat_i in range(-268, -100, 3):
                 'coast': True
             })
 
-print(f"Final high-density points with Mozambique: {len(globe_points)}")
+print(f"Final clean points: {len(globe_points)}")
 
 with open('frontend/src/data/worldPoints.json', 'w') as f:
     json.dump(globe_points, f, separators=(',', ':'))
 
 print('Saved to frontend/src/data/worldPoints.json')
+
+

@@ -75,3 +75,4 @@ export const ServicesPillars: React.FC<ServicesPillarsProps> = ({ pillars = [] }
     </section>
   );
 };
+

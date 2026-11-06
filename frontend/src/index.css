@@ -1,22 +1,26 @@
-@import url('https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;600;700;800&family=Syne:wght@700;800;900&display=swap');
 
 :root {
-  --red: #E10600;
-  --red-glow: rgba(225, 6, 0, 0.28);
-  --black: #060606;
-  --dark-1: #0a0a0a;
-  --dark-2: #111111;
-  --dark-3: #181818;
+  --red: #ff3b30;
+  --red-deep: #e10600;
+  --red-glow: rgba(255, 59, 48, 0.35);
+  --cyan: #00d4ff;
+  --cyan-glow: rgba(0, 212, 255, 0.35);
+  --orange: #ff9500;
+  --black: #020204;
+  --dark-1: #06060a;
+  --dark-2: #0e0e14;
+  --dark-3: #16161e;
   --ink: #ffffff;
-  --mute: #a3a3a3;
-  --subtle: #666666;
+  --mute: #9999a5;
+  --subtle: #555562;
   --line: rgba(255, 255, 255, 0.08);
   --line-strong: rgba(255, 255, 255, 0.16);
-  --line-red: rgba(225, 6, 0, 0.35);
-  --panel: #0d0d0d;
+  --line-red: rgba(255, 59, 48, 0.4);
+  --panel: #09090e;
 
   --font-mono: 'JetBrains Mono', 'Space Mono', 'Courier New', monospace;
-  --font-display: Anton, 'Helvetica Now', Impact, sans-serif;
+  --font-display: 'Space Grotesk', 'Syne', -apple-system, sans-serif;
   --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 
   color-scheme: dark;
@@ -44,14 +48,14 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Tipografia Base */
+/* Tipografia Base (United Carriers Architectural Style) */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-display);
-  font-weight: 400;
+  font-weight: 700;
   text-transform: uppercase;
-  line-height: 0.95;
+  line-height: 0.98;
   margin: 0;
-  letter-spacing: 0.5px;
+  letter-spacing: -0.025em;
 }
 
 a {
@@ -171,201 +175,357 @@ a {
 }
 
 /* ==========================================================================
-   NAVBAR (FLOATING GLASS ENTERPRISE SPEC)
+   TOP TECHNICAL WIRE TICKER (UNITED CARRIERS SPEC)
    ========================================================================== */
 
-.uc-nav {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 100;
-  background: rgba(6, 6, 6, 0.82);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid var(--line);
-  transition: all 0.3s ease;
+.uc-top-ticker {
+  position: relative;
+  z-index: 101;
+  background: #000000;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.8px;
+  color: var(--mute);
+  padding: 8px 0;
 }
 
-.uc-nav-inner {
-  height: 74px;
+.uc-ticker-inner {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 20px;
 }
 
-.uc-logo {
+.uc-ticker-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ticker-badge {
+  color: #ff3b30;
+  font-weight: 700;
+}
+
+.ticker-text {
+  color: #888894;
+}
+
+.uc-ticker-right {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-shrink: 0;
 }
 
-.uc-logo-img {
-  width: 34px;
-  height: 34px;
-  border-radius: 4px;
-  object-fit: cover;
-  border: 1px solid var(--line-red);
+.ticker-link {
+  color: #ffffff;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.2s ease;
 }
 
-.uc-logo-text {
+.ticker-link:hover {
+  color: #ff3b30;
+}
+
+.ticker-sep {
+  color: rgba(255, 255, 255, 0.18);
+}
+
+.ticker-code {
+  color: var(--cyan);
+  font-weight: 700;
+}
+
+/* ==========================================================================
+   NAVBAR (UNITED CARRIERS MINIMALIST ARCHITECTURAL SPEC)
+   ========================================================================== */
+
+.uc-nav-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(2, 2, 4, 0.88);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  transition: background 0.3s ease;
+}
+
+.uc-nav-row {
+  height: 72px;
   display: flex;
-  flex-direction: column;
-  line-height: 1;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
 }
 
-.brand-title {
+.uc-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.uc-brand-mark {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 0 12px rgba(255, 59, 48, 0.3);
+}
+
+.uc-brand-icon {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.uc-brand-title {
   font-family: var(--font-display);
-  font-size: 24px;
-  color: #fff;
-  letter-spacing: 1px;
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  color: #ffffff;
 }
 
-.brand-sub {
+.uc-brand-badge {
   font-family: var(--font-mono);
   font-size: 8px;
-  color: var(--red);
-  letter-spacing: 2.5px;
   font-weight: 700;
-  margin-top: 2px;
+  letter-spacing: 2px;
+  color: #ff3b30;
+  background: rgba(255, 59, 48, 0.1);
+  border: 1px solid rgba(255, 59, 48, 0.35);
+  padding: 2px 6px;
+  border-radius: 4px;
 }
 
-.uc-status-pill {
+.uc-nav-links {
   display: flex;
   align-items: center;
-  gap: 7px;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 700;
-  color: #fff;
-  letter-spacing: 1px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--line);
-  padding: 4px 10px;
-  border-radius: 3px;
-}
-
-.status-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--red);
-  box-shadow: 0 0 8px var(--red);
-  animation: pulse-dot 1.8s infinite;
-}
-
-@keyframes pulse-dot {
-  0% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.3; transform: scale(0.8); }
-  100% { opacity: 1; transform: scale(1); }
-}
-
-.uc-menu {
-  display: flex;
-  align-items: center;
-  gap: 26px;
+  gap: 28px;
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
-.uc-menu a {
-  font-family: var(--font-body);
-  font-size: 13px;
+.uc-nav-links a {
+  font-family: var(--font-mono);
+  font-size: 11px;
   font-weight: 600;
-  color: var(--mute);
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
+  letter-spacing: 1.5px;
+  color: #8f8f9e;
+  text-decoration: none;
   position: relative;
   padding: 6px 0;
+  transition: color 0.25s ease;
 }
 
-.uc-menu a:hover, .uc-menu a.on {
-  color: #fff;
+.uc-nav-links a:hover {
+  color: #ffffff;
 }
 
-.uc-menu a::after {
+.uc-nav-links a::after {
   content: "";
   position: absolute;
   bottom: 0;
   left: 0;
   width: 0;
-  height: 2px;
-  background: var(--red);
-  transition: width 0.3s ease;
+  height: 1.5px;
+  background: #ffffff;
+  transition: width 0.25s ease;
 }
 
-.uc-menu a:hover::after, .uc-menu a.on::after {
+.uc-nav-links a:hover::after {
   width: 100%;
 }
 
-.uc-nav-actions {
+.uc-nav-action-wrap {
   display: flex;
   align-items: center;
+  gap: 14px;
 }
 
-.uc-burger {
+.uc-nav-cta {
+  padding: 9px 22px !important;
+  font-size: 12px !important;
+}
+
+.uc-burger-btn {
   display: none;
   background: transparent;
-  border: 1px solid var(--line);
-  color: #fff;
-  padding: 8px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  cursor: pointer;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+}
+
+.burger-line {
+  width: 18px;
+  height: 2px;
+  background: #ffffff;
+  transition: all 0.3s ease;
+}
+
+.uc-burger-btn.open .burger-line:first-child {
+  transform: translateY(3.5px) rotate(45deg);
+}
+
+.uc-burger-btn.open .burger-line:last-child {
+  transform: translateY(-3.5px) rotate(-45deg);
+}
+
+.uc-nav-admin-tools {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-left: auto;
+}
+
+.admin-status-pill {
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 1px;
-  border-radius: 2px;
-  cursor: pointer;
+  color: #ff3b30;
+  background: rgba(255, 59, 48, 0.12);
+  border: 1px solid rgba(255, 59, 48, 0.4);
+  padding: 6px 14px;
+  border-radius: 9999px;
 }
 
-/* Botões Estilo United Carriers */
+/* ==========================================================================
+   ROUNDED PILL BUTTON SYSTEM (UNITED CARRIERS SPEC: border-radius: 9999px)
+   ========================================================================== */
+
+.uc-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 13px 28px;
+  border-radius: 9999px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+.uc-pill-solid {
+  background: #ffffff;
+  color: #000000 !important;
+  border-color: #ffffff;
+  box-shadow: 0 4px 20px rgba(255, 255, 255, 0.16);
+}
+
+.uc-pill-solid:hover {
+  background: #f0f0f0;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(255, 255, 255, 0.3);
+}
+
+.uc-pill-ghost {
+  background: rgba(255, 255, 255, 0.05);
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(10px);
+}
+
+.uc-pill-ghost:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.6);
+  transform: translateY(-2px);
+}
+
+.uc-pill-play {
+  background: rgba(255, 59, 48, 0.12);
+  color: #ff3b30 !important;
+  border-color: rgba(255, 59, 48, 0.4);
+}
+
+.uc-pill-play:hover {
+  background: rgba(255, 59, 48, 0.25);
+  border-color: #ff3b30;
+  color: #ffffff !important;
+  transform: translateY(-2px);
+}
+
+.uc-pill-arrow {
+  transition: transform 0.25s ease;
+}
+
+.uc-pill:hover .uc-pill-arrow {
+  transform: translate(2px, -2px);
+}
+
+/* Also support legacy .btn class with pill styles */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
-  font-family: var(--font-body);
+  font-family: var(--font-display);
   font-size: 13px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 1px;
-  padding: 13px 24px;
-  border-radius: 3px;
+  letter-spacing: 0.8px;
+  padding: 13px 28px;
+  border-radius: 9999px;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   border: 1px solid transparent;
+  text-decoration: none;
 }
 
 .uc-btn-primary {
-  background: var(--red);
-  color: #fff;
-  box-shadow: 0 4px 18px rgba(225, 6, 0, 0.3);
+  background: #ffffff;
+  color: #000000 !important;
+  border-color: #ffffff;
+  box-shadow: 0 4px 20px rgba(255, 255, 255, 0.16);
 }
 
 .uc-btn-primary:hover {
-  background: #ff1a14;
+  background: #eaeaea;
   transform: translateY(-2px);
-  box-shadow: 0 8px 26px rgba(225, 6, 0, 0.45);
+  box-shadow: 0 8px 28px rgba(255, 255, 255, 0.3);
 }
 
 .uc-btn-glass {
   background: rgba(255, 255, 255, 0.05);
-  border-color: var(--line-strong);
-  color: #fff;
-  backdrop-filter: blur(8px);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #fff !important;
+  backdrop-filter: blur(10px);
 }
 
 .uc-btn-glass:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.12);
   border-color: #fff;
   transform: translateY(-2px);
 }
 
 .uc-btn-whatsapp {
   background: #25d366;
-  color: #fff;
-  border: 1px solid #20ba5a;
+  color: #fff !important;
+  border-color: #20ba5a;
   box-shadow: 0 6px 20px rgba(37, 211, 102, 0.3);
 }
 
@@ -389,134 +549,220 @@ a {
 }
 
 /* ==========================================================================
-   HERO SECTION
+   HERO SECTION (EXACT UNITED CARRIERS 2-COLUMN + 3D SPHERE SPEC)
    ========================================================================== */
 
-.uc-hero {
+.uc-hero-section {
   position: relative;
-  min-height: 92vh;
+  min-height: calc(100vh - 100px);
   display: flex;
-  align-items: center;
-  padding-top: 100px;
-  padding-bottom: 60px;
+  flex-direction: column;
+  justify-content: center;
   overflow: hidden;
-  background: #050505;
+  background: #020204;
+  padding: 40px 0 60px 0;
 }
 
-.uc-hero-bg-img {
+.uc-hero-void-bg {
   position: absolute;
   inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
+  pointer-events: none;
   z-index: 1;
 }
 
-.uc-hero-overlay {
+.uc-hero-stars {
   position: absolute;
   inset: 0;
-  z-index: 2;
-  background: linear-gradient(
-    to bottom,
-    rgba(6, 6, 6, 0.65) 0%,
-    rgba(6, 6, 6, 0.3) 40%,
-    rgba(6, 6, 6, 0.85) 85%,
-    #060606 100%
-  );
-  pointer-events: none;
+  background-image: 
+    radial-gradient(1px 1px at 30px 40px, #ffffff, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 120px 180px, rgba(255,255,255,0.7), rgba(0,0,0,0)),
+    radial-gradient(1.5px 1.5px at 220px 320px, #00d4ff, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 350px 110px, #ff9500, rgba(0,0,0,0)),
+    radial-gradient(1.2px 1.2px at 480px 420px, rgba(255,255,255,0.8), rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 620px 240px, #ffffff, rgba(0,0,0,0));
+  background-repeat: repeat;
+  background-size: 600px 600px;
+  opacity: 0.55;
 }
 
-.uc-hero-grid-lines {
+.uc-hero-wiregrid {
   position: absolute;
   inset: 0;
-  z-index: 2;
-  background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-                    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-  background-size: 60px 60px;
-  pointer-events: none;
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 70px 70px;
+  opacity: 0.8;
 }
 
-.uc-hero-container {
+.uc-hero-viewport {
   position: relative;
-  z-index: 3;
-  width: 100%;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 1.05fr 1fr;
+  align-items: center;
+  gap: 40px;
+  min-height: 75vh;
 }
 
-.uc-hero-title {
-  font-size: clamp(48px, 9.5vw, 125px);
-  line-height: 0.92;
-  margin-bottom: 24px;
-}
-
-.uc-hero-bottom-row {
+.uc-hero-left {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  gap: 36px;
-  flex-wrap: wrap;
-  margin-top: 32px;
+  flex-direction: column;
+  justify-content: center;
 }
 
-.uc-hero-lead {
-  max-width: 580px;
+.uc-hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #9999a5;
+  margin-bottom: 22px;
+}
+
+.eyebrow-accent {
+  color: #ff3b30;
+  font-size: 9px;
+}
+
+.uc-hero-headline {
+  font-family: var(--font-display);
+  font-size: clamp(44px, 5.8vw, 84px);
+  font-weight: 800;
+  line-height: 0.98;
+  letter-spacing: -0.03em;
+  color: #ffffff;
+  margin-bottom: 24px;
+  text-transform: uppercase;
+}
+
+.text-crimson-gradient {
+  background: linear-gradient(135deg, #ffffff 30%, #ff3b30 70%, #ff9500 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.uc-hero-narrative {
+  font-family: var(--font-body);
   font-size: 16px;
   line-height: 1.65;
-  color: var(--ink);
-  margin: 0;
+  color: #9999a5;
+  max-width: 520px;
+  margin: 0 0 32px 0;
 }
 
-.uc-hero-lead strong {
-  color: #fff;
-  border-bottom: 1px solid var(--red);
-}
-
-.uc-hero-cta-group {
+.uc-hero-pills {
   display: flex;
   align-items: center;
   gap: 14px;
   flex-wrap: wrap;
+  margin-bottom: 48px;
 }
 
-/* Technical HUD Capabilities Bar */
-.uc-hud-bar {
+.uc-hero-telemetry {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.02);
-  margin-top: 60px;
-  padding: 16px 24px;
-  flex-wrap: wrap;
-  gap: 16px;
+  gap: 28px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.uc-hud-item {
+.telemetry-item {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  flex-direction: column;
 }
 
-.hud-code {
+.telemetry-val {
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 700;
-  color: var(--red);
+  color: #ffffff;
+  letter-spacing: 0.5px;
 }
 
-.hud-label {
-  font-family: var(--font-mono);
+.telemetry-lbl {
+  font-family: var(--font-body);
   font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 1.2px;
-  color: var(--mute);
+  color: #666675;
 }
 
-.uc-hud-divider {
+.telemetry-div {
   width: 1px;
-  height: 20px;
-  background: var(--line);
+  height: 28px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Right 3D Globe Wrapper */
+.uc-hero-right {
+  position: relative;
+  width: 100%;
+  height: 620px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.uc-globe-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+}
+
+.uc-globe-wrapper:active {
+  cursor: grabbing;
+}
+
+.uc-globe-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.uc-globe-ambient-radial {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 60% 50%, rgba(0, 160, 255, 0.12) 0%, transparent 65%);
+}
+
+/* Floating Vertical Site of the Day Badge */
+.uc-floating-badge {
+  position: fixed;
+  right: 0;
+  top: 45%;
+  transform: translateY(-50%);
+  z-index: 99;
+  background: #0051ff;
+  color: #ffffff;
+  padding: 14px 8px;
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  box-shadow: -4px 0 20px rgba(0, 81, 255, 0.4);
+}
+
+.badge-logo {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 1px;
+}
+
+.badge-vertical-text {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
 }
 
 /* ==========================================================================
@@ -2158,6 +2404,17 @@ a {
    ========================================================================== */
 
 @media (max-width: 1024px) {
+  .uc-hero-viewport {
+    grid-template-columns: 1fr;
+    gap: 40px;
+    padding-top: 20px;
+  }
+
+  .uc-hero-right {
+    height: 480px;
+    order: -1;
+  }
+
   .uc-manifesto-grid {
     grid-template-columns: 1fr;
     gap: 32px;
@@ -2189,46 +2446,51 @@ a {
     padding: 0 18px;
   }
 
-  .uc-status-pill {
-    display: none;
+  .uc-top-ticker .uc-ticker-left {
+    max-width: 60%;
   }
 
-  .uc-menu {
+  .uc-nav-links {
     position: fixed;
-    top: 74px;
+    top: 72px;
     left: 0;
     right: 0;
-    background: #080808;
-    border-bottom: 1px solid var(--line);
+    background: #040408;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     flex-direction: column;
-    padding: 24px;
-    gap: 18px;
+    padding: 28px;
+    gap: 20px;
     display: none;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.8);
   }
 
-  .uc-menu.open {
+  .uc-nav-links.is-active {
     display: flex;
   }
 
-  .uc-burger {
-    display: block;
+  .uc-burger-btn {
+    display: flex;
   }
 
-  .uc-nav-actions {
+  .uc-nav-cta {
     display: none;
   }
 
-  .uc-hero-title {
-    font-size: 46px;
-  }
-
-  .uc-hero-bottom-row {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .uc-hud-bar {
+  .uc-floating-badge {
     display: none;
+  }
+
+  .uc-hero-headline {
+    font-size: 38px;
+  }
+
+  .uc-hero-right {
+    height: 380px;
+  }
+
+  .uc-hero-telemetry {
+    flex-wrap: wrap;
+    gap: 16px;
   }
 
   .uc-metrics-grid {

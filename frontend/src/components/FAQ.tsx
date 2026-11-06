@@ -60,3 +60,4 @@ export const FAQ: React.FC<FAQProps> = ({ items = [] }) => {
     </section>
   );
 };
+

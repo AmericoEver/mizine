@@ -1,5 +1,6 @@
 import React from 'react';
 import { HeroContent } from '../types';
+import { HeroGlobe } from './HeroGlobe';
 
 interface HeroProps {
   content: HeroContent;
@@ -7,82 +8,104 @@ interface HeroProps {
 }
 
 export const Hero: React.FC<HeroProps> = ({ content, onPlayShowreel }) => {
-  const hasCover = Boolean(content.coverImageUrl);
-
   return (
-    <header className={`uc-hero ${hasCover ? 'has-cover' : ''}`} id="topo">
-      {hasCover && (
-        <img
-          src={content.coverImageUrl}
-          alt="Mizine Multimédia Capa"
-          className="uc-hero-bg-img"
-        />
-      )}
-
-      {/* Grid Pattern & Vignette Overlay */}
-      <div className="uc-hero-overlay" />
-      <div className="uc-hero-grid-lines" />
-
-      <div className="wrap uc-hero-container">
-        {/* Monospaced Tag */}
-        <div className="uc-meta-tag reveal-up">
-          <span className="meta-bracket">[</span>
-          <span className="meta-index">01/06</span>
-          <span className="meta-bracket">]</span>
-          <span className="meta-sep">•</span>
-          <span className="meta-title">MIZINE MULTIMÉDIA • ESTÚDIO AUDIOVISUAL & REDES SOCIAIS</span>
+    <header className="uc-hero-section" id="topo">
+      {/* Top Technical Wire Ticker */}
+      <div className="uc-top-ticker">
+        <div className="wrap uc-ticker-inner">
+          <div className="uc-ticker-left">
+            <span className="ticker-badge">NEWS:</span>
+            <span className="ticker-text">
+              PRODUÇÃO CINEMATOGRÁFICA 4K DCI & REELS DE ALTA RETENÇÃO EM MOÇAMBIQUE E ÁFRICA AUSTRAL...
+            </span>
+          </div>
+          <div className="uc-ticker-right">
+            <a href="#simulador" className="ticker-link">SIMULADOR DE ORÇAMENTO</a>
+            <span className="ticker-sep">|</span>
+            <span className="ticker-code">ESTÚDIO CENTRAL [MZ]</span>
+          </div>
         </div>
+      </div>
 
-        {/* Massive Bold Headline */}
-        <h1 className="uc-hero-title reveal-up">
-          CRIAMOS <span className="text-red">CINEMA.</span><br />
-          CAPTURAMOS <span className="text-outline">ATENÇÃO.</span>
-        </h1>
+      {/* Deep Space Starfield & Grid Matrix */}
+      <div className="uc-hero-void-bg">
+        <div className="uc-hero-stars" />
+        <div className="uc-hero-wiregrid" />
+      </div>
 
-        {/* Narrative Description */}
-        <div className="uc-hero-bottom-row reveal-up">
-          <p className="uc-hero-lead">
-            Da produção de <strong>vídeos comerciais 4K</strong> e <strong>reels de alta retenção</strong> aos <strong>convites digitais interativos</strong> da Mizine Celebrate e subdivisões tecnológicas — somos o teu ecossistema multimédia completo.
+      {/* Main 2-Column United Carriers Composition */}
+      <div className="wrap uc-hero-viewport">
+        {/* Left Column: Typography & CTAs */}
+        <div className="uc-hero-left">
+          {/* Eyebrow Pill / Monospace Tag */}
+          <div className="uc-hero-eyebrow reveal-up">
+            <span className="eyebrow-accent">●</span>
+            <span className="eyebrow-text">UM SÓ OPERADOR MULTIMÉDIA</span>
+          </div>
+
+          {/* Massive Geometric Display Headline */}
+          <h1 className="uc-hero-headline reveal-up">
+            CRIAMOS<br />
+            CINEMA.<br />
+            ASSUMIMOS O<br />
+            <span className="text-crimson-gradient">RESULTADO.</span>
+          </h1>
+
+          {/* Narrative Lead Paragraph */}
+          <p className="uc-hero-narrative reveal-up">
+            Video making cinematográfico 4K, gestão de redes sociais com foco em retenção e convites digitais exclusivos, unificados sob uma única produtora de referência.
           </p>
 
-          <div className="uc-hero-cta-group">
-            <a href="#reels" className="btn uc-btn-primary">
-              <span>Explorar Trabalhos</span>
-              <span className="btn-arrow">↓</span>
+          {/* Pill Action Buttons (Exact United Carriers Shape: rounded 9999px) */}
+          <div className="uc-hero-pills reveal-up">
+            <a href="#contacto" className="uc-pill uc-pill-solid">
+              <span>FALAR CONNOSCO</span>
+              <span className="uc-pill-arrow">↗</span>
+            </a>
+
+            <a href="#pilares" className="uc-pill uc-pill-ghost">
+              <span>NOSSOS SERVIÇOS</span>
             </a>
 
             <button
               onClick={() => onPlayShowreel('Showreel Mizine Multimédia', content.showreelVideoUrl || '/media/videos/showreel.mp4')}
-              className="btn uc-btn-glass"
+              className="uc-pill uc-pill-play"
+              title="Assistir Showreel"
             >
-              <span className="play-triangle">▶</span>
-              <span>Ver Showreel</span>
+              <span className="play-icon">▶</span>
+              <span>SHOWREEL</span>
             </button>
+          </div>
+
+          {/* Bottom Coordinate Bar */}
+          <div className="uc-hero-telemetry reveal-up">
+            <div className="telemetry-item">
+              <span className="telemetry-val">4K DCI</span>
+              <span className="telemetry-lbl">Resolução Master</span>
+            </div>
+            <div className="telemetry-div" />
+            <div className="telemetry-item">
+              <span className="telemetry-val">100%</span>
+              <span className="telemetry-lbl">Retenção Viral</span>
+            </div>
+            <div className="telemetry-div" />
+            <div className="telemetry-item">
+              <span className="telemetry-val">MAPUTO</span>
+              <span className="telemetry-lbl">Sede Operacional</span>
+            </div>
           </div>
         </div>
 
-        {/* Technical HUD Capabilities Bar */}
-        <div className="uc-hud-bar reveal-up">
-          <div className="uc-hud-item">
-            <span className="hud-code">01</span>
-            <span className="hud-label">VIDEO MAKING 4K</span>
-          </div>
-          <div className="uc-hud-divider" />
-          <div className="uc-hud-item">
-            <span className="hud-code">02</span>
-            <span className="hud-label">GESTÃO DE REDES SOCIAIS</span>
-          </div>
-          <div className="uc-hud-divider" />
-          <div className="uc-hud-item">
-            <span className="hud-code">03</span>
-            <span className="hud-label">MIZINE CELEBRATE (CONVITES)</span>
-          </div>
-          <div className="uc-hud-divider" />
-          <div className="uc-hud-item">
-            <span className="hud-code">04</span>
-            <span className="hud-label">ECOSSISTEMA DO GRUPO</span>
-          </div>
+        {/* Right Column: Giant Interactive 3D Glowing Particle Sphere */}
+        <div className="uc-hero-right reveal-fade">
+          <HeroGlobe />
         </div>
+      </div>
+
+      {/* Floating Vertical Site-of-the-Day Style Badge */}
+      <div className="uc-floating-badge" aria-hidden="true">
+        <span className="badge-logo">MZ.</span>
+        <span className="badge-vertical-text">ESTÚDIO 2026</span>
       </div>
     </header>
   );

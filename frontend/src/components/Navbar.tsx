@@ -9,60 +9,54 @@ export const Navbar: React.FC<NavbarProps> = ({ onBackToSite, isAdminView }) => 
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <nav className="uc-nav">
-      <div className="wrap uc-nav-inner">
-        <a className="logo uc-logo" href={isAdminView ? '/#topo' : '#topo'}>
-          <img
-            src="/logo-m.jpg"
-            alt="Mizine Multimédia"
-            className="uc-logo-img"
-          />
-          <div className="uc-logo-text">
-            <span className="brand-title">MIZINE</span>
-            <span className="brand-sub">MULTIMÉDIA</span>
+    <nav className="uc-nav-header">
+      <div className="wrap uc-nav-row">
+        {/* Brand Wordmark (United Carriers wide geometric font) */}
+        <a className="uc-brand" href={isAdminView ? '/#topo' : '#topo'}>
+          <div className="uc-brand-mark">
+            <img src="/logo-m.jpg" alt="M" className="uc-brand-icon" />
           </div>
+          <span className="uc-brand-title">MIZINE</span>
+          <span className="uc-brand-badge">MULTIMÉDIA</span>
         </a>
 
         {!isAdminView ? (
           <>
-            <div className="uc-status-pill">
-              <span className="status-dot"></span>
-              <span className="status-label">STUDIO REC • 4K 24FPS</span>
-            </div>
-
-            <ul id="menu" className={`uc-menu ${isOpen ? 'open' : ''}`}>
-              <li><a href="#sobre" onClick={() => setIsOpen(false)}>Sobre</a></li>
-              <li><a href="#pilares" onClick={() => setIsOpen(false)}>Pilares</a></li>
-              <li><a href="#reels" onClick={() => setIsOpen(false)}>Trabalhos</a></li>
-              <li><a href="#porque" onClick={() => setIsOpen(false)}>Porquê</a></li>
-              <li><a href="#simulador" onClick={() => setIsOpen(false)}>Simulador</a></li>
-              <li><a href="#clientes" onClick={() => setIsOpen(false)}>Clientes</a></li>
+            {/* Nav Links */}
+            <ul className={`uc-nav-links ${isOpen ? 'is-active' : ''}`}>
+              <li><a href="#pilares" onClick={() => setIsOpen(false)}>SERVIÇOS</a></li>
+              <li><a href="#reels" onClick={() => setIsOpen(false)}>REELS</a></li>
+              <li><a href="#trabalhos" onClick={() => setIsOpen(false)}>PROJETOS</a></li>
+              <li><a href="#porque" onClick={() => setIsOpen(false)}>DIFERENCIAIS</a></li>
+              <li><a href="#simulador" onClick={() => setIsOpen(false)}>SIMULADOR</a></li>
+              <li><a href="#clientes" onClick={() => setIsOpen(false)}>CLIENTES</a></li>
               <li><a href="#faq" onClick={() => setIsOpen(false)}>FAQ</a></li>
-              <li><a href="#contacto" onClick={() => setIsOpen(false)}>Contacto</a></li>
+              <li><a href="#contacto" onClick={() => setIsOpen(false)}>CONTACTO</a></li>
             </ul>
 
-            <div className="uc-nav-actions">
-              <a className="btn uc-btn-primary" href="#simulador">
-                <span>Iniciar Projeto</span>
-                <span className="btn-arrow">→</span>
+            {/* Right Action: White Pill Button */}
+            <div className="uc-nav-action-wrap">
+              <a className="uc-pill uc-pill-solid uc-nav-cta" href="#simulador">
+                <span>INICIAR PROJETO</span>
+                <span className="uc-pill-arrow">↗</span>
               </a>
-            </div>
 
-            <button
-              className="burger uc-burger"
-              id="burger"
-              aria-label="Abrir menu"
-              onClick={() => setIsOpen(!isOpen)}
-            >
-              <span>{isOpen ? 'Fechar' : 'Menu'}</span>
-            </button>
+              <button
+                className={`uc-burger-btn ${isOpen ? 'open' : ''}`}
+                aria-label="Toggle navigation"
+                onClick={() => setIsOpen(!isOpen)}
+              >
+                <span className="burger-line"></span>
+                <span className="burger-line"></span>
+              </button>
+            </div>
           </>
         ) : (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginLeft: 'auto' }}>
-            <span className="admin-badge">Painel de Gestão</span>
+          <div className="uc-nav-admin-tools">
+            <span className="admin-status-pill">MODO ADMIN</span>
             {onBackToSite && (
-              <button onClick={onBackToSite} className="btn uc-btn-primary">
-                Voltar ao Site
+              <button onClick={onBackToSite} className="uc-pill uc-pill-solid">
+                VOLTAR AO SITE
               </button>
             )}
           </div>

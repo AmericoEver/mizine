@@ -71,15 +71,15 @@ const MARKERS: Marker3D[] = [
 ];
 
 const GLOBAL_ARCS = [
-  { fromLat: -25.96, fromLon: 32.58, toLat: 51.5, toLon: -0.12, color: '#ff9500' }, // Maputo -> Europe
-  { fromLat: -25.96, fromLon: 32.58, toLat: -23.55, toLon: -46.63, color: '#ff9500' }, // Maputo -> Americas
-  { fromLat: 30.04, fromLon: 31.23, toLat: -1.28, toLon: 36.82, color: '#ff9500' }, // Egypt -> Kenya
-  { fromLat: 51.5, fromLon: -0.12, toLat: 39.93, toLon: 32.85, color: '#ff9500' }, // Europe -> Turkey
-  { fromLat: -25.96, fromLon: 32.58, toLat: -29.0, toLon: 26.0, color: '#ff3b30' } // Maputo -> South Africa
+  { fromLat: -25.96, fromLon: 32.58, toLat: 51.5, toLon: -0.12, color: '#ff9500' },
+  { fromLat: -25.96, fromLon: 32.58, toLat: -23.55, toLon: -46.63, color: '#ff9500' },
+  { fromLat: 30.04, fromLon: 31.23, toLat: -1.28, toLon: 36.82, color: '#ff9500' },
+  { fromLat: 51.5, fromLon: -0.12, toLat: 39.93, toLon: 32.85, color: '#ff9500' },
+  { fromLat: -25.96, fromLon: 32.58, toLat: -29.0, toLon: 26.0, color: '#ff3b30' }
 ];
 
 interface CameraFlashStar {
-  xNorm: number; // 0 to 1 inside cosmic void
+  xNorm: number;
   yNorm: number;
   lastFlash: number;
   interval: number;
@@ -87,7 +87,11 @@ interface CameraFlashStar {
   size: number;
 }
 
-export const HeroGlobe: React.FC = () => {
+interface HeroGlobeProps {
+  onPlayVideo?: (title: string, videoUrl: string) => void;
+}
+
+export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
@@ -100,9 +104,7 @@ export const HeroGlobe: React.FC = () => {
     let width = 0;
     let height = 0;
 
-    // Stable planetary tilt (~16 deg)
     let rotX = -0.16;
-    // Initial Y rotation so Mozambique (-25.96 lat, 32.58 lon) faces front & center
     let rotY = -Math.PI * 0.10;
     let targetRotY = rotY;
     let targetRotX = rotX;
@@ -110,20 +112,22 @@ export const HeroGlobe: React.FC = () => {
     let lastMouseX = 0;
     let lastMouseY = 0;
 
-    // Mouse parallax tilt angles
     let mouseTiltX = 0;
     let mouseTiltY = 0;
     let targetMouseTiltX = 0;
     let targetMouseTiltY = 0;
 
-    // Counter-rotation speeds:
-    // Planet rotates to the LEFT (negative rotY)
+    // Track mouse position on canvas
+    let currentMouseX = -9999;
+    let currentMouseY = -9999;
+    let isHoveringMoon = false;
+    let hoveredFilmIndex = -1;
+    let shutterFlash = 0; // Camera shutter trigger
+
     const planetRotateSpeed = -0.0020;
-    // Film reel orbits to the RIGHT (opposite direction)
     let filmOrbitAngle = 0;
     const filmOrbitSpeed = 0.0036;
 
-    // Mathematically correct conversion: North Pole at TOP (-Y in screen space), South Pole at BOTTOM (+Y)
     const latLonToVec = (lat: number, lon: number) => {
       const phi = (lat * Math.PI) / 180;
       const theta = (lon * Math.PI) / 180;
@@ -135,19 +139,16 @@ export const HeroGlobe: React.FC = () => {
       };
     };
 
-    // Precompute 3D unit vectors for world points
     const worldPoints = (worldData as WorldPoint[]).map(pt => ({
       ...pt,
       vec: latLonToVec(pt.lat, pt.lon)
     }));
 
-    // Precompute marker vectors
     const markerVectors = MARKERS.map(m => ({
       ...m,
       vec: latLonToVec(m.lat, m.lon)
     }));
 
-    // Initialize Camera LED Flash Stars in the cosmic void between moon and planet
     const flashStars: CameraFlashStar[] = [];
     const flashColors = ['#ffffff', '#e0f7ff', '#fff3e0', '#ffeb3b'];
     for (let i = 0; i < 22; i++) {
@@ -161,29 +162,61 @@ export const HeroGlobe: React.FC = () => {
       });
     }
 
-    // Canvas resize to parent container
     const handleResize = () => {
       if (!canvas) return;
       const parent = canvas.parentElement;
-      width = parent ? parent.clientWidth : window.innerWidth;
-      height = parent ? parent.clientHeight : window.innerHeight;
+      const rect = parent ? parent.getBoundingClientRect() : { width: window.innerWidth, height: window.innerHeight };
+      width = rect.width;
+      height = rect.height;
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      canvas.width = width * dpr;
-      canvas.height = height * dpr;
+      canvas.width = Math.round(width * dpr);
+      canvas.height = Math.round(height * dpr);
+      canvas.style.width = width + 'px';
+      canvas.style.height = height + 'px';
+      ctx.resetTransform?.();
       ctx.scale(dpr, dpr);
     };
 
     handleResize();
     window.addEventListener('resize', handleResize);
 
-    // Mouse & Touch interaction
     const onMouseDown = (e: MouseEvent) => {
-      isDragging = true;
-      lastMouseX = e.clientX;
-      lastMouseY = e.clientY;
+      const rect = canvas.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+
+      // Click on Moon Easter Egg
+      if (isHoveringMoon) {
+        shutterFlash = 1.0;
+        onPlayVideo?.(
+          'Mizine Multimédia — Apresentação 4K DCI',
+          '/media/videos/showreel.mp4'
+        );
+        return;
+      }
+
+      // Click on Film Reel Frame Easter Egg
+      if (hoveredFilmIndex >= 0) {
+        shutterFlash = 1.0;
+        onPlayVideo?.(
+          'Mizine Multimédia — O Que É A Mizine [4K DCI]',
+          '/media/videos/showreel.mp4'
+        );
+        return;
+      }
+
+      // Only start drag if not clicking buttons/links
+      if (clickX > width * 0.40) {
+        isDragging = true;
+        lastMouseX = e.clientX;
+        lastMouseY = e.clientY;
+      }
     };
 
     const onMouseMove = (e: MouseEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      currentMouseX = e.clientX - rect.left;
+      currentMouseY = e.clientY - rect.top;
+
       if (isDragging) {
         const dx = e.clientX - lastMouseX;
         const dy = e.clientY - lastMouseY;
@@ -208,6 +241,15 @@ export const HeroGlobe: React.FC = () => {
 
     const onTouchStart = (e: TouchEvent) => {
       if (e.touches.length === 1) {
+        const rect = canvas.getBoundingClientRect();
+        currentMouseX = e.touches[0].clientX - rect.left;
+        currentMouseY = e.touches[0].clientY - rect.top;
+
+        if (isHoveringMoon || hoveredFilmIndex >= 0) {
+          onPlayVideo?.('Mizine Multimédia — Apresentação 4K', '/media/videos/showreel.mp4');
+          return;
+        }
+
         isDragging = true;
         lastMouseX = e.touches[0].clientX;
         lastMouseY = e.touches[0].clientY;
@@ -236,7 +278,6 @@ export const HeroGlobe: React.FC = () => {
     window.addEventListener('touchmove', onTouchMove, { passive: true });
     window.addEventListener('touchend', onTouchEnd);
 
-    // 3D Rotation function
     const rotate3D = (v: { x: number; y: number; z: number }, cosY: number, sinY: number, cosX: number, sinX: number) => {
       const x1 = v.x * cosY + v.z * sinY;
       const z1 = -v.x * sinY + v.z * cosY;
@@ -250,9 +291,7 @@ export const HeroGlobe: React.FC = () => {
     const render = () => {
       time += 0.015;
 
-      // Continuous Leftward Planet Spin
       targetRotY += planetRotateSpeed;
-      // Continuous Rightward Film Reel Orbit
       filmOrbitAngle += filmOrbitSpeed;
 
       rotY += (targetRotY - rotY) * 0.08;
@@ -264,14 +303,13 @@ export const HeroGlobe: React.FC = () => {
 
       ctx.clearRect(0, 0, width, height);
 
-      // --- FULL SPHERE VISIBILITY ALIGNED TO THE RIGHT ---
-      // The whole sphere is 100% visible, fully circular, aligned to the right margin!
+      // --- 100% PERFECT MATHEMATICAL CIRCLE ALIGNED TO RIGHT ---
       const isMobile = width < 900;
       const radius = isMobile
         ? Math.min(width * 0.42, height * 0.32)
-        : Math.min(height * 0.39, width * 0.26);
+        : Math.min(height * 0.39, width * 0.25);
 
-      const cx = isMobile ? width * 0.50 : width - radius - 70;
+      const cx = isMobile ? width * 0.50 : width - radius - 75;
       const cy = isMobile ? height * 0.36 : height * 0.50;
 
       const cosY = Math.cos(rotY);
@@ -279,42 +317,48 @@ export const HeroGlobe: React.FC = () => {
       const cosX = Math.cos(rotX);
       const sinX = Math.sin(rotX);
 
-      // --- LAYER 1: CELESTIAL MOON AS [ 🔴 REC ] ALIGNED TO THE LEFT ---
+      // --- LAYER 1: ENLARGED MOON AS [ 🔴 REC ] WITH EASTER EGG (ALIGNED LEFT) ---
       const wrapMargin = Math.max(30, (width - 1340) / 2);
-      const moonX = isMobile ? 55 : Math.max(65, wrapMargin + 30);
-      const moonY = isMobile ? 110 : 135;
-      const moonR = isMobile ? 14 : 18;
+      const moonX = isMobile ? 60 : Math.max(70, wrapMargin + 30);
+      const moonY = isMobile ? 110 : 140;
+      const baseMoonR = isMobile ? 18 : 24; // ENLARGED as requested
+
+      // Check hover on Moon
+      const distToMoon = Math.hypot(currentMouseX - moonX, currentMouseY - moonY);
+      isHoveringMoon = distToMoon < baseMoonR * 1.8;
+      const moonR = isHoveringMoon ? baseMoonR * 1.18 : baseMoonR;
 
       // Soft Deep Cosmic Red Lunar Halo
-      const moonHalo = ctx.createRadialGradient(moonX, moonY, moonR * 0.3, moonX, moonY, moonR * 3.5);
-      moonHalo.addColorStop(0, 'rgba(255, 59, 48, 0.45)');
-      moonHalo.addColorStop(0.5, 'rgba(255, 45, 85, 0.16)');
+      const haloMul = isHoveringMoon ? 4.5 : 3.6;
+      const moonHalo = ctx.createRadialGradient(moonX, moonY, moonR * 0.3, moonX, moonY, moonR * haloMul);
+      moonHalo.addColorStop(0, isHoveringMoon ? 'rgba(255, 40, 20, 0.65)' : 'rgba(255, 59, 48, 0.45)');
+      moonHalo.addColorStop(0.5, 'rgba(255, 45, 85, 0.18)');
       moonHalo.addColorStop(1, 'rgba(0, 0, 0, 0)');
       ctx.beginPath();
-      ctx.arc(moonX, moonY, moonR * 3.5, 0, Math.PI * 2);
+      ctx.arc(moonX, moonY, moonR * haloMul, 0, Math.PI * 2);
       ctx.fillStyle = moonHalo;
       ctx.fill();
 
-      // Glowing Lunar Sphere (Crimson Cinema Red with surface texture)
-      const moonGrad = ctx.createRadialGradient(moonX - 5, moonY - 5, 2, moonX, moonY, moonR);
-      moonGrad.addColorStop(0, '#ff453a');
+      // Glowing Lunar Sphere (Crimson Cinema Red with 3D gradient)
+      const moonGrad = ctx.createRadialGradient(moonX - moonR * 0.3, moonY - moonR * 0.3, 2, moonX, moonY, moonR);
+      moonGrad.addColorStop(0, isHoveringMoon ? '#ff6961' : '#ff453a');
       moonGrad.addColorStop(0.65, '#d32f2f');
-      moonGrad.addColorStop(1, '#500202');
+      moonGrad.addColorStop(1, '#4a0202');
       ctx.beginPath();
       ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2);
       ctx.fillStyle = moonGrad;
       ctx.fill();
 
       // Camera Viewfinder Corners around the Moon [ 🔴 REC ]
-      const vfW = isMobile ? 74 : 88;
-      const vfH = isMobile ? 46 : 54;
+      const vfW = isMobile ? 86 : (isHoveringMoon ? 120 : 105);
+      const vfH = isMobile ? 54 : (isHoveringMoon ? 70 : 60);
       const vfX = moonX - vfW / 2;
       const vfY = moonY - vfH / 2;
-      const cLen = 10;
+      const cLen = isHoveringMoon ? 12 : 10;
 
       ctx.save();
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
-      ctx.lineWidth = 1.3;
+      ctx.strokeStyle = isHoveringMoon ? '#00d4ff' : 'rgba(255, 255, 255, 0.85)';
+      ctx.lineWidth = isHoveringMoon ? 1.8 : 1.3;
 
       // Top-Left [
       ctx.beginPath();
@@ -346,23 +390,32 @@ export const HeroGlobe: React.FC = () => {
 
       // Bold Blinking REC Label with glowing indicator
       const isRecBlink = Math.sin(time * 3.6) > -0.2;
-      ctx.font = '800 11.5px "JetBrains Mono", monospace';
-      ctx.fillStyle = isRecBlink ? '#ffffff' : 'rgba(255, 255, 255, 0.35)';
+      ctx.font = '800 12.5px "JetBrains Mono", monospace';
+      ctx.fillStyle = isHoveringMoon ? '#00d4ff' : (isRecBlink ? '#ffffff' : 'rgba(255, 255, 255, 0.35)');
       ctx.textAlign = 'left';
-      ctx.fillText('REC', moonX + moonR + 9, moonY + 4);
+      ctx.fillText(isHoveringMoon ? 'REC ON' : 'REC', moonX + moonR + 10, moonY + 4);
 
-      // Micro Camera Telemetry
-      ctx.font = '600 8px "JetBrains Mono", monospace';
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
+      // Micro Camera Telemetry / Easter Egg
+      ctx.font = '600 8.5px "JetBrains Mono", monospace';
+      ctx.fillStyle = isHoveringMoon ? '#00d4ff' : 'rgba(255, 255, 255, 0.65)';
       const sec = Math.floor(time) % 60;
       const fr = Math.floor((time * 24) % 24);
       const tcStr = `TC 00:04:${sec.toString().padStart(2, '0')}:${fr.toString().padStart(2, '0')}`;
-      ctx.fillText(`● LUA / REC • 4K DCI`, vfX, vfY + vfH + 13);
-      ctx.fillText(tcStr, vfX, vfY + vfH + 23);
+      
+      if (isHoveringMoon) {
+        // EASTER EGG ON HOVER
+        ctx.fillStyle = '#ff3b30';
+        ctx.fillText(`● ESTÚDIO AO VIVO • CLIQUE PARA ASSISTIR ▶`, vfX - 8, vfY + vfH + 15);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+        ctx.fillText(`4K DCI • 24.000FPS • ISO 800 • 1/48`, vfX - 8, vfY + vfH + 26);
+      } else {
+        ctx.fillText(`● LUA / REC • 4K DCI`, vfX, vfY + vfH + 14);
+        ctx.fillText(tcStr, vfX, vfY + vfH + 24);
+      }
       ctx.restore();
 
-      // --- LAYER 2: CAMERA LED FLASH STARS (Pop in the void between Moon and Planet) ---
-      const voidMinX = moonX + vfW * 0.6;
+      // --- LAYER 2: CAMERA LED FLASH STARS IN THE COSMIC VOID ---
+      const voidMinX = moonX + vfW * 0.65;
       const voidMaxX = cx - radius - 20;
 
       if (voidMaxX > voidMinX) {
@@ -371,22 +424,19 @@ export const HeroGlobe: React.FC = () => {
           const starX = voidMinX + star.xNorm * (voidMaxX - voidMinX);
           const starY = star.yNorm * height;
 
-          // Check if star should trigger a flash
           if (time - star.lastFlash > star.interval) {
             star.lastFlash = time;
             star.interval = 1.5 + Math.random() * 3.5;
           }
 
           const flashAge = time - star.lastFlash;
-          const flashDuration = 0.32; // Quick camera strobe flash
+          const flashDuration = 0.32;
 
           if (flashAge >= 0 && flashAge < flashDuration) {
             const progress = flashAge / flashDuration;
-            // Sudden bright rise, exponential decay
             const flashIntensity = Math.pow(1 - progress, 2.5);
 
             ctx.save();
-            // 1. Soft Circular Flash Corona
             const coronaR = (star.size * 5) * flashIntensity;
             const coronaGrad = ctx.createRadialGradient(starX, starY, 0, starX, starY, coronaR);
             coronaGrad.addColorStop(0, 'rgba(255, 255, 255, 0.95)');
@@ -397,7 +447,6 @@ export const HeroGlobe: React.FC = () => {
             ctx.arc(starX, starY, coronaR, 0, Math.PI * 2);
             ctx.fill();
 
-            // 2. Anamorphic Horizontal Lens Flare Ray
             const rayW = (32 + star.size * 8) * flashIntensity;
             ctx.strokeStyle = 'rgba(255, 255, 255, ' + (0.9 * flashIntensity) + ')';
             ctx.lineWidth = 1.2;
@@ -406,22 +455,18 @@ export const HeroGlobe: React.FC = () => {
             ctx.lineTo(starX + rayW, starY);
             ctx.stroke();
 
-            // 3. Vertical Cross Flare Spikes
             const rayH = (14 + star.size * 4) * flashIntensity;
             ctx.beginPath();
             ctx.moveTo(starX, starY - rayH);
             ctx.lineTo(starX, starY + rayH);
             ctx.stroke();
 
-            // 4. Center Hot White Core
             ctx.fillStyle = '#ffffff';
             ctx.beginPath();
             ctx.arc(starX, starY, star.size * 0.9 * flashIntensity, 0, Math.PI * 2);
             ctx.fill();
-
             ctx.restore();
           } else {
-            // Subtle resting twinkle star
             const twinkle = 0.25 + Math.sin(time * 2 + i) * 0.15;
             ctx.fillStyle = 'rgba(255, 255, 255, ' + twinkle + ')';
             ctx.beginPath();
@@ -431,36 +476,11 @@ export const HeroGlobe: React.FC = () => {
         }
       }
 
-      // --- LAYER 3: ATMOSPHERIC NEON RIM GLOWS FOR THE SPHERE ---
-      // Solar Orange Rim (Top-Right)
-      const orangeGlow = ctx.createRadialGradient(
-        cx + radius * 0.35, cy - radius * 0.45, radius * 0.25,
-        cx, cy, radius * 1.35
-      );
-      orangeGlow.addColorStop(0, 'rgba(255, 120, 0, 0.45)');
-      orangeGlow.addColorStop(0.45, 'rgba(255, 55, 0, 0.18)');
-      orangeGlow.addColorStop(0.85, 'rgba(255, 20, 0, 0.03)');
-      orangeGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
-      ctx.fillStyle = orangeGlow;
-      ctx.fillRect(0, 0, width, height);
-
-      // Deep Blue Rim Crescent (Bottom-Left)
-      const blueGlow = ctx.createRadialGradient(
-        cx - radius * 0.45, cy + radius * 0.4, radius * 0.2,
-        cx, cy, radius * 1.40
-      );
-      blueGlow.addColorStop(0, 'rgba(0, 160, 255, 0.55)');
-      blueGlow.addColorStop(0.45, 'rgba(0, 210, 255, 0.22)');
-      blueGlow.addColorStop(0.8, 'rgba(0, 90, 220, 0.05)');
-      blueGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
-      ctx.fillStyle = blueGlow;
-      ctx.fillRect(0, 0, width, height);
-
-      // --- LAYER 4: 35MM FILM REEL INDEPENDENT COUNTER-ORBIT ---
+      // --- LAYER 3: 35MM FILM REEL INDEPENDENT COUNTER-ORBIT & INTERACTION ---
       const filmFrames = 54;
       const filmOrbitRadius = radius * 1.18;
       const filmWidth = radius * 0.076;
-      const filmInclination = -0.26; // Stable celestial tilt
+      const filmInclination = -0.26;
 
       interface FilmQuad {
         tl: { x: number; y: number; z: number };
@@ -469,6 +489,8 @@ export const HeroGlobe: React.FC = () => {
         bl: { x: number; y: number; z: number };
         centerZ: number;
         index: number;
+        screenCenterX: number;
+        screenCenterY: number;
       }
 
       const filmQuads: FilmQuad[] = [];
@@ -478,7 +500,6 @@ export const HeroGlobe: React.FC = () => {
       const sinMouseX = Math.sin(rotX + mouseTiltX);
 
       for (let i = 0; i < filmFrames; i++) {
-        // Counter-orbit: minus filmOrbitAngle moves front frames from LEFT to RIGHT!
         const a1 = (i / filmFrames) * Math.PI * 2 - filmOrbitAngle;
         const a2 = ((i + 0.85) / filmFrames) * Math.PI * 2 - filmOrbitAngle;
 
@@ -503,19 +524,51 @@ export const HeroGlobe: React.FC = () => {
         const bl = getFilmEdge(a1, -filmWidth * 0.5);
 
         const centerZ = (tl.z + tr.z + br.z + bl.z) / 4;
-        filmQuads.push({ tl, tr, br, bl, centerZ, index: i });
+        const screenCenterX = cx + (tl.x + tr.x + br.x + bl.x) / 4;
+        const screenCenterY = cy + (tl.y + tr.y + br.y + bl.y) / 4;
+
+        filmQuads.push({ tl, tr, br, bl, centerZ, index: i, screenCenterX, screenCenterY });
       }
 
-      const projectFilmPoint = (p: { x: number; y: number }) => ({
-        px: cx + p.x,
-        py: cy + p.y
-      });
+      // Check hover on front film frames
+      hoveredFilmIndex = -1;
+      let closestDist = 32; // hover threshold in px
+      for (let i = 0; i < filmQuads.length; i++) {
+        const q = filmQuads[i];
+        if (q.centerZ > 0) {
+          const d = Math.hypot(currentMouseX - q.screenCenterX, currentMouseY - q.screenCenterY);
+          if (d < closestDist) {
+            closestDist = d;
+            hoveredFilmIndex = q.index;
+          }
+        }
+      }
+
+      // Canvas cursor hint
+      if (isHoveringMoon || hoveredFilmIndex >= 0) {
+        canvas.style.cursor = 'pointer';
+      } else {
+        canvas.style.cursor = isDragging ? 'grabbing' : 'default';
+      }
+
 
       const drawFilmQuad = (q: FilmQuad, isBack: boolean) => {
-        const pTL = projectFilmPoint(q.tl);
-        const pTR = projectFilmPoint(q.tr);
-        const pBR = projectFilmPoint(q.br);
-        const pBL = projectFilmPoint(q.bl);
+        const isHovered = q.index === hoveredFilmIndex;
+        const scale = isHovered ? 1.35 : 1.0;
+
+        // Apply scale around frame center if hovered
+        const centerX = (q.tl.x + q.tr.x + q.br.x + q.bl.x) / 4;
+        const centerY = (q.tl.y + q.tr.y + q.br.y + q.bl.y) / 4;
+
+        const scalePoint = (p: { x: number; y: number }) => ({
+          px: cx + centerX + (p.x - centerX) * scale,
+          py: cy + centerY + (p.y - centerY) * scale
+        });
+
+        const pTL = scalePoint(q.tl);
+        const pTR = scalePoint(q.tr);
+        const pBR = scalePoint(q.br);
+        const pBL = scalePoint(q.bl);
 
         ctx.save();
 
@@ -527,12 +580,21 @@ export const HeroGlobe: React.FC = () => {
         ctx.lineTo(pBL.px, pBL.py);
         ctx.closePath();
 
-        ctx.fillStyle = isBack ? 'rgba(10, 10, 16, 0.50)' : 'rgba(14, 14, 20, 0.94)';
+        ctx.fillStyle = isBack
+          ? 'rgba(10, 10, 16, 0.50)'
+          : (isHovered ? 'rgba(20, 20, 32, 0.98)' : 'rgba(14, 14, 20, 0.94)');
         ctx.fill();
 
-        ctx.strokeStyle = isBack ? 'rgba(255, 140, 20, 0.25)' : 'rgba(255, 140, 40, 0.85)';
-        ctx.lineWidth = 1;
+        ctx.strokeStyle = isHovered
+          ? '#00d4ff'
+          : (isBack ? 'rgba(255, 140, 20, 0.25)' : 'rgba(255, 140, 40, 0.85)');
+        ctx.lineWidth = isHovered ? 2.2 : 1;
+        if (isHovered) {
+          ctx.shadowColor = '#00d4ff';
+          ctx.shadowBlur = 12;
+        }
         ctx.stroke();
+        ctx.shadowBlur = 0;
 
         // Inner Film Exposure Window
         const inset = 0.18;
@@ -553,23 +615,52 @@ export const HeroGlobe: React.FC = () => {
         ctx.closePath();
 
         const isCyan = q.index % 2 === 0;
-        ctx.fillStyle = isCyan
-          ? (isBack ? 'rgba(0, 212, 255, 0.10)' : 'rgba(0, 212, 255, 0.22)')
-          : (isBack ? 'rgba(255, 120, 0, 0.10)' : 'rgba(255, 120, 0, 0.25)');
+        ctx.fillStyle = isHovered
+          ? 'rgba(0, 212, 255, 0.45)'
+          : (isCyan
+            ? (isBack ? 'rgba(0, 212, 255, 0.10)' : 'rgba(0, 212, 255, 0.22)')
+            : (isBack ? 'rgba(255, 120, 0, 0.10)' : 'rgba(255, 120, 0, 0.25)'));
         ctx.fill();
+
+        // If hovered, draw PLAY ICON inside the frame!
+        if (isHovered) {
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          const midX = (wTLx + wTRx + wBRx + wBLx) / 4;
+          const midY = (wTLy + wTRy + wBRy + wBLy) / 4;
+          ctx.moveTo(midX - 4, midY - 6);
+          ctx.lineTo(midX + 7, midY);
+          ctx.lineTo(midX - 4, midY + 6);
+          ctx.closePath();
+          ctx.fill();
+
+          // Tooltip callout above hovered frame
+          ctx.font = '800 9.5px "Space Grotesk", sans-serif';
+          const tipText = '▶ VER APRESENTAÇÃO MIZINE 4K';
+          const tipW = ctx.measureText(tipText).width + 16;
+          ctx.fillStyle = '#030408';
+          ctx.strokeStyle = '#00d4ff';
+          ctx.lineWidth = 1.2;
+          ctx.fillRect(midX - tipW / 2, midY - 32, tipW, 22);
+          ctx.strokeRect(midX - tipW / 2, midY - 32, tipW, 22);
+
+          ctx.fillStyle = '#ffffff';
+          ctx.textAlign = 'center';
+          ctx.fillText(tipText, midX, midY - 18);
+        }
 
         // 35mm Sprocket Holes
         ctx.fillStyle = '#020205';
         const spTopX = pTL.px + (pTR.px - pTL.px) * 0.5 + (pBL.px - pTL.px) * 0.08;
         const spTopY = pTL.py + (pTR.py - pTL.py) * 0.5 + (pBL.py - pTL.py) * 0.08;
         ctx.beginPath();
-        ctx.arc(spTopX, spTopY, 1.2, 0, Math.PI * 2);
+        ctx.arc(spTopX, spTopY, 1.2 * scale, 0, Math.PI * 2);
         ctx.fill();
 
         const spBotX = pBL.px + (pBR.px - pBL.px) * 0.5 - (pBL.px - pTL.px) * 0.08;
         const spBotY = pBL.py + (pBR.py - pBL.py) * 0.5 - (pBL.py - pTL.py) * 0.08;
         ctx.beginPath();
-        ctx.arc(spBotX, spBotY, 1.2, 0, Math.PI * 2);
+        ctx.arc(spBotX, spBotY, 1.2 * scale, 0, Math.PI * 2);
         ctx.fill();
 
         ctx.restore();
@@ -583,34 +674,39 @@ export const HeroGlobe: React.FC = () => {
       }
 
       // --- PHASE B: SOLID PLANET SPHERE CORE ---
-      const coreGrad = ctx.createRadialGradient(cx, cy, radius * 0.3, cx, cy, radius);
+      const coreGrad = ctx.createRadialGradient(cx, cy, radius * 0.25, cx, cy, radius);
       coreGrad.addColorStop(0, 'rgba(2, 3, 6, 0.99)');
       coreGrad.addColorStop(0.75, 'rgba(2, 3, 7, 0.97)');
-      coreGrad.addColorStop(1, 'rgba(3, 6, 14, 0.85)');
+      coreGrad.addColorStop(1, 'rgba(3, 6, 14, 0.88)');
       ctx.beginPath();
       ctx.arc(cx, cy, radius, 0, Math.PI * 2);
       ctx.fillStyle = coreGrad;
       ctx.fill();
 
-      // Sharp Neon Blue Crescent Edge Stroke
+      // Complete 360-degree Mathematical Circumference Outline (Guarantees exact circle perception)
       ctx.save();
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.16)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // Sharp Neon Blue Crescent Edge Stroke
       ctx.beginPath();
       ctx.arc(cx, cy, radius, 0.35 * Math.PI, 1.2 * Math.PI);
       ctx.lineWidth = 3.2;
       ctx.strokeStyle = 'rgba(0, 210, 255, 0.85)';
       ctx.shadowColor = '#00d4ff';
-      ctx.shadowBlur = 18;
+      ctx.shadowBlur = 16;
       ctx.stroke();
-      ctx.restore();
 
       // Sharp Neon Fiery Amber Top Arc Stroke
-      ctx.save();
       ctx.beginPath();
       ctx.arc(cx, cy, radius, 1.3 * Math.PI, 1.95 * Math.PI);
       ctx.lineWidth = 2.4;
       ctx.strokeStyle = 'rgba(255, 140, 20, 0.9)';
       ctx.shadowColor = '#ff6b00';
-      ctx.shadowBlur = 16;
+      ctx.shadowBlur = 14;
       ctx.stroke();
       ctx.restore();
 
@@ -640,7 +736,6 @@ export const HeroGlobe: React.FC = () => {
         }
       }
 
-      // Sort points back-to-front
       projectedPoints.sort((a, b) => a.z - b.z);
 
       for (let i = 0; i < projectedPoints.length; i++) {
@@ -648,7 +743,6 @@ export const HeroGlobe: React.FC = () => {
         const depth = pt.z;
 
         if (pt.moz) {
-          // AUTHENTIC MOZAMBIQUE: Both ocean and continental border dots
           const isBorder = pt.coast;
           const rMoz = (isBorder ? 1.55 : 1.2) * (0.65 + depth * 0.55);
           ctx.beginPath();
@@ -658,7 +752,6 @@ export const HeroGlobe: React.FC = () => {
             : `rgba(255, 95, 80, ${Math.min(1, 0.82 * depth + 0.10)})`;
           ctx.fill();
         } else {
-          // Standard Continent Dot
           const isCoast = pt.coast;
           const r = (isCoast ? 1.35 : 1.05) * (0.6 + depth * 0.55);
           let alpha = (isCoast ? 0.95 : 0.65) * Math.pow(depth, 1.4);
@@ -709,7 +802,6 @@ export const HeroGlobe: React.FC = () => {
           ctx.lineWidth = 1.2;
           ctx.stroke();
 
-          // Traveling photon packet
           const packetPhase = (time * 0.6 + i * 0.22) % 1;
           const inv = 1 - packetPhase;
           const curPX = inv * inv * fromPX + 2 * inv * packetPhase * midPX + packetPhase * packetPhase * toPX;
@@ -747,10 +839,8 @@ export const HeroGlobe: React.FC = () => {
           ctx.globalAlpha = alpha;
 
           if (m.isHQ) {
-            // MOÇAMBIQUE HQ BEACON PIN
             const pulse = 1 + Math.sin(time * 3.5) * 0.25;
 
-            // Concentric radar waves
             const wave1 = (time * 1.6) % 1.5;
             ctx.beginPath();
             ctx.arc(mx, my, 8 + wave1 * 22, 0, Math.PI * 2);
@@ -758,7 +848,6 @@ export const HeroGlobe: React.FC = () => {
             ctx.lineWidth = 1.5;
             ctx.stroke();
 
-            // Center Pin
             ctx.beginPath();
             ctx.arc(mx, my, 5 * pulse, 0, Math.PI * 2);
             ctx.fillStyle = '#ff3b30';
@@ -771,7 +860,6 @@ export const HeroGlobe: React.FC = () => {
             ctx.fillStyle = '#ffffff';
             ctx.fill();
 
-            // Leader line angled safely away from the orbital film
             const lineEndX = mx + 28;
             const lineEndY = my + 26;
             ctx.beginPath();
@@ -782,7 +870,6 @@ export const HeroGlobe: React.FC = () => {
             ctx.lineWidth = 1.2;
             ctx.stroke();
 
-            // Sharp Mozambique HQ Badge Box
             const padX = 10;
             ctx.font = '800 11px "Space Grotesk", sans-serif';
             const hqTitle = 'MOÇAMBIQUE [HQ]';
@@ -810,7 +897,6 @@ export const HeroGlobe: React.FC = () => {
             ctx.fillStyle = '#a3a3b2';
             ctx.fillText('Conexão Global • 4K • Redes Sociais', boxX + padX, boxY + 39);
           } else {
-            // Standard Rectangular Black Location Tag
             const pulse = 1 + Math.sin(time * 3 + i) * 0.2;
             ctx.beginPath();
             ctx.arc(mx, my, 4 * pulse, 0, Math.PI * 2);
@@ -853,6 +939,13 @@ export const HeroGlobe: React.FC = () => {
         }
       }
 
+      // Camera shutter flash effect
+      if (shutterFlash > 0.02) {
+        ctx.fillStyle = `rgba(255, 255, 255, ${shutterFlash * 0.85})`;
+        ctx.fillRect(0, 0, width, height);
+        shutterFlash *= 0.82;
+      }
+
       animationFrameId = requestAnimationFrame(render);
     };
 
@@ -868,7 +961,7 @@ export const HeroGlobe: React.FC = () => {
       window.removeEventListener('touchmove', onTouchMove);
       window.removeEventListener('touchend', onTouchEnd);
     };
-  }, []);
+  }, [onPlayVideo]);
 
   return (
     <div className="uc-globe-universe-wrapper">

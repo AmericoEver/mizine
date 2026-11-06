@@ -10,12 +10,12 @@ interface HeroProps {
 export const Hero: React.FC<HeroProps> = ({ content, onPlayShowreel }) => {
   return (
     <section className="uc-hero-section" id="topo">
-      {/* Full-bleed Deep Space Canvas Universe: No boundary box, covers entire section */}
+      {/* Full-bleed Deep Space Canvas Universe with Interactive 35mm Film Frames */}
       <div className="uc-hero-canvas-universe">
-        <HeroGlobe />
+        <HeroGlobe onPlayVideo={(title, url) => onPlayShowreel(title, url)} />
       </div>
 
-      {/* Typography & CTAs floating seamlessly ON TOP of the Colossal Globe */}
+      {/* Typography & CTAs kept strictly on the left margin */}
       <div className="wrap uc-hero-viewport">
         <div className="uc-hero-left">
           {/* Eyebrow Pill / Monospace Tag */}
@@ -23,58 +23,53 @@ export const Hero: React.FC<HeroProps> = ({ content, onPlayShowreel }) => {
             <span className="eyebrow-accent">●</span>
             <span className="eyebrow-code">[ 01/06 ]</span>
             <span className="eyebrow-sep">•</span>
-            <span className="eyebrow-text">UM SÓ OPERADOR MULTIMÉDIA</span>
+            <span className="eyebrow-text">MULTIMÉDIA & CINEMA</span>
           </div>
 
-          {/* Massive Display Headline */}
+          {/* Clean, Punchy Display Headline */}
           <h1 className="uc-hero-headline reveal-up">
             CRIAMOS<br />
             CINEMA.<br />
-            ASSUMIMOS O<br />
-            <span className="text-crimson-gradient">RESULTADO.</span>
+            <span className="text-crimson-gradient">ASSUMIMOS O RESULTADO.</span>
           </h1>
 
-          {/* Elevated Narrative Lead Paragraph */}
+          {/* Crisp, Non-intrusive Narrative (Center remains completely clear) */}
           <p className="uc-hero-narrative reveal-up">
-            Do audiovisual cinematográfico em <strong>4K DCI</strong> e <strong>reels de alto engajamento</strong> à gestão estratégica de marcas e <strong>convites digitais interativos</strong>. Uma equipa coesa, visão unificada e foco absoluto no resultado final.
+            Produção 4K DCI, reels estratégicos de alta retenção e soluções visuais que aceleram marcas.
           </p>
 
-          {/* Pill Action Buttons (Exact United Carriers Shape: rounded 9999px) */}
+          {/* Action Pills */}
           <div className="uc-hero-pills reveal-up">
             <a href="#contacto" className="uc-pill uc-pill-solid">
-              <span>FALAR CONNOSCO</span>
+              <span>INICIAR PROJETO</span>
               <span className="uc-pill-arrow">↗</span>
             </a>
 
-            <a href="#pilares" className="uc-pill uc-pill-ghost">
-              <span>NOSSOS SERVIÇOS</span>
-            </a>
-
             <button
-              onClick={() => onPlayShowreel('Showreel Mizine Multimédia', content.showreelVideoUrl || '/media/videos/showreel.mp4')}
+              onClick={() => onPlayShowreel('Mizine Multimédia — Apresentação 4K DCI', content.showreelVideoUrl || '/media/videos/showreel.mp4')}
               className="uc-pill uc-pill-play"
-              title="Assistir Showreel"
+              title="Assistir Apresentação Mizine"
             >
               <span className="play-icon">▶</span>
-              <span>SHOWREEL</span>
+              <span>VER VÍDEO</span>
             </button>
           </div>
 
-          {/* Bottom Telemetry HUD Bar */}
+          {/* Compact Telemetry HUD Bar */}
           <div className="uc-hero-telemetry reveal-up">
             <div className="telemetry-item">
-              <span className="telemetry-val">4K DCI / 24FPS</span>
-              <span className="telemetry-lbl">Padrão Cinematográfico</span>
+              <span className="telemetry-val">4K DCI</span>
+              <span className="telemetry-lbl">Cinema 24FPS</span>
             </div>
             <div className="telemetry-div" />
             <div className="telemetry-item">
-              <span className="telemetry-val">+100% RETENÇÃO</span>
-              <span className="telemetry-lbl">Social Media Viral</span>
+              <span className="telemetry-val">+100%</span>
+              <span className="telemetry-lbl">Retenção Viral</span>
             </div>
             <div className="telemetry-div" />
             <div className="telemetry-item">
               <span className="telemetry-val">MAPUTO [HQ]</span>
-              <span className="telemetry-lbl">Sede & Operação Global</span>
+              <span className="telemetry-lbl">Base Global</span>
             </div>
           </div>
         </div>

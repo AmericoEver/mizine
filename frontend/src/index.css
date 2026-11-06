@@ -592,7 +592,7 @@ a {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  max-width: 650px;
+  max-width: 460px; /* Kept compact on left so center of screen is clean */
   z-index: 5;
   pointer-events: auto; /* CTAs, pills and links remain 100% interactive */
 }
@@ -606,7 +606,7 @@ a {
   font-weight: 700;
   letter-spacing: 2px;
   color: #9999a5;
-  margin-bottom: 22px;
+  margin-bottom: 20px;
 }
 
 .eyebrow-accent {
@@ -625,12 +625,12 @@ a {
 
 .uc-hero-headline {
   font-family: var(--font-display);
-  font-size: clamp(48px, 6.2vw, 92px);
+  font-size: clamp(34px, 4.2vw, 62px); /* Refined scale that never invades center */
   font-weight: 800;
-  line-height: 0.96;
+  line-height: 1.0;
   letter-spacing: -0.035em;
   color: #ffffff;
-  margin-bottom: 26px;
+  margin-bottom: 20px;
   text-transform: uppercase;
 }
 
@@ -642,11 +642,11 @@ a {
 
 .uc-hero-narrative {
   font-family: var(--font-body);
-  font-size: 16.5px;
-  line-height: 1.68;
+  font-size: 15px;
+  line-height: 1.6;
   color: #a3a3b2;
-  max-width: 530px;
-  margin: 0 0 34px 0;
+  max-width: 420px;
+  margin: 0 0 26px 0;
 }
 
 .uc-hero-narrative strong {

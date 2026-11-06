@@ -73,6 +73,23 @@ const GLOBAL_ARCS = [
   { fromLat: -25.96, fromLon: 32.58, toLat: 39.93, toLon: 32.85, color: '#34c759' }    // Maputo -> Ásia / Turquia (Distribuição)
 ];
 
+// CLIENT LOGOS DO PORTFÓLIO OFICIAL MOISÉS MABUNDA (FITA 24MM INTERLIGADA)
+const CLIENT_LOGOS = [
+  { name: 'CONFNES', src: '/media/clients/confnes.png' },
+  { name: 'UNE', src: '/media/clients/une.png' },
+  { name: 'INAS', src: '/media/clients/inas.png' },
+  { name: 'GOV. GAZA', src: '/media/clients/governo-gaza.png' },
+  { name: 'CREDMOZ', src: '/media/clients/credmoz.png' },
+  { name: 'CATALYST ACADEMY', src: '/media/clients/catalyst-academy.png' },
+  { name: 'GEEK EVER', src: '/media/clients/geek.png' },
+  { name: 'MOZCLEAN', src: '/media/clients/mozclean.png' },
+  { name: 'LIMPOPO TV', src: '/media/clients/limpopo-tv.png' },
+  { name: 'CPC - GAZA', src: '/media/clients/cpc-gaza.png' },
+  { name: 'QUAQUA', src: '/media/clients/quaqua.png' },
+  { name: 'FCDF', src: '/media/clients/fcdf.png' },
+  { name: 'HOME SERVICE', src: '/media/clients/home-service.png' }
+];
+
 interface CameraFlashStar {
   xNorm: number;
   yNorm: number;
@@ -203,6 +220,14 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
         size: 2.5 + Math.random() * 2.5
       });
     }
+
+    // Preload client brand logos for interconnected 24mm film reel
+    const clientLogoImages: { name: string; img: HTMLImageElement }[] = [];
+    CLIENT_LOGOS.forEach(item => {
+      const img = new Image();
+      img.src = item.src;
+      clientLogoImages.push({ name: item.name, img });
+    });
 
     const handleResize = () => {
       if (!canvas) return;
@@ -373,6 +398,17 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
       const scrollInd = document.querySelector('.uc-hero-scroll-indicator') as HTMLElement;
       if (scrollInd) {
         scrollInd.style.opacity = sp === 0 ? '1' : Math.max(0, 1 - sp * 2.2).toFixed(3);
+      }
+      const cloudTransitionEl = document.querySelector('.uc-hero-cloud-transition') as HTMLElement;
+      if (cloudTransitionEl) {
+        if (sp <= 0.05) {
+          cloudTransitionEl.style.opacity = '0';
+          cloudTransitionEl.style.transform = 'translateY(36px)';
+        } else {
+          const cFade = Math.min(1, (sp - 0.05) / 0.50);
+          cloudTransitionEl.style.opacity = cFade.toFixed(3);
+          cloudTransitionEl.style.transform = `translateY(${((1 - cFade) * 36).toFixed(1)}px)`;
+        }
       }
 
       const easeP = sp * sp * (3 - 2 * sp); // Hermite smoothstep
@@ -614,12 +650,15 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
       }
     }
 
-      // --- LAYER 3: 35MM FILM REEL INDEPENDENT COUNTER-ORBIT & INTERACTION ---
+      // --- LAYER 3: 24MM PHOTOGRAPHIC FILM REEL INTERCONNECTED DESCENT & CLIENT LOGOS ---
       const filmFrames = 54;
-      const filmOrbitRadius = radius * (1.18 + sp * 0.45);
-      const filmWidth = radius * 0.076;
-      const filmInclination = -0.26;
-      const filmAlpha = Math.max(0, 1 - sp * 2.2);
+      // As scroll proceeds, the 24mm reel uncurls, expands and descends gracefully towards the bottom
+      const filmDescendY = easeP * height * 0.50;
+      const filmCenterY = cy + filmDescendY;
+      const currentOrbitRadius = radius * (1.18 + easeP * 0.65);
+      const currentFilmWidth = radius * (0.076 + easeP * 0.038);
+      const currentFilmInclination = -0.26 * (1 - easeP * 0.88);
+      const filmAlpha = 1.0;
 
       interface FilmQuad {
         tl: { x: number; y: number; z: number };
@@ -643,11 +682,11 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
         const a2 = ((i + 0.85) / filmFrames) * Math.PI * 2 - filmOrbitAngle;
 
         const getFilmEdge = (angle: number, offset: number) => {
-          const ox = filmOrbitRadius * Math.cos(angle);
-          const oz = filmOrbitRadius * Math.sin(angle);
+          const ox = currentOrbitRadius * Math.cos(angle);
+          const oz = currentOrbitRadius * Math.sin(angle);
           const x0 = ox;
-          const y0 = oz * Math.sin(filmInclination) + offset * Math.cos(filmInclination);
-          const z0 = oz * Math.cos(filmInclination) - offset * Math.sin(filmInclination);
+          const y0 = oz * Math.sin(currentFilmInclination) + offset * Math.cos(currentFilmInclination);
+          const z0 = oz * Math.cos(currentFilmInclination) - offset * Math.sin(currentFilmInclination);
 
           const xCam = x0 * cosMouseY + z0 * sinMouseY;
           const zCamTemp = -x0 * sinMouseY + z0 * cosMouseY;
@@ -657,14 +696,14 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
           return { x: xCam, y: yCam, z: zCam };
         };
 
-        const tl = getFilmEdge(a1, filmWidth * 0.5);
-        const tr = getFilmEdge(a2, filmWidth * 0.5);
-        const br = getFilmEdge(a2, -filmWidth * 0.5);
-        const bl = getFilmEdge(a1, -filmWidth * 0.5);
+        const tl = getFilmEdge(a1, currentFilmWidth * 0.5);
+        const tr = getFilmEdge(a2, currentFilmWidth * 0.5);
+        const br = getFilmEdge(a2, -currentFilmWidth * 0.5);
+        const bl = getFilmEdge(a1, -currentFilmWidth * 0.5);
 
         const centerZ = (tl.z + tr.z + br.z + bl.z) / 4;
         const screenCenterX = cx + (tl.x + tr.x + br.x + bl.x) / 4;
-        const screenCenterY = cy + (tl.y + tr.y + br.y + bl.y) / 4;
+        const screenCenterY = filmCenterY + (tl.y + tr.y + br.y + bl.y) / 4;
 
         filmQuads.push({ tl, tr, br, bl, centerZ, index: i, screenCenterX, screenCenterY });
       }
@@ -700,7 +739,7 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
 
         const scalePoint = (p: { x: number; y: number }) => ({
           px: cx + centerX + (p.x - centerX) * scale,
-          py: cy + centerY + (p.y - centerY) * scale
+          py: filmCenterY + centerY + (p.y - centerY) * scale
         });
 
         const pTL = scalePoint(q.tl);
@@ -708,8 +747,12 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
         const pBR = scalePoint(q.br);
         const pBL = scalePoint(q.bl);
 
+        const daylightTransition = Math.max(0, Math.min(1, (easeP - 0.10) / 0.50));
+
         ctx.save();
-        ctx.globalAlpha = isBack ? filmAlpha * 0.5 : filmAlpha;
+        ctx.globalAlpha = isBack
+          ? (filmAlpha * Math.max(0.08, 1 - daylightTransition * 0.85) * 0.45)
+          : filmAlpha;
 
         ctx.beginPath();
         ctx.moveTo(pTL.px, pTL.py);
@@ -718,22 +761,37 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
         ctx.lineTo(pBL.px, pBL.py);
         ctx.closePath();
 
-        ctx.fillStyle = isBack
-          ? 'rgba(10, 10, 16, 0.50)'
-          : (isHovered ? 'rgba(20, 20, 32, 0.98)' : 'rgba(14, 14, 20, 0.94)');
+        // In space: dark cinematic celluloid. In daylight: crisp white celluloid card!
+        if (daylightTransition > 0.45) {
+          ctx.fillStyle = '#ffffff';
+        } else if (daylightTransition > 0.05) {
+          const t = daylightTransition / 0.45;
+          ctx.fillStyle = `rgba(${Math.round(14 + t * 241)}, ${Math.round(14 + t * 241)}, ${Math.round(20 + t * 235)}, 0.96)`;
+        } else {
+          ctx.fillStyle = isBack
+            ? 'rgba(10, 10, 16, 0.50)'
+            : (isHovered ? 'rgba(20, 20, 32, 0.98)' : 'rgba(14, 14, 20, 0.94)');
+        }
         ctx.fill();
 
-        ctx.strokeStyle = isHovered
-          ? '#00d4ff'
-          : (isBack ? 'rgba(255, 140, 20, 0.25)' : 'rgba(255, 140, 40, 0.85)');
-        ctx.lineWidth = isHovered ? 2.2 : 1;
+        // Film Frame Outer Border
+        if (daylightTransition > 0.45) {
+          ctx.strokeStyle = isHovered ? '#ff3b30' : 'rgba(220, 38, 38, 0.65)';
+          ctx.lineWidth = isHovered ? 2.2 : 1.2;
+        } else {
+          ctx.strokeStyle = isHovered
+            ? '#00d4ff'
+            : (isBack ? 'rgba(255, 140, 20, 0.25)' : 'rgba(255, 140, 40, 0.85)');
+          ctx.lineWidth = isHovered ? 2.2 : 1;
+        }
         if (isHovered) {
-          ctx.shadowColor = '#00d4ff';
+          ctx.shadowColor = daylightTransition > 0.45 ? '#ff3b30' : '#00d4ff';
           ctx.shadowBlur = 12;
         }
         ctx.stroke();
         ctx.shadowBlur = 0;
 
+        // Frame Inner Window (where video or client logo is displayed)
         const inset = 0.18;
         const wTLx = pTL.px + (pBL.px - pTL.px) * inset + (pTR.px - pTL.px) * 0.15;
         const wTLy = pTL.py + (pBL.py - pTL.py) * inset + (pTR.py - pTL.py) * 0.15;
@@ -751,15 +809,48 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
         ctx.lineTo(wBLx, wBLy);
         ctx.closePath();
 
-        const isCyan = q.index % 2 === 0;
-        ctx.fillStyle = isHovered
-          ? 'rgba(0, 212, 255, 0.45)'
-          : (isCyan
-            ? (isBack ? 'rgba(0, 212, 255, 0.10)' : 'rgba(0, 212, 255, 0.22)')
-            : (isBack ? 'rgba(255, 120, 0, 0.10)' : 'rgba(255, 120, 0, 0.25)'));
-        ctx.fill();
+        if (daylightTransition > 0.35) {
+          ctx.fillStyle = '#ffffff';
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(0, 0, 0, 0.08)';
+          ctx.lineWidth = 0.8;
+          ctx.stroke();
+        } else {
+          const isCyan = q.index % 2 === 0;
+          ctx.fillStyle = isHovered
+            ? 'rgba(0, 212, 255, 0.45)'
+            : (isCyan
+              ? (isBack ? 'rgba(0, 212, 255, 0.10)' : 'rgba(0, 212, 255, 0.22)')
+              : (isBack ? 'rgba(255, 120, 0, 0.10)' : 'rgba(255, 120, 0, 0.25)'));
+          ctx.fill();
+        }
 
-        if (isHovered) {
+        // DRAW CLIENT LOGO IN THE FRAME WINDOW ON TRANSITION / DAYLIGHT
+        if (daylightTransition > 0.10 && !isBack) {
+          const logoObj = clientLogoImages[q.index % clientLogoImages.length];
+          if (logoObj && logoObj.img.complete && logoObj.img.naturalWidth > 0) {
+            ctx.save();
+            const logoAlpha = Math.min(1, (daylightTransition - 0.10) / 0.35);
+            ctx.globalAlpha = logoAlpha;
+            const midX = (wTLx + wTRx + wBRx + wBLx) / 4;
+            const midY = (wTLy + wTRy + wBRy + wBLy) / 4;
+            const qw = Math.hypot(wTRx - wTLx, wTRy - wTLy);
+            const qh = Math.hypot(wBLx - wTLx, wBLy - wTLy);
+            const maxW = Math.max(16, qw * 0.72);
+            const maxH = Math.max(12, qh * 0.68);
+            const aspect = logoObj.img.naturalWidth / (logoObj.img.naturalHeight || 1);
+            let dw = maxW;
+            let dh = dw / aspect;
+            if (dh > maxH) {
+              dh = maxH;
+              dw = dh * aspect;
+            }
+            ctx.drawImage(logoObj.img, midX - dw / 2, midY - dh / 2, dw, dh);
+            ctx.restore();
+          }
+        }
+
+        if (isHovered && daylightTransition <= 0.35) {
           ctx.fillStyle = '#ffffff';
           ctx.beginPath();
           const midX = (wTLx + wTRx + wBRx + wBLx) / 4;
@@ -784,18 +875,27 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
           ctx.fillText(tipText, midX, midY - 18);
         }
 
-        ctx.fillStyle = '#020205';
-        const spTopX = pTL.px + (pTR.px - pTL.px) * 0.5 + (pBL.px - pTL.px) * 0.08;
-        const spTopY = pTL.py + (pTR.py - pTL.py) * 0.5 + (pBL.py - pTL.py) * 0.08;
-        ctx.beginPath();
-        ctx.arc(spTopX, spTopY, 1.2 * scale, 0, Math.PI * 2);
-        ctx.fill();
+        // Authentic 24mm Film Sprockets Perforations (Top & Bottom)
+        const sprocketW = Math.max(2.2, 4.2 * scale);
+        const sprocketH = Math.max(1.8, 3.0 * scale);
+        const spFill = daylightTransition > 0.4 ? '#181822' : '#020205';
 
-        const spBotX = pBL.px + (pBR.px - pBL.px) * 0.5 - (pBL.px - pTL.px) * 0.08;
-        const spBotY = pBL.py + (pBR.py - pBL.py) * 0.5 - (pBL.py - pTL.py) * 0.08;
-        ctx.beginPath();
-        ctx.arc(spBotX, spBotY, 1.2 * scale, 0, Math.PI * 2);
-        ctx.fill();
+        // Top sprockets (2 holes)
+        ctx.fillStyle = spFill;
+        const spTopX1 = pTL.px + (pTR.px - pTL.px) * 0.30 + (pBL.px - pTL.px) * 0.08;
+        const spTopY1 = pTL.py + (pTR.py - pTL.py) * 0.30 + (pBL.py - pTL.py) * 0.08;
+        const spTopX2 = pTL.px + (pTR.px - pTL.px) * 0.70 + (pBL.px - pTL.px) * 0.08;
+        const spTopY2 = pTL.py + (pTR.py - pTL.py) * 0.70 + (pBL.py - pTL.py) * 0.08;
+        ctx.fillRect(spTopX1 - sprocketW / 2, spTopY1 - sprocketH / 2, sprocketW, sprocketH);
+        ctx.fillRect(spTopX2 - sprocketW / 2, spTopY2 - sprocketH / 2, sprocketW, sprocketH);
+
+        // Bottom sprockets (2 holes)
+        const spBotX1 = pBL.px + (pBR.px - pBL.px) * 0.30 - (pBL.px - pTL.px) * 0.08;
+        const spBotY1 = pBL.py + (pBR.py - pBL.py) * 0.30 - (pBL.py - pTL.py) * 0.08;
+        const spBotX2 = pBL.px + (pBR.px - pBL.px) * 0.70 - (pBL.px - pTL.px) * 0.08;
+        const spBotY2 = pBL.py + (pBR.py - pBL.py) * 0.70 - (pBL.py - pTL.py) * 0.08;
+        ctx.fillRect(spBotX1 - sprocketW / 2, spBotY1 - sprocketH / 2, sprocketW, sprocketH);
+        ctx.fillRect(spBotX2 - sprocketW / 2, spBotY2 - sprocketH / 2, sprocketW, sprocketH);
 
         ctx.restore();
       };
@@ -957,13 +1057,6 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
         }
       }
 
-      // --- PHASE E: DRAW FRONT HALF OF FILM REEL (Z >= 0) ---
-      for (let i = 0; i < filmQuads.length; i++) {
-        if (filmQuads[i].centerZ >= 0) {
-          drawFilmQuad(filmQuads[i], false);
-        }
-      }
-
       // --- PHASE F: TECHNICAL LOCATION BADGES (ORIGINATING IN MOÇAMBIQUE) ---
       for (let i = 0; i < markerVectors.length; i++) {
         const m = markerVectors[i];
@@ -1117,7 +1210,7 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
       // --- PHASE G: REALISTIC VOLUMETRIC CLOUDS THAT DISGUISE THE SEAM COMPLETELY ---
       // As user scrolls, clouds rise from the bottom, billow across the viewport,
       // and completely dissolve the dark space into pure daylight white #f8f9fc!
-      const cloudDeckAlpha = Math.min(1, Math.max(0, sp * 1.6));
+      const cloudDeckAlpha = sp <= 0.05 ? 0 : Math.min(1, Math.max(0, (sp - 0.05) * 1.8));
       if (cloudDeckAlpha > 0.01) {
         ctx.save();
 
@@ -1177,9 +1270,16 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
         ctx.restore();
       }
 
-      // --- PHASE H: FULL WHITE DAYLIGHT WASH AS USER PENETRATES DEEP CLOUDS (sp > 0.70) ---
-      if (sp > 0.70) {
-        const daylightWash = Math.min(1, (sp - 0.70) / 0.25);
+      // --- PHASE G2: 24MM PHOTOGRAPHIC FILM REEL WITH CLIENT LOGOS DESCENDING OVER CLOUDS ---
+      for (let i = 0; i < filmQuads.length; i++) {
+        if (filmQuads[i].centerZ >= 0) {
+          drawFilmQuad(filmQuads[i], false);
+        }
+      }
+
+      // --- PHASE H: FULL WHITE DAYLIGHT WASH AS USER PENETRATES DEEP CLOUDS (sp > 0.72) ---
+      if (sp > 0.72) {
+        const daylightWash = Math.min(1, (sp - 0.72) / 0.26);
         ctx.save();
         ctx.fillStyle = `rgba(248, 249, 252, ${daylightWash * 1.0})`;
         ctx.fillRect(0, 0, width, height);
@@ -1187,30 +1287,31 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
       }
 
       // --- BOLD INTEGRATED AEROSPACE TELEMETRY HUD // POUSO EM MOÇAMBIQUE [HQ] ---
-      // Fades in during descent (sp > 0.22) and fades out cleanly (sp < 0.65)
-      // safely in the upper-mid screen, guaranteeing ZERO collision with the bottom boundary!
-      if (sp > 0.20 && sp < 0.65) {
-        const hudAlpha = Math.sin(Math.PI * ((sp - 0.20) / 0.45));
+      // Centered exactly in the middle of the viewport with gentle, smooth sinusoidal transition!
+      if (sp > 0.16 && sp < 0.62) {
+        const hudNorm = (sp - 0.16) / 0.46;
+        const hudAlpha = Math.sin(Math.PI * hudNorm) * 0.88;
         ctx.save();
         ctx.globalAlpha = hudAlpha;
 
-        const hudW = Math.min(width * 0.92, 540);
-        const hudH = 78;
+        const hudW = Math.min(width * 0.90, 520);
+        const hudH = 76;
         const hudX = (width - hudW) / 2;
-        const hudY = Math.min(height * 0.36, height - 220);
+        const hudY = (height - hudH) / 2; // EXACT CENTER OF SCREEN!
 
         // Glassmorphism HUD Backdrop
-        ctx.fillStyle = 'rgba(2, 6, 18, 0.92)';
+        ctx.fillStyle = 'rgba(2, 6, 18, 0.90)';
         ctx.fillRect(hudX, hudY, hudW, hudH);
 
-        // Neon Cyan Border with Corner Brackets
-        ctx.strokeStyle = '#00d4ff';
-        ctx.lineWidth = 1.4;
+        // Sleek hairline cyan border
+        ctx.strokeStyle = 'rgba(0, 212, 255, 0.75)';
+        ctx.lineWidth = 1.2;
         ctx.strokeRect(hudX, hudY, hudW, hudH);
 
         // Glowing Corner Brackets
-        const cLen = 14;
-        ctx.lineWidth = 2.5;
+        const cLen = 12;
+        ctx.lineWidth = 2.2;
+        ctx.strokeStyle = '#00d4ff';
         // TL
         ctx.beginPath(); ctx.moveTo(hudX, hudY + cLen); ctx.lineTo(hudX, hudY); ctx.lineTo(hudX + cLen, hudY); ctx.stroke();
         // TR
@@ -1223,17 +1324,16 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
         // Top Telemetry Header Row
         const isBlink = Math.sin(time * 6) > 0;
         ctx.font = '700 9px "JetBrains Mono", monospace';
-        ctx.fillStyle = isBlink ? '#ff3b30' : 'rgba(255, 59, 48, 0.4)';
+        ctx.fillStyle = isBlink ? '#ff3b30' : 'rgba(255, 59, 48, 0.45)';
         ctx.textAlign = 'left';
         ctx.fillText('● REC', hudX + 16, hudY + 18);
 
         ctx.fillStyle = '#00d4ff';
         ctx.fillText('// TELEMETRIA AEROESPACIAL MIZINE • ENTRADA ATMOSFÉRICA', hudX + 62, hudY + 18);
 
-        // Big Altitude Readout
-        const altProgress = (sp - 0.36) / 0.58;
-        const altKm = Math.max(0.8, (1 - altProgress) * 12.85).toFixed(altProgress > 0.85 ? 2 : 1);
-        const altDisplay = altProgress > 0.92 ? `${Math.round((1 - altProgress) * 12850)} M` : `${altKm} KM`;
+        // Big Altitude Readout (Smooth countdown)
+        const altKm = (22.5 * (1 - hudNorm) + 1.2).toFixed(1);
+        const altDisplay = hudNorm > 0.90 ? `${Math.round((1 - hudNorm) * 22500)} M` : `${altKm} KM`;
 
         ctx.font = '900 22px "Space Grotesk", sans-serif';
         ctx.fillStyle = '#ffffff';
@@ -1242,7 +1342,7 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
         // Mach Speed & Target Coordinates
         ctx.font = '600 9.5px "JetBrains Mono", monospace';
         ctx.fillStyle = '#ff9500';
-        const mach = Math.max(1.2, (24.4 - altProgress * 21.8)).toFixed(1);
+        const mach = (14.2 * (1 - hudNorm) + 1.1).toFixed(1);
         ctx.fillText(`VELOCIDADE: MACH ${mach}`, hudX + 16, hudY + 64);
 
         ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
@@ -1257,7 +1357,7 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
         ctx.fillRect(hudX + 16, hudY + hudH - 5, hudW - 32, 2.5);
 
         ctx.fillStyle = '#00d4ff';
-        ctx.fillRect(hudX + 16, hudY + hudH - 5, (hudW - 32) * altProgress, 2.5);
+        ctx.fillRect(hudX + 16, hudY + hudH - 5, (hudW - 32) * hudNorm, 2.5);
 
         ctx.restore();
       }

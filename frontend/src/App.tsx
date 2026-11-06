@@ -18,6 +18,7 @@ import { Contact } from './components/Contact';
 import { Footer } from './components/Footer';
 import { Lightbox } from './components/Lightbox';
 import { Preloader } from './components/Preloader';
+import { CustomCursor } from './components/CustomCursor';
 
 import { AdminLogin } from './admin/AdminLogin';
 import { AdminDashboard } from './admin/AdminDashboard';
@@ -171,6 +172,7 @@ export function App() {
   // Página pública 100% inspirada na estética e narrativa de United Carriers
   return (
     <div className="mizine-app">
+      <CustomCursor />
       {showPreloader && <Preloader onComplete={() => setShowPreloader(false)} />}
       <Navbar />
       <Hero content={content.hero} onPlayShowreel={handleOpenVideo} />

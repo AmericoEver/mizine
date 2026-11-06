@@ -10,35 +10,11 @@ export const Navbar: React.FC<NavbarProps> = ({ onBackToSite, isAdminView }) => 
 
   return (
     <header className="uc-main-header">
-      {/* Top Technical Wire Ticker (At the very top of the screen) */}
-      {!isAdminView && (
-        <div className="uc-top-ticker">
-          <div className="wrap uc-ticker-inner">
-            <div className="uc-ticker-left">
-              <span className="ticker-badge">NEWS:</span>
-              <span className="ticker-text">
-                PRODUÇÃO CINEMATOGRÁFICA 4K DCI & REELS DE ALTA RETENÇÃO EM MOÇAMBIQUE E ÁFRICA AUSTRAL...
-              </span>
-            </div>
-            <div className="uc-ticker-right">
-              <a href="#simulador" className="ticker-link">SIMULADOR DE ORÇAMENTO</a>
-              <span className="ticker-sep">|</span>
-              <span className="ticker-code">ESTÚDIO CENTRAL [MZ]</span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Main Navigation Row */}
       <nav className="uc-nav-header">
         <div className="wrap uc-nav-row">
-          {/* Brand Wordmark (United Carriers style) */}
+          {/* Brand Wordmark: Apenas MIZINE (Sem imagem, sem 'Multimédia') */}
           <a className="uc-brand" href={isAdminView ? '/#topo' : '#topo'}>
-            <img src="/logo-m.jpg" alt="M" className="uc-brand-avatar" />
-            <div className="uc-brand-group">
-              <span className="uc-brand-title">MIZINE</span>
-              <span className="uc-brand-sub">MULTIMÉDIA</span>
-            </div>
+            <span className="uc-brand-title">MIZINE</span>
           </a>
 
           {!isAdminView ? (

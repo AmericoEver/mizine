@@ -10,7 +10,7 @@ interface HeroProps {
 export const Hero: React.FC<HeroProps> = ({ content, onPlayShowreel }) => {
   return (
     <section className="uc-hero-section" id="topo">
-      {/* Deep Space Starfield & Grid Matrix */}
+      {/* Deep Space Void Canvas & Subdued Matrix */}
       <div className="uc-hero-void-bg">
         <div className="uc-hero-stars" />
         <div className="uc-hero-wiregrid" />
@@ -23,10 +23,12 @@ export const Hero: React.FC<HeroProps> = ({ content, onPlayShowreel }) => {
           {/* Eyebrow Pill / Monospace Tag */}
           <div className="uc-hero-eyebrow reveal-up">
             <span className="eyebrow-accent">●</span>
+            <span className="eyebrow-code">[ 01/06 ]</span>
+            <span className="eyebrow-sep">•</span>
             <span className="eyebrow-text">UM SÓ OPERADOR MULTIMÉDIA</span>
           </div>
 
-          {/* Massive Geometric Display Headline */}
+          {/* Massive Display Headline */}
           <h1 className="uc-hero-headline reveal-up">
             CRIAMOS<br />
             CINEMA.<br />
@@ -34,9 +36,9 @@ export const Hero: React.FC<HeroProps> = ({ content, onPlayShowreel }) => {
             <span className="text-crimson-gradient">RESULTADO.</span>
           </h1>
 
-          {/* Narrative Lead Paragraph */}
+          {/* Elevated Narrative Lead Paragraph */}
           <p className="uc-hero-narrative reveal-up">
-            Video making cinematográfico 4K, gestão de redes sociais com foco em retenção e convites digitais exclusivos, unificados sob uma única produtora de referência.
+            Do audiovisual cinematográfico em <strong>4K DCI</strong> e <strong>reels de alto engajamento</strong> à gestão estratégica de marcas e <strong>convites digitais interativos</strong>. Uma equipa coesa, visão unificada e foco absoluto no resultado final.
           </p>
 
           {/* Pill Action Buttons (Exact United Carriers Shape: rounded 9999px) */}
@@ -60,26 +62,26 @@ export const Hero: React.FC<HeroProps> = ({ content, onPlayShowreel }) => {
             </button>
           </div>
 
-          {/* Bottom Coordinate Bar */}
+          {/* Bottom Telemetry HUD Bar */}
           <div className="uc-hero-telemetry reveal-up">
             <div className="telemetry-item">
-              <span className="telemetry-val">4K DCI</span>
-              <span className="telemetry-lbl">Resolução Master</span>
+              <span className="telemetry-val">4K DCI / 24FPS</span>
+              <span className="telemetry-lbl">Padrão Cinematográfico</span>
             </div>
             <div className="telemetry-div" />
             <div className="telemetry-item">
-              <span className="telemetry-val">100%</span>
-              <span className="telemetry-lbl">Retenção Viral</span>
+              <span className="telemetry-val">+100% RETENÇÃO</span>
+              <span className="telemetry-lbl">Social Media Viral</span>
             </div>
             <div className="telemetry-div" />
             <div className="telemetry-item">
-              <span className="telemetry-val">MAPUTO</span>
-              <span className="telemetry-lbl">Sede Operacional</span>
+              <span className="telemetry-val">MAPUTO [HQ]</span>
+              <span className="telemetry-lbl">Sede & Operação Global</span>
             </div>
           </div>
         </div>
 
-        {/* Right Column: Giant Interactive 3D Glowing Particle Sphere */}
+        {/* Right Column: GIANT 3D GLOWING PARTICLE SPHERE */}
         <div className="uc-hero-right reveal-fade">
           <HeroGlobe />
         </div>

@@ -5,6 +5,7 @@ interface WorldPoint {
   lat: number;
   lon: number;
   moz?: boolean;
+  coast?: boolean;
 }
 
 interface Marker3D {
@@ -26,7 +27,28 @@ const MARKERS: Marker3D[] = [
     isHQ: true
   },
   {
-    name: 'EUROPA & UK',
+    name: 'SOUTH AFRICA',
+    sub: 'África Austral',
+    lat: -29.0,
+    lon: 26.0,
+    color: '#ff9500'
+  },
+  {
+    name: 'KENYA',
+    sub: 'África Oriental',
+    lat: -1.28,
+    lon: 36.82,
+    color: '#ff9500'
+  },
+  {
+    name: 'EGYPT',
+    sub: 'Norte de África',
+    lat: 30.04,
+    lon: 31.23,
+    color: '#ff9500'
+  },
+  {
+    name: 'EUROPE & UK',
     sub: 'Parcerias Audiovisuais',
     lat: 51.5,
     lon: -0.12,
@@ -40,26 +62,20 @@ const MARKERS: Marker3D[] = [
     color: '#ff9500'
   },
   {
-    name: 'MÉDIO ORIENTE & ASIA',
-    sub: 'Campanhas & Expansão',
-    lat: 25.20,
-    lon: 55.27,
+    name: 'TURKEY & ASIA',
+    sub: 'Expansão & Audiovisual',
+    lat: 39.93,
+    lon: 32.85,
     color: '#af52de'
-  },
-  {
-    name: 'ÁFRICA AUSTRAL',
-    sub: 'Cobertura Regional 4K',
-    lat: -26.20,
-    lon: 28.04,
-    color: '#34c759'
   }
 ];
 
 const GLOBAL_ARCS = [
-  { targetLat: 51.5, targetLon: -0.12, color: '#00d4ff' },   // Europe/London
-  { targetLat: -23.55, targetLon: -46.63, color: '#ff9500' }, // Americas/SP
-  { targetLat: 25.20, targetLon: 55.27, color: '#af52de' },  // Middle East/Dubai
-  { targetLat: -26.20, targetLon: 28.04, color: '#34c759' }  // Regional Africa/JHB
+  { fromLat: -25.96, fromLon: 32.58, toLat: 51.5, toLon: -0.12, color: '#ff9500' }, // Maputo -> Europe
+  { fromLat: -25.96, fromLon: 32.58, toLat: -23.55, toLon: -46.63, color: '#ff9500' }, // Maputo -> Americas
+  { fromLat: 30.04, fromLon: 31.23, toLat: -1.28, toLon: 36.82, color: '#ff9500' }, // Egypt -> Kenya
+  { fromLat: 51.5, fromLon: -0.12, toLat: 39.93, toLon: 32.85, color: '#ff9500' }, // Europe -> Turkey
+  { fromLat: -25.96, fromLon: 32.58, toLat: -29.0, toLon: 26.0, color: '#ff3b30' } // Maputo -> South Africa
 ];
 
 export const HeroGlobe: React.FC = () => {
@@ -77,8 +93,8 @@ export const HeroGlobe: React.FC = () => {
 
     // Stable planetary tilt: natural Earth axial tilt (~16 deg)
     let rotX = -0.16;
-    // Initial Y rotation so Mozambique (-25.96 lat, 32.58 lon) is visible and facing front
-    let rotY = -Math.PI * 0.12;
+    // Initial Y rotation so Mozambique (-25.96 lat, 32.58 lon) faces front & center
+    let rotY = -Math.PI * 0.10;
     let targetRotY = rotY;
     let targetRotX = rotX;
     let isDragging = false;
@@ -88,7 +104,7 @@ export const HeroGlobe: React.FC = () => {
     // Counter-rotation: Planet rotates to the LEFT, film reel orbits to the RIGHT
     const planetRotateSpeed = -0.0022; // Planet rotates left
     let filmOrbitAngle = 0;
-    const filmOrbitSpeed = 0.0046; // Film orbits right (opposite direction)
+    const filmOrbitSpeed = 0.0048; // Film orbits right (opposite direction)
 
     // Mathematically correct conversion: North Pole at TOP (-Y in screen space), South Pole at BOTTOM (+Y)
     const latLonToVec = (lat: number, lon: number) => {
@@ -102,7 +118,7 @@ export const HeroGlobe: React.FC = () => {
       };
     };
 
-    // Precompute 3D unit vectors for all 3,500+ real continent points
+    // Precompute 3D unit vectors for all 9,200+ coastline and continental points
     const worldPoints = (worldData as WorldPoint[]).map(pt => ({
       ...pt,
       vec: latLonToVec(pt.lat, pt.lon)
@@ -113,8 +129,6 @@ export const HeroGlobe: React.FC = () => {
       ...m,
       vec: latLonToVec(m.lat, m.lon)
     }));
-
-    const hqVec = latLonToVec(-25.96, 32.58);
 
     // Canvas resize
     const handleResize = () => {
@@ -150,7 +164,6 @@ export const HeroGlobe: React.FC = () => {
         const rect = canvas.getBoundingClientRect();
         const nx = (e.clientX - rect.left) / width - 0.5;
         const ny = (e.clientY - rect.top) / height - 0.5;
-        // Subtle, stable response to mouse (NO wild vertical flapping)
         targetRotX = -0.16 + ny * 0.10;
         targetRotY += nx * 0.0006;
       }
@@ -211,14 +224,14 @@ export const HeroGlobe: React.FC = () => {
 
       rotY += (targetRotY - rotY) * 0.08;
       rotX += (targetRotX - rotX) * 0.08;
-      // Clamp tilt so the planet always stays upright with North at the top
       rotX = Math.max(-0.35, Math.min(0.1, rotX));
 
       ctx.clearRect(0, 0, width, height);
 
-      const cx = width * 0.54;
+      // COLOSSAL SCALE (Matching United Carriers reference image)
+      const cx = width * 0.64;
       const cy = height * 0.52;
-      const radius = Math.min(width, height) * 0.43;
+      const radius = Math.min(width, height) * 0.68;
 
       const cosY = Math.cos(rotY);
       const sinY = Math.sin(rotY);
@@ -251,11 +264,10 @@ export const HeroGlobe: React.FC = () => {
       ctx.fillRect(0, 0, width, height);
 
       // --- LAYER 2: 35MM FILM REEL ORBIT CALCULATION ---
-      // 52 celluloid frames forming a closed 3D ribbon loop
-      const filmFrames = 52;
-      const filmOrbitRadius = radius * 1.25;
-      const filmWidth = radius * 0.085;
-      const filmInclination = 0.28; // ~16 deg stable celestial orbit (NO wild wobbling)
+      const filmFrames = 54;
+      const filmOrbitRadius = radius * 1.18;
+      const filmWidth = radius * 0.076;
+      const filmInclination = 0.26; // ~15 deg stable celestial orbit
 
       interface FilmQuad {
         tl: { x: number; y: number; z: number };
@@ -276,11 +288,9 @@ export const HeroGlobe: React.FC = () => {
         const getFilmEdge = (angle: number, offset: number) => {
           const ox = filmOrbitRadius * Math.cos(angle);
           const oz = filmOrbitRadius * Math.sin(angle);
-          // Fixed celestial inclination (stable planetary ring)
           const x0 = ox;
           const y0 = oz * Math.sin(filmInclination) + offset * Math.cos(filmInclination);
           const z0 = oz * Math.cos(filmInclination) - offset * Math.sin(filmInclination);
-          // Apply subtle viewer perspective rotation
           return rotate3D({ x: x0, y: y0, z: z0 }, cosY, sinY, cosX, sinX);
         };
 
@@ -298,7 +308,6 @@ export const HeroGlobe: React.FC = () => {
         py: cy + p.y
       });
 
-      // Smooth, natural rendering function (NO hard cuts!)
       const drawFilmQuad = (q: FilmQuad, isBack: boolean) => {
         const pTL = projectFilmPoint(q.tl);
         const pTR = projectFilmPoint(q.tr);
@@ -346,7 +355,7 @@ export const HeroGlobe: React.FC = () => {
           : (isBack ? 'rgba(255, 120, 0, 0.10)' : 'rgba(255, 120, 0, 0.25)');
         ctx.fill();
 
-        // 35mm Sprocket Holes (Perforações da fita de gravação)
+        // 35mm Sprocket Holes
         ctx.fillStyle = '#020205';
         const spTopX = pTL.px + (pTR.px - pTL.px) * 0.5 + (pBL.px - pTL.px) * 0.08;
         const spTopY = pTL.py + (pTR.py - pTL.py) * 0.5 + (pBL.py - pTL.py) * 0.08;
@@ -364,7 +373,6 @@ export const HeroGlobe: React.FC = () => {
       };
 
       // --- PHASE A: DRAW BACK HALF OF FILM REEL (Z < 0) ---
-      // Drawn behind the planet
       for (let i = 0; i < filmQuads.length; i++) {
         if (filmQuads[i].centerZ < 0) {
           drawFilmQuad(filmQuads[i], true);
@@ -372,7 +380,7 @@ export const HeroGlobe: React.FC = () => {
       }
 
       // --- PHASE B: SOLID PLANET SPHERE CORE ---
-      // Opaque planetary sphere that naturally and smoothly passes IN FRONT of the back film ring!
+      // Opaque planetary sphere that naturally masks the back of the film without hard cuts!
       const coreGrad = ctx.createRadialGradient(cx, cy, radius * 0.3, cx, cy, radius);
       coreGrad.addColorStop(0, 'rgba(2, 3, 6, 0.99)');
       coreGrad.addColorStop(0.75, 'rgba(2, 3, 7, 0.97)');
@@ -404,12 +412,13 @@ export const HeroGlobe: React.FC = () => {
       ctx.stroke();
       ctx.restore();
 
-      // --- PHASE C: 3,500+ REAL CONTINENTAL POINTS ---
+      // --- PHASE C: 9,200+ REAL CONTINENT & COASTLINE POINTS ---
       interface ProjPt {
         px: number;
         py: number;
         z: number;
         moz?: boolean;
+        coast?: boolean;
       }
 
       const projectedPoints: ProjPt[] = [];
@@ -418,13 +427,13 @@ export const HeroGlobe: React.FC = () => {
         const pt = worldPoints[i];
         const rot = rotate3D(pt.vec, cosY, sinY, cosX, sinX);
 
-        // Only draw points on the front/visible hemisphere of the planet
         if (rot.z > -0.05) {
           projectedPoints.push({
             px: cx + rot.x * radius,
             py: cy + rot.y * radius,
             z: rot.z,
-            moz: pt.moz
+            moz: pt.moz,
+            coast: pt.coast
           });
         }
       }
@@ -442,13 +451,11 @@ export const HeroGlobe: React.FC = () => {
           const rMoz = 2.4 * pulse * (0.8 + depth * 0.4);
 
           ctx.save();
-          // Glowing red aura
           ctx.beginPath();
           ctx.arc(pt.px, pt.py, rMoz * 1.8, 0, Math.PI * 2);
           ctx.fillStyle = `rgba(255, 59, 48, ${0.45 * depth})`;
           ctx.fill();
 
-          // Solid bright red core dot
           ctx.beginPath();
           ctx.arc(pt.px, pt.py, rMoz, 0, Math.PI * 2);
           ctx.fillStyle = '#ff3b30';
@@ -457,61 +464,66 @@ export const HeroGlobe: React.FC = () => {
           ctx.fill();
           ctx.restore();
         } else {
-          // Standard Continent Dot
-          const r = 1.15 * (0.6 + depth * 0.55);
-          let alpha = Math.pow(depth, 1.4) * 0.85;
+          // Standard Continent Dot (Coastline perimeter dots are brighter and crisper!)
+          const isCoast = pt.coast;
+          const r = (isCoast ? 1.35 : 1.05) * (0.6 + depth * 0.55);
+          let alpha = (isCoast ? 0.95 : 0.65) * Math.pow(depth, 1.4);
 
           const dist = Math.hypot(pt.px - cx, pt.py - cy) / radius;
           if (dist > 0.85) alpha = Math.min(1, alpha * 1.4);
 
           ctx.beginPath();
           ctx.arc(pt.px, pt.py, r, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(230, 235, 250, ${alpha * 0.85})`;
+          ctx.fillStyle = isCoast
+            ? `rgba(255, 255, 255, ${alpha * 0.95})`
+            : `rgba(215, 225, 245, ${alpha * 0.80})`;
           ctx.fill();
         }
       }
 
-      // --- PHASE D: GLOBAL CONNECTION ARCS (Maputo HQ to World) ---
-      const rotHQ = rotate3D(hqVec, cosY, sinY, cosX, sinX);
-      const hqPX = cx + rotHQ.x * radius;
-      const hqPY = cy + rotHQ.y * radius;
-
+      // --- PHASE D: GLOBAL CONNECTION ARCS (Orange Parabolic Trajectories like United Carriers) ---
       for (let i = 0; i < GLOBAL_ARCS.length; i++) {
         const arc = GLOBAL_ARCS[i];
-        const destVec = latLonToVec(arc.targetLat, arc.targetLon);
-        const rotDest = rotate3D(destVec, cosY, sinY, cosX, sinX);
+        const fromVec = latLonToVec(arc.fromLat, arc.fromLon);
+        const toVec = latLonToVec(arc.toLat, arc.toLon);
 
-        if (rotHQ.z > -0.15 || rotDest.z > -0.15) {
-          const destPX = cx + rotDest.x * radius;
-          const destPY = cy + rotDest.y * radius;
+        const rotFrom = rotate3D(fromVec, cosY, sinY, cosX, sinX);
+        const rotTo = rotate3D(toVec, cosY, sinY, cosX, sinX);
 
+        if (rotFrom.z > -0.15 || rotTo.z > -0.15) {
+          const fromPX = cx + rotFrom.x * radius;
+          const fromPY = cy + rotFrom.y * radius;
+          const toPX = cx + rotTo.x * radius;
+          const toPY = cy + rotTo.y * radius;
+
+          // Elevated apex of parabolic flight curve
           const midVec = {
-            x: (rotHQ.x + rotDest.x) * 0.5 * 1.30,
-            y: (rotHQ.y + rotDest.y) * 0.5 * 1.30,
-            z: (rotHQ.z + rotDest.z) * 0.5 * 1.30
+            x: (rotFrom.x + rotTo.x) * 0.5 * 1.32,
+            y: (rotFrom.y + rotTo.y) * 0.5 * 1.32,
+            z: (rotFrom.z + rotTo.z) * 0.5 * 1.32
           };
           const midPX = cx + midVec.x * radius;
           const midPY = cy + midVec.y * radius;
 
-          const arcAlpha = Math.max(0.1, (rotHQ.z + rotDest.z + 1.2) / 2.4);
+          const arcAlpha = Math.max(0.1, (rotFrom.z + rotTo.z + 1.2) / 2.4);
 
           ctx.save();
           ctx.beginPath();
-          ctx.moveTo(hqPX, hqPY);
-          ctx.quadraticCurveTo(midPX, midPY, destPX, destPY);
+          ctx.moveTo(fromPX, fromPY);
+          ctx.quadraticCurveTo(midPX, midPY, toPX, toPY);
           ctx.strokeStyle = arc.color;
-          ctx.globalAlpha = 0.3 * arcAlpha;
-          ctx.lineWidth = 1;
+          ctx.globalAlpha = 0.42 * arcAlpha;
+          ctx.lineWidth = 1.2;
           ctx.stroke();
 
-          // Photon packet traveling along arc
-          const packetPhase = (time * 0.6 + i * 0.25) % 1;
+          // Traveling photon packet
+          const packetPhase = (time * 0.6 + i * 0.22) % 1;
           const inv = 1 - packetPhase;
-          const curPX = inv * inv * hqPX + 2 * inv * packetPhase * midPX + packetPhase * packetPhase * destPX;
-          const curPY = inv * inv * hqPY + 2 * inv * packetPhase * midPY + packetPhase * packetPhase * destPY;
+          const curPX = inv * inv * fromPX + 2 * inv * packetPhase * midPX + packetPhase * packetPhase * toPX;
+          const curPY = inv * inv * fromPY + 2 * inv * packetPhase * midPY + packetPhase * packetPhase * toPY;
 
           ctx.beginPath();
-          ctx.arc(curPX, curPY, 2.2, 0, Math.PI * 2);
+          ctx.arc(curPX, curPY, 2.4, 0, Math.PI * 2);
           ctx.fillStyle = '#ffffff';
           ctx.shadowColor = arc.color;
           ctx.shadowBlur = 8;
@@ -522,14 +534,13 @@ export const HeroGlobe: React.FC = () => {
       }
 
       // --- PHASE E: DRAW FRONT HALF OF FILM REEL (Z >= 0) ---
-      // Passes smoothly IN FRONT of the planet and continental points!
       for (let i = 0; i < filmQuads.length; i++) {
         if (filmQuads[i].centerZ >= 0) {
           drawFilmQuad(filmQuads[i], false);
         }
       }
 
-      // --- PHASE F: MOÇAMBIQUE HQ & GLOBAL TECHNICAL PINS ---
+      // --- PHASE F: TECHNICAL RECTANGULAR LOCATION BADGES (Exact United Carriers Spec) ---
       for (let i = 0; i < markerVectors.length; i++) {
         const m = markerVectors[i];
         const rot = rotate3D(m.vec, cosY, sinY, cosX, sinX);
@@ -568,59 +579,78 @@ export const HeroGlobe: React.FC = () => {
             ctx.fill();
 
             // HUD Leader Line
-            const lineEndX = mx + 42;
-            const lineEndY = my - 24;
+            const lineEndX = mx + 38;
+            const lineEndY = my - 22;
             ctx.beginPath();
             ctx.moveTo(mx, my);
             ctx.lineTo(lineEndX, lineEndY);
-            ctx.lineTo(lineEndX + 45, lineEndY);
+            ctx.lineTo(lineEndX + 20, lineEndY);
             ctx.strokeStyle = '#ff3b30';
             ctx.lineWidth = 1.2;
             ctx.stroke();
 
-            ctx.font = '700 11px "Space Grotesk", sans-serif';
+            // Sleek Mozambique HQ Badge Box
+            const padX = 10;
+            ctx.font = '800 11px "Space Grotesk", sans-serif';
+            const hqTitle = '🇲🇿 MOÇAMBIQUE [HQ]';
+            const textWidth = ctx.measureText(hqTitle).width;
+            const boxW = Math.max(textWidth + padX * 2, 175);
+            const boxH = 38;
+            const boxX = lineEndX + 4;
+            const boxY = lineEndY - 19;
+
+            ctx.fillStyle = 'rgba(2, 3, 6, 0.94)';
+            ctx.strokeStyle = '#ff3b30';
+            ctx.lineWidth = 1.2;
+            ctx.fillRect(boxX, boxY, boxW, boxH);
+            ctx.strokeRect(boxX, boxY, boxW, boxH);
+
             ctx.fillStyle = '#ffffff';
             ctx.textAlign = 'left';
-            ctx.fillText('🇲🇿 MOÇAMBIQUE [HQ]', lineEndX + 4, lineEndY - 6);
+            ctx.fillText(hqTitle, boxX + padX, boxY + 15);
 
-            ctx.font = '600 9px "JetBrains Mono", monospace';
+            ctx.font = '600 8.5px "JetBrains Mono", monospace';
             ctx.fillStyle = '#ff3b30';
-            ctx.fillText('SEDE & BERÇO DA MIZINE', lineEndX + 4, lineEndY + 10);
-
-            ctx.font = '400 8.5px "Inter", sans-serif';
-            ctx.fillStyle = '#a3a3a3';
-            ctx.fillText('Conexão Global • 4K • Redes Sociais', lineEndX + 4, lineEndY + 22);
+            ctx.fillText('SEDE & BERÇO DA MIZINE', boxX + padX, boxY + 28);
           } else {
-            // Standard Global Markers
+            // Standard Rectangular Black Location Tag (United Carriers style: SOUTH AFRICA, KENYA, etc.)
             const pulse = 1 + Math.sin(time * 3 + i) * 0.2;
             ctx.beginPath();
-            ctx.arc(mx, my, 3.5 * pulse, 0, Math.PI * 2);
+            ctx.arc(mx, my, 4 * pulse, 0, Math.PI * 2);
             ctx.fillStyle = m.color;
             ctx.shadowColor = m.color;
             ctx.shadowBlur = 8;
             ctx.fill();
 
             const isRight = rot.x >= 0;
-            const lineEndX = mx + (isRight ? 24 : -24);
-            const lineEndY = my - 14;
+            const lineEndX = mx + (isRight ? 22 : -22);
+            const lineEndY = my - 12;
 
             ctx.beginPath();
             ctx.moveTo(mx, my);
             ctx.lineTo(lineEndX, lineEndY);
-            ctx.lineTo(lineEndX + (isRight ? 12 : -12), lineEndY);
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
             ctx.lineWidth = 1;
             ctx.stroke();
 
-            ctx.font = '600 9.5px "JetBrains Mono", monospace';
-            ctx.fillStyle = '#ffffff';
-            ctx.textAlign = isRight ? 'left' : 'right';
-            const labelX = lineEndX + (isRight ? 16 : -16);
-            ctx.fillText(m.name, labelX, lineEndY + 3);
+            // Black rectangular tag box with sharp corners
+            const padX = 7;
+            ctx.font = '700 9px "JetBrains Mono", monospace';
+            const textWidth = ctx.measureText(m.name).width;
+            const boxW = textWidth + padX * 2;
+            const boxH = 17;
+            const boxX = isRight ? lineEndX + 4 : lineEndX - 4 - boxW;
+            const boxY = lineEndY - boxH * 0.5;
 
-            ctx.font = '400 8px "Inter", sans-serif';
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-            ctx.fillText(m.sub, labelX, lineEndY + 14);
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.94)';
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+            ctx.lineWidth = 1;
+            ctx.fillRect(boxX, boxY, boxW, boxH);
+            ctx.strokeRect(boxX, boxY, boxW, boxH);
+
+            ctx.fillStyle = '#ffffff';
+            ctx.textAlign = 'left';
+            ctx.fillText(m.name, boxX + padX, boxY + 12);
           }
 
           ctx.restore();

@@ -17,6 +17,7 @@ import { FAQ } from './components/FAQ';
 import { Contact } from './components/Contact';
 import { Footer } from './components/Footer';
 import { Lightbox } from './components/Lightbox';
+import { Preloader } from './components/Preloader';
 
 import { AdminLogin } from './admin/AdminLogin';
 import { AdminDashboard } from './admin/AdminDashboard';
@@ -33,6 +34,7 @@ export function App() {
 
   const [isAdminRoute, setIsAdminRoute] = useState<boolean>(checkIsAdminRoute);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(apiService.isAuthenticated);
+  const [showPreloader, setShowPreloader] = useState<boolean>(() => !checkIsAdminRoute());
 
   const [lightbox, setLightbox] = useState<{ isOpen: boolean; title: string; videoUrl: string }>({
     isOpen: false,
@@ -169,6 +171,7 @@ export function App() {
   // Página pública 100% inspirada na estética e narrativa de United Carriers
   return (
     <div className="mizine-app">
+      {showPreloader && <Preloader onComplete={() => setShowPreloader(false)} />}
       <Navbar />
       <Hero content={content.hero} onPlayShowreel={handleOpenVideo} />
       <IntroMetrics content={content.about} />

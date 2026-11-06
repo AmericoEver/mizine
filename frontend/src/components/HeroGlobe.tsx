@@ -5,7 +5,6 @@ interface WorldPoint {
   lat: number;
   lon: number;
   moz?: boolean;
-  reg?: string;
 }
 
 interface Marker3D {
@@ -19,8 +18,8 @@ interface Marker3D {
 
 const MARKERS: Marker3D[] = [
   {
-    name: 'MOÇAMBIQUE [SEDE]',
-    sub: 'Berço & QG Mizine Multimédia',
+    name: 'MOÇAMBIQUE [HQ]',
+    sub: 'Sede & Berço da Mizine',
     lat: -25.96,
     lon: 32.58,
     color: '#ff3b30',
@@ -28,9 +27,9 @@ const MARKERS: Marker3D[] = [
   },
   {
     name: 'EUROPA & UK',
-    sub: 'Audiovisual & Parcerias',
-    lat: 48.85,
-    lon: 2.35,
+    sub: 'Parcerias Audiovisuais',
+    lat: 51.5,
+    lon: -0.12,
     color: '#00d4ff'
   },
   {
@@ -45,7 +44,7 @@ const MARKERS: Marker3D[] = [
     sub: 'Campanhas & Expansão',
     lat: 25.20,
     lon: 55.27,
-    color: '#5856d6'
+    color: '#af52de'
   },
   {
     name: 'ÁFRICA AUSTRAL',
@@ -56,12 +55,11 @@ const MARKERS: Marker3D[] = [
   }
 ];
 
-// Arcs connecting Mozambique HQ to the world
 const GLOBAL_ARCS = [
-  { targetLat: 48.85, targetLon: 2.35, color: '#00d4ff' },   // Europe
-  { targetLat: -23.55, targetLon: -46.63, color: '#ff9500' }, // Americas
-  { targetLat: 25.20, targetLon: 55.27, color: '#af52de' },  // Middle East
-  { targetLat: -26.20, targetLon: 28.04, color: '#34c759' }  // Regional Africa
+  { targetLat: 51.5, targetLon: -0.12, color: '#00d4ff' },   // Europe/London
+  { targetLat: -23.55, targetLon: -46.63, color: '#ff9500' }, // Americas/SP
+  { targetLat: 25.20, targetLon: 55.27, color: '#af52de' },  // Middle East/Dubai
+  { targetLat: -26.20, targetLon: 28.04, color: '#34c759' }  // Regional Africa/JHB
 ];
 
 export const HeroGlobe: React.FC = () => {
@@ -77,35 +75,40 @@ export const HeroGlobe: React.FC = () => {
     let width = 0;
     let height = 0;
 
-    // Initial rotation: tilt to showcase Africa / Mozambique front & center
-    let rotX = 0.28;
-    // Maputo is at lon 32.5. To make it front-facing at start:
-    let rotY = -Math.PI * 0.45;
+    // Stable planetary tilt: natural Earth axial tilt (~16 deg)
+    let rotX = -0.16;
+    // Initial Y rotation so Mozambique (-25.96 lat, 32.58 lon) is visible and facing front
+    let rotY = -Math.PI * 0.12;
     let targetRotY = rotY;
     let targetRotX = rotX;
     let isDragging = false;
     let lastMouseX = 0;
     let lastMouseY = 0;
-    const autoRotateSpeed = 0.0028;
 
-    // Convert lat/long to 3D unit sphere coordinate
+    // Counter-rotation: Planet rotates to the LEFT, film reel orbits to the RIGHT
+    const planetRotateSpeed = -0.0022; // Planet rotates left
+    let filmOrbitAngle = 0;
+    const filmOrbitSpeed = 0.0046; // Film orbits right (opposite direction)
+
+    // Mathematically correct conversion: North Pole at TOP (-Y in screen space), South Pole at BOTTOM (+Y)
     const latLonToVec = (lat: number, lon: number) => {
-      const phi = (90 - lat) * (Math.PI / 180);
-      const theta = (lon + 180) * (Math.PI / 180);
+      const phi = (lat * Math.PI) / 180;
+      const theta = (lon * Math.PI) / 180;
+      const cosPhi = Math.cos(phi);
       return {
-        x: -(Math.sin(phi) * Math.sin(theta)),
-        y: Math.cos(phi),
-        z: Math.sin(phi) * Math.cos(theta)
+        x: cosPhi * Math.sin(theta),
+        y: -Math.sin(phi), // Negative so North (+lat) points UP on computer screen
+        z: cosPhi * Math.cos(theta)
       };
     };
 
-    // Precalculate 3D vectors for real continent points
+    // Precompute 3D unit vectors for all 3,500+ real continent points
     const worldPoints = (worldData as WorldPoint[]).map(pt => ({
       ...pt,
       vec: latLonToVec(pt.lat, pt.lon)
     }));
 
-    // Precalculate marker vectors
+    // Precompute marker vectors
     const markerVectors = MARKERS.map(m => ({
       ...m,
       vec: latLonToVec(m.lat, m.lon)
@@ -113,7 +116,7 @@ export const HeroGlobe: React.FC = () => {
 
     const hqVec = latLonToVec(-25.96, 32.58);
 
-    // Resize handler
+    // Canvas resize
     const handleResize = () => {
       if (!canvas) return;
       const rect = canvas.getBoundingClientRect();
@@ -139,16 +142,17 @@ export const HeroGlobe: React.FC = () => {
       if (isDragging) {
         const dx = e.clientX - lastMouseX;
         const dy = e.clientY - lastMouseY;
-        targetRotY += dx * 0.006;
-        targetRotX += dy * 0.004;
+        targetRotY += dx * 0.005;
+        targetRotX += dy * 0.003;
         lastMouseX = e.clientX;
         lastMouseY = e.clientY;
       } else {
         const rect = canvas.getBoundingClientRect();
         const nx = (e.clientX - rect.left) / width - 0.5;
         const ny = (e.clientY - rect.top) / height - 0.5;
-        targetRotX = 0.28 + ny * 0.2;
-        targetRotY += nx * 0.001;
+        // Subtle, stable response to mouse (NO wild vertical flapping)
+        targetRotX = -0.16 + ny * 0.10;
+        targetRotY += nx * 0.0006;
       }
     };
 
@@ -168,8 +172,8 @@ export const HeroGlobe: React.FC = () => {
       if (isDragging && e.touches.length === 1) {
         const dx = e.touches[0].clientX - lastMouseX;
         const dy = e.touches[0].clientY - lastMouseY;
-        targetRotY += dx * 0.008;
-        targetRotX += dy * 0.006;
+        targetRotY += dx * 0.006;
+        targetRotX += dy * 0.003;
         lastMouseX = e.touches[0].clientX;
         lastMouseY = e.touches[0].clientY;
       }
@@ -186,7 +190,7 @@ export const HeroGlobe: React.FC = () => {
     window.addEventListener('touchmove', onTouchMove, { passive: true });
     window.addEventListener('touchend', onTouchEnd);
 
-    // 3D Rotation helper
+    // 3D Rotation function
     const rotate3D = (v: { x: number; y: number; z: number }, cosY: number, sinY: number, cosX: number, sinX: number) => {
       const x1 = v.x * cosY + v.z * sinY;
       const z1 = -v.x * sinY + v.z * cosY;
@@ -199,11 +203,16 @@ export const HeroGlobe: React.FC = () => {
 
     const render = () => {
       time += 0.015;
-      targetRotY += autoRotateSpeed;
+
+      // Planet spins to the left
+      targetRotY += planetRotateSpeed;
+      // Film reel counter-orbits to the right (opposite direction)
+      filmOrbitAngle += filmOrbitSpeed;
 
       rotY += (targetRotY - rotY) * 0.08;
       rotX += (targetRotX - rotX) * 0.08;
-      rotX = Math.max(-0.65, Math.min(0.65, rotX));
+      // Clamp tilt so the planet always stays upright with North at the top
+      rotX = Math.max(-0.35, Math.min(0.1, rotX));
 
       ctx.clearRect(0, 0, width, height);
 
@@ -216,36 +225,158 @@ export const HeroGlobe: React.FC = () => {
       const cosX = Math.cos(rotX);
       const sinX = Math.sin(rotX);
 
-      // --- 1. ATMOSPHERIC NEON RIM GLOWS (United Carriers dual lighting) ---
-      // Fiery Orange/Crimson Upper Flare
+      // --- LAYER 1: ATMOSPHERIC NEON RIM GLOWS (Space Ambient) ---
+      // Fiery Orange/Amber Solar Rim (Top-Right)
       const orangeGlow = ctx.createRadialGradient(
         cx + radius * 0.35, cy - radius * 0.45, radius * 0.25,
         cx, cy, radius * 1.3
       );
-      orangeGlow.addColorStop(0, 'rgba(255, 110, 0, 0.45)');
-      orangeGlow.addColorStop(0.45, 'rgba(255, 50, 0, 0.18)');
-      orangeGlow.addColorStop(0.85, 'rgba(255, 20, 0, 0.04)');
+      orangeGlow.addColorStop(0, 'rgba(255, 120, 0, 0.45)');
+      orangeGlow.addColorStop(0.45, 'rgba(255, 55, 0, 0.18)');
+      orangeGlow.addColorStop(0.85, 'rgba(255, 20, 0, 0.03)');
       orangeGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
       ctx.fillStyle = orangeGlow;
       ctx.fillRect(0, 0, width, height);
 
-      // Electric Cyan/Blue Deep Rim Crescent
+      // Electric Cyan/Blue Deep Rim Crescent (Bottom-Left)
       const blueGlow = ctx.createRadialGradient(
         cx - radius * 0.45, cy + radius * 0.4, radius * 0.2,
         cx, cy, radius * 1.35
       );
       blueGlow.addColorStop(0, 'rgba(0, 160, 255, 0.58)');
       blueGlow.addColorStop(0.45, 'rgba(0, 210, 255, 0.25)');
-      blueGlow.addColorStop(0.8, 'rgba(0, 90, 220, 0.06)');
+      blueGlow.addColorStop(0.8, 'rgba(0, 90, 220, 0.05)');
       blueGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
       ctx.fillStyle = blueGlow;
       ctx.fillRect(0, 0, width, height);
 
-      // Globe Void Core
+      // --- LAYER 2: 35MM FILM REEL ORBIT CALCULATION ---
+      // 52 celluloid frames forming a closed 3D ribbon loop
+      const filmFrames = 52;
+      const filmOrbitRadius = radius * 1.25;
+      const filmWidth = radius * 0.085;
+      const filmInclination = 0.28; // ~16 deg stable celestial orbit (NO wild wobbling)
+
+      interface FilmQuad {
+        tl: { x: number; y: number; z: number };
+        tr: { x: number; y: number; z: number };
+        br: { x: number; y: number; z: number };
+        bl: { x: number; y: number; z: number };
+        centerZ: number;
+        index: number;
+      }
+
+      const filmQuads: FilmQuad[] = [];
+
+      for (let i = 0; i < filmFrames; i++) {
+        // Orbit to the right (filmOrbitAngle positive)
+        const a1 = (i / filmFrames) * Math.PI * 2 + filmOrbitAngle;
+        const a2 = ((i + 0.85) / filmFrames) * Math.PI * 2 + filmOrbitAngle;
+
+        const getFilmEdge = (angle: number, offset: number) => {
+          const ox = filmOrbitRadius * Math.cos(angle);
+          const oz = filmOrbitRadius * Math.sin(angle);
+          // Fixed celestial inclination (stable planetary ring)
+          const x0 = ox;
+          const y0 = oz * Math.sin(filmInclination) + offset * Math.cos(filmInclination);
+          const z0 = oz * Math.cos(filmInclination) - offset * Math.sin(filmInclination);
+          // Apply subtle viewer perspective rotation
+          return rotate3D({ x: x0, y: y0, z: z0 }, cosY, sinY, cosX, sinX);
+        };
+
+        const tl = getFilmEdge(a1, filmWidth * 0.5);
+        const tr = getFilmEdge(a2, filmWidth * 0.5);
+        const br = getFilmEdge(a2, -filmWidth * 0.5);
+        const bl = getFilmEdge(a1, -filmWidth * 0.5);
+
+        const centerZ = (tl.z + tr.z + br.z + bl.z) / 4;
+        filmQuads.push({ tl, tr, br, bl, centerZ, index: i });
+      }
+
+      const projectFilmPoint = (p: { x: number; y: number }) => ({
+        px: cx + p.x,
+        py: cy + p.y
+      });
+
+      // Smooth, natural rendering function (NO hard cuts!)
+      const drawFilmQuad = (q: FilmQuad, isBack: boolean) => {
+        const pTL = projectFilmPoint(q.tl);
+        const pTR = projectFilmPoint(q.tr);
+        const pBR = projectFilmPoint(q.br);
+        const pBL = projectFilmPoint(q.bl);
+
+        ctx.save();
+
+        // Celluloid Film Frame Body
+        ctx.beginPath();
+        ctx.moveTo(pTL.px, pTL.py);
+        ctx.lineTo(pTR.px, pTR.py);
+        ctx.lineTo(pBR.px, pBR.py);
+        ctx.lineTo(pBL.px, pBL.py);
+        ctx.closePath();
+
+        ctx.fillStyle = isBack ? 'rgba(10, 10, 16, 0.55)' : 'rgba(14, 14, 20, 0.94)';
+        ctx.fill();
+
+        ctx.strokeStyle = isBack ? 'rgba(255, 140, 20, 0.3)' : 'rgba(255, 140, 40, 0.85)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Inner Film Exposure Window
+        const inset = 0.18;
+        const wTLx = pTL.px + (pBL.px - pTL.px) * inset + (pTR.px - pTL.px) * 0.15;
+        const wTLy = pTL.py + (pBL.py - pTL.py) * inset + (pTR.py - pTL.py) * 0.15;
+        const wTRx = pTR.px + (pBR.px - pTR.px) * inset - (pTR.px - pTL.px) * 0.15;
+        const wTRy = pTR.py + (pBR.py - pTR.py) * inset - (pTR.py - pTL.py) * 0.15;
+        const wBRx = pBR.px - (pBR.px - pTR.px) * inset - (pTR.px - pTL.px) * 0.15;
+        const wBRy = pBR.py - (pBR.py - pTR.py) * inset - (pTR.py - pTL.py) * 0.15;
+        const wBLx = pBL.px - (pBL.px - pTL.px) * inset + (pTR.px - pTL.px) * 0.15;
+        const wBLy = pBL.py - (pBL.py - pTL.py) * inset + (pTR.py - pTL.py) * 0.15;
+
+        ctx.beginPath();
+        ctx.moveTo(wTLx, wTLy);
+        ctx.lineTo(wTRx, wTRy);
+        ctx.lineTo(wBRx, wBRy);
+        ctx.lineTo(wBLx, wBLy);
+        ctx.closePath();
+
+        const isCyan = q.index % 2 === 0;
+        ctx.fillStyle = isCyan
+          ? (isBack ? 'rgba(0, 212, 255, 0.10)' : 'rgba(0, 212, 255, 0.22)')
+          : (isBack ? 'rgba(255, 120, 0, 0.10)' : 'rgba(255, 120, 0, 0.25)');
+        ctx.fill();
+
+        // 35mm Sprocket Holes (Perforações da fita de gravação)
+        ctx.fillStyle = '#020205';
+        const spTopX = pTL.px + (pTR.px - pTL.px) * 0.5 + (pBL.px - pTL.px) * 0.08;
+        const spTopY = pTL.py + (pTR.py - pTL.py) * 0.5 + (pBL.py - pTL.py) * 0.08;
+        ctx.beginPath();
+        ctx.arc(spTopX, spTopY, 1.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        const spBotX = pBL.px + (pBR.px - pBL.px) * 0.5 - (pBL.px - pTL.px) * 0.08;
+        const spBotY = pBL.py + (pBR.py - pBL.py) * 0.5 - (pBL.py - pTL.py) * 0.08;
+        ctx.beginPath();
+        ctx.arc(spBotX, spBotY, 1.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+      };
+
+      // --- PHASE A: DRAW BACK HALF OF FILM REEL (Z < 0) ---
+      // Drawn behind the planet
+      for (let i = 0; i < filmQuads.length; i++) {
+        if (filmQuads[i].centerZ < 0) {
+          drawFilmQuad(filmQuads[i], true);
+        }
+      }
+
+      // --- PHASE B: SOLID PLANET SPHERE CORE ---
+      // Opaque planetary sphere that naturally and smoothly passes IN FRONT of the back film ring!
       const coreGrad = ctx.createRadialGradient(cx, cy, radius * 0.3, cx, cy, radius);
-      coreGrad.addColorStop(0, 'rgba(3, 4, 8, 0.98)');
-      coreGrad.addColorStop(0.75, 'rgba(2, 3, 6, 0.96)');
-      coreGrad.addColorStop(1, 'rgba(4, 8, 16, 0.72)');
+      coreGrad.addColorStop(0, 'rgba(2, 3, 6, 0.99)');
+      coreGrad.addColorStop(0.75, 'rgba(2, 3, 7, 0.97)');
+      coreGrad.addColorStop(1, 'rgba(3, 6, 14, 0.85)');
       ctx.beginPath();
       ctx.arc(cx, cy, radius, 0, Math.PI * 2);
       ctx.fillStyle = coreGrad;
@@ -273,145 +404,12 @@ export const HeroGlobe: React.FC = () => {
       ctx.stroke();
       ctx.restore();
 
-      // --- 2. 3D 35MM FILM REEL ORBITAL RING ("Fita de gravação de vídeo") ---
-      // We render a 3D cinematographic film strip ribbon orbiting the globe!
-      const filmFrames = 54;
-      const filmOrbitRadius = radius * 1.28;
-      const filmWidth = radius * 0.095;
-      const filmTilt = 0.42; // Orbit inclination angle (~24 deg)
-      const filmSpeed = time * 0.22; // smooth film reel translation
-
-      // Calculate 3D quads for film frames
-      interface FilmQuad {
-        tl: { x: number; y: number; z: number };
-        tr: { x: number; y: number; z: number };
-        br: { x: number; y: number; z: number };
-        bl: { x: number; y: number; z: number };
-        centerZ: number;
-        index: number;
-      }
-
-      const quads: FilmQuad[] = [];
-
-      for (let i = 0; i < filmFrames; i++) {
-        const a1 = (i / filmFrames) * Math.PI * 2 + filmSpeed;
-        const a2 = ((i + 0.85) / filmFrames) * Math.PI * 2 + filmSpeed;
-
-        const getFilmEdge = (angle: number, offset: number) => {
-          // Point in orbital plane
-          const ox = filmOrbitRadius * Math.cos(angle);
-          const oz = filmOrbitRadius * Math.sin(angle);
-          // Tilt around X
-          const x0 = ox;
-          const y0 = oz * Math.sin(filmTilt) + offset * Math.cos(filmTilt);
-          const z0 = oz * Math.cos(filmTilt) - offset * Math.sin(filmTilt);
-          // Rotate by globe rotation
-          return rotate3D({ x: x0, y: y0, z: z0 }, cosY, sinY, cosX, sinX);
-        };
-
-        const tl = getFilmEdge(a1, filmWidth * 0.5);
-        const tr = getFilmEdge(a2, filmWidth * 0.5);
-        const br = getFilmEdge(a2, -filmWidth * 0.5);
-        const bl = getFilmEdge(a1, -filmWidth * 0.5);
-
-        const centerZ = (tl.z + tr.z + br.z + bl.z) / 4;
-        quads.push({ tl, tr, br, bl, centerZ, index: i });
-      }
-
-      // Draw film frames sorted by depth (back to front)
-      quads.sort((a, b) => a.centerZ - b.centerZ);
-
-      const projectPoint = (p: { x: number; y: number }) => ({
-        px: cx + p.x,
-        py: cy + p.y
-      });
-
-      for (let i = 0; i < quads.length; i++) {
-        const q = quads[i];
-        const isBack = q.centerZ < 0;
-
-        // Skip or dim back frames when occluded by the solid sphere
-        const pTL = projectPoint(q.tl);
-        const pTR = projectPoint(q.tr);
-        const pBR = projectPoint(q.br);
-        const pBL = projectPoint(q.bl);
-
-        const frameAlpha = isBack ? 0.22 : 0.95;
-
-        ctx.save();
-
-        // Celluloid Film Frame Body (Dark Film Base)
-        ctx.beginPath();
-        ctx.moveTo(pTL.px, pTL.py);
-        ctx.lineTo(pTR.px, pTR.py);
-        ctx.lineTo(pBR.px, pBR.py);
-        ctx.lineTo(pBL.px, pBL.py);
-        ctx.closePath();
-
-        ctx.fillStyle = isBack
-          ? 'rgba(10, 10, 15, 0.4)'
-          : 'rgba(15, 15, 22, 0.88)';
-        ctx.fill();
-
-        ctx.strokeStyle = isBack
-          ? 'rgba(255, 140, 20, 0.2)'
-          : 'rgba(255, 140, 40, 0.7)';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-
-        // Inner Film Exposure Window (Glowing Screen / Frame)
-        const inset = 0.22;
-        const wTLx = pTL.px + (pBL.px - pTL.px) * inset + (pTR.px - pTL.px) * 0.15;
-        const wTLy = pTL.py + (pBL.py - pTL.py) * inset + (pTR.py - pTL.py) * 0.15;
-        const wTRx = pTR.px + (pBR.px - pTR.px) * inset - (pTR.px - pTL.px) * 0.15;
-        const wTRy = pTR.py + (pBR.py - pTR.py) * inset - (pTR.py - pTL.py) * 0.15;
-        const wBRx = pBR.px - (pBR.px - pTR.px) * inset - (pTR.px - pTL.px) * 0.15;
-        const wBRy = pBR.py - (pBR.py - pTR.py) * inset - (pTR.py - pTL.py) * 0.15;
-        const wBLx = pBL.px - (pBL.px - pTL.px) * inset + (pTR.px - pTL.px) * 0.15;
-        const wBLy = pBL.py - (pBL.py - pTL.py) * inset + (pTR.py - pTL.py) * 0.15;
-
-        ctx.beginPath();
-        ctx.moveTo(wTLx, wTLy);
-        ctx.lineTo(wTRx, wTRy);
-        ctx.lineTo(wBRx, wBRy);
-        ctx.lineTo(wBLx, wBLy);
-        ctx.closePath();
-
-        // Cinema Light inside the frame (alternating amber / cyan)
-        const isCyanFrame = q.index % 2 === 0;
-        ctx.fillStyle = isCyanFrame
-          ? `rgba(0, 212, 255, ${0.12 * frameAlpha})`
-          : `rgba(255, 120, 0, ${0.14 * frameAlpha})`;
-        ctx.fill();
-
-        // 35mm Film Sprocket Holes (Perforações da fita de cinema)
-        if (!isBack) {
-          ctx.fillStyle = '#020204';
-          // Top perforation
-          const spTopX = pTL.px + (pTR.px - pTL.px) * 0.5 + (pBL.px - pTL.px) * 0.1;
-          const spTopY = pTL.py + (pTR.py - pTL.py) * 0.5 + (pBL.py - pTL.py) * 0.1;
-          ctx.beginPath();
-          ctx.arc(spTopX, spTopY, 1.2, 0, Math.PI * 2);
-          ctx.fill();
-
-          // Bottom perforation
-          const spBotX = pBL.px + (pBR.px - pBL.px) * 0.5 - (pBL.px - pTL.px) * 0.1;
-          const spBotY = pBL.py + (pBR.py - pBL.py) * 0.5 - (pBL.py - pTL.py) * 0.1;
-          ctx.beginPath();
-          ctx.arc(spBotX, spBotY, 1.2, 0, Math.PI * 2);
-          ctx.fill();
-        }
-
-        ctx.restore();
-      }
-
-      // --- 3. REAL CONTINENT PARTICLES PROJECTION (World Continents + Mozambique) ---
+      // --- PHASE C: 3,500+ REAL CONTINENTAL POINTS ---
       interface ProjPt {
         px: number;
         py: number;
         z: number;
         moz?: boolean;
-        reg?: string;
       }
 
       const projectedPoints: ProjPt[] = [];
@@ -420,13 +418,15 @@ export const HeroGlobe: React.FC = () => {
         const pt = worldPoints[i];
         const rot = rotate3D(pt.vec, cosY, sinY, cosX, sinX);
 
-        projectedPoints.push({
-          px: cx + rot.x * radius,
-          py: cy + rot.y * radius,
-          z: rot.z,
-          moz: pt.moz,
-          reg: pt.reg
-        });
+        // Only draw points on the front/visible hemisphere of the planet
+        if (rot.z > -0.05) {
+          projectedPoints.push({
+            px: cx + rot.x * radius,
+            py: cy + rot.y * radius,
+            z: rot.z,
+            moz: pt.moz
+          });
+        }
       }
 
       // Sort points back-to-front
@@ -434,59 +434,44 @@ export const HeroGlobe: React.FC = () => {
 
       for (let i = 0; i < projectedPoints.length; i++) {
         const pt = projectedPoints[i];
+        const depth = pt.z;
 
-        // Depth scale (cull far back)
-        if (pt.z < -0.15) continue;
-        const depth = (pt.z + 1) / 2;
-
-        // Base continent dots
         if (pt.moz) {
-          // --- MOÇAMBIQUE HIGHLIGHT (Sede & Berço Mizine) ---
-          const pulse = 1 + Math.sin(time * 4) * 0.3;
-          const rMoz = 3.2 * pulse * (0.8 + depth * 0.4);
+          // --- ULTRA-DETAILED MOÇAMBIQUE HIGHLIGHT (Sede & Berço Mizine) ---
+          const pulse = 1 + Math.sin(time * 4) * 0.25;
+          const rMoz = 2.4 * pulse * (0.8 + depth * 0.4);
 
-          // Glowing beacon aura around Mozambique
           ctx.save();
+          // Glowing red aura
           ctx.beginPath();
-          ctx.arc(pt.px, pt.py, rMoz * 2.2, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(255, 59, 48, ${0.35 * depth})`;
+          ctx.arc(pt.px, pt.py, rMoz * 1.8, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255, 59, 48, ${0.45 * depth})`;
           ctx.fill();
 
-          // Solid bright red core
+          // Solid bright red core dot
           ctx.beginPath();
           ctx.arc(pt.px, pt.py, rMoz, 0, Math.PI * 2);
           ctx.fillStyle = '#ff3b30';
           ctx.shadowColor = '#ff2d55';
-          ctx.shadowBlur = 12;
+          ctx.shadowBlur = 10;
           ctx.fill();
           ctx.restore();
         } else {
-          // Regular continent dot
-          const r = 1.35 * (0.6 + depth * 0.6);
-          let alpha = Math.pow(depth, 1.6) * 0.85;
+          // Standard Continent Dot
+          const r = 1.15 * (0.6 + depth * 0.55);
+          let alpha = Math.pow(depth, 1.4) * 0.85;
 
-          // Rim lighting boost
           const dist = Math.hypot(pt.px - cx, pt.py - cy) / radius;
-          if (dist > 0.85) alpha = Math.min(1, alpha * 1.5);
+          if (dist > 0.85) alpha = Math.min(1, alpha * 1.4);
 
           ctx.beginPath();
           ctx.arc(pt.px, pt.py, r, 0, Math.PI * 2);
-
-          // Give Africa and near-Maputo points a slightly warmer golden tint
-          if (pt.reg === 'africa') {
-            ctx.fillStyle = `rgba(255, 180, 80, ${alpha * 0.95})`;
-          } else if (pt.reg === 'europe') {
-            ctx.fillStyle = `rgba(0, 210, 255, ${alpha * 0.9})`;
-          } else if (pt.reg === 'north_america' || pt.reg === 'south_america') {
-            ctx.fillStyle = `rgba(255, 140, 40, ${alpha * 0.9})`;
-          } else {
-            ctx.fillStyle = `rgba(235, 240, 255, ${alpha * 0.8})`;
-          }
+          ctx.fillStyle = `rgba(230, 235, 250, ${alpha * 0.85})`;
           ctx.fill();
         }
       }
 
-      // --- 4. GLOBAL CONNECTION ARCS (From Maputo HQ to the World) ---
+      // --- PHASE D: GLOBAL CONNECTION ARCS (Maputo HQ to World) ---
       const rotHQ = rotate3D(hqVec, cosY, sinY, cosX, sinX);
       const hqPX = cx + rotHQ.x * radius;
       const hqPY = cy + rotHQ.y * radius;
@@ -496,16 +481,14 @@ export const HeroGlobe: React.FC = () => {
         const destVec = latLonToVec(arc.targetLat, arc.targetLon);
         const rotDest = rotate3D(destVec, cosY, sinY, cosX, sinX);
 
-        // Only draw if either HQ or Dest is on front hemisphere
-        if (rotHQ.z > -0.2 || rotDest.z > -0.2) {
+        if (rotHQ.z > -0.15 || rotDest.z > -0.15) {
           const destPX = cx + rotDest.x * radius;
           const destPY = cy + rotDest.y * radius;
 
-          // Midpoint elevated off surface to form 3D ballistic arc
           const midVec = {
-            x: (rotHQ.x + rotDest.x) * 0.5 * 1.32,
-            y: (rotHQ.y + rotDest.y) * 0.5 * 1.32,
-            z: (rotHQ.z + rotDest.z) * 0.5 * 1.32
+            x: (rotHQ.x + rotDest.x) * 0.5 * 1.30,
+            y: (rotHQ.y + rotDest.y) * 0.5 * 1.30,
+            z: (rotHQ.z + rotDest.z) * 0.5 * 1.30
           };
           const midPX = cx + midVec.x * radius;
           const midPY = cy + midVec.y * radius;
@@ -517,29 +500,36 @@ export const HeroGlobe: React.FC = () => {
           ctx.moveTo(hqPX, hqPY);
           ctx.quadraticCurveTo(midPX, midPY, destPX, destPY);
           ctx.strokeStyle = arc.color;
-          ctx.globalAlpha = 0.28 * arcAlpha;
+          ctx.globalAlpha = 0.3 * arcAlpha;
           ctx.lineWidth = 1;
           ctx.stroke();
 
-          // Traveling photon packet from Maputo to World
+          // Photon packet traveling along arc
           const packetPhase = (time * 0.6 + i * 0.25) % 1;
           const inv = 1 - packetPhase;
           const curPX = inv * inv * hqPX + 2 * inv * packetPhase * midPX + packetPhase * packetPhase * destPX;
           const curPY = inv * inv * hqPY + 2 * inv * packetPhase * midPY + packetPhase * packetPhase * destPY;
 
           ctx.beginPath();
-          ctx.arc(curPX, curPY, 2.5, 0, Math.PI * 2);
+          ctx.arc(curPX, curPY, 2.2, 0, Math.PI * 2);
           ctx.fillStyle = '#ffffff';
           ctx.shadowColor = arc.color;
           ctx.shadowBlur = 8;
           ctx.globalAlpha = arcAlpha;
           ctx.fill();
-
           ctx.restore();
         }
       }
 
-      // --- 5. TECHNICAL PINS & PRODUCTION LABELS (Highlight on Mozambique) ---
+      // --- PHASE E: DRAW FRONT HALF OF FILM REEL (Z >= 0) ---
+      // Passes smoothly IN FRONT of the planet and continental points!
+      for (let i = 0; i < filmQuads.length; i++) {
+        if (filmQuads[i].centerZ >= 0) {
+          drawFilmQuad(filmQuads[i], false);
+        }
+      }
+
+      // --- PHASE F: MOÇAMBIQUE HQ & GLOBAL TECHNICAL PINS ---
       for (let i = 0; i < markerVectors.length; i++) {
         const m = markerVectors[i];
         const rot = rotate3D(m.vec, cosY, sinY, cosX, sinX);
@@ -553,18 +543,18 @@ export const HeroGlobe: React.FC = () => {
           ctx.globalAlpha = alpha;
 
           if (m.isHQ) {
-            // --- SPECIAL PROMINENT PIN: MOÇAMBIQUE HQ ---
-            const pulse = 1 + Math.sin(time * 3.5) * 0.3;
+            // --- PROMINENT MOÇAMBIQUE HQ BEACON PIN ---
+            const pulse = 1 + Math.sin(time * 3.5) * 0.25;
 
-            // Concentric Radar Waves
-            const wave1 = (time * 1.8) % 1.5;
+            // Concentric radar waves
+            const wave1 = (time * 1.6) % 1.5;
             ctx.beginPath();
             ctx.arc(mx, my, 8 + wave1 * 22, 0, Math.PI * 2);
             ctx.strokeStyle = `rgba(255, 59, 48, ${Math.max(0, 1 - wave1 / 1.5)})`;
             ctx.lineWidth = 1.5;
             ctx.stroke();
 
-            // Center Pin Head
+            // Center Pin
             ctx.beginPath();
             ctx.arc(mx, my, 5 * pulse, 0, Math.PI * 2);
             ctx.fillStyle = '#ff3b30';
@@ -572,13 +562,12 @@ export const HeroGlobe: React.FC = () => {
             ctx.shadowBlur = 16;
             ctx.fill();
 
-            // White Inner Core
             ctx.beginPath();
             ctx.arc(mx, my, 2, 0, Math.PI * 2);
             ctx.fillStyle = '#ffffff';
             ctx.fill();
 
-            // Technical HUD Leader Line
+            // HUD Leader Line
             const lineEndX = mx + 42;
             const lineEndY = my - 24;
             ctx.beginPath();
@@ -589,7 +578,6 @@ export const HeroGlobe: React.FC = () => {
             ctx.lineWidth = 1.2;
             ctx.stroke();
 
-            // Mozambique Flag Badge + Text
             ctx.font = '700 11px "Space Grotesk", sans-serif';
             ctx.fillStyle = '#ffffff';
             ctx.textAlign = 'left';

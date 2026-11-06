@@ -5,14 +5,15 @@ import { apiService } from './services/api';
 
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
-import { Strip } from './components/Strip';
-import { About } from './components/About';
-import { Reels } from './components/Reels';
+import { IntroMetrics } from './components/IntroMetrics';
+import { ServicesPillars } from './components/ServicesPillars';
 import { Projects } from './components/Projects';
+import { Reels } from './components/Reels';
+import { WhyMizine } from './components/WhyMizine';
+import { ProjectCalculator } from './components/ProjectCalculator';
 import { Clients } from './components/Clients';
-import { Timeline } from './components/Timeline';
-import { Team } from './components/Team';
 import { Group } from './components/Group';
+import { FAQ } from './components/FAQ';
 import { Contact } from './components/Contact';
 import { Footer } from './components/Footer';
 import { Lightbox } from './components/Lightbox';
@@ -23,7 +24,7 @@ import { AdminDashboard } from './admin/AdminDashboard';
 export function App() {
   const [content, setContent] = useState<SiteContent>(defaultContent);
 
-  // Determina se a URL atual é /admin ou #admin
+  // Determina se a rota é /admin ou #admin
   const checkIsAdminRoute = () => {
     const path = window.location.pathname.toLowerCase();
     const hash = window.location.hash.toLowerCase();
@@ -64,7 +65,7 @@ export function App() {
     load();
   }, []);
 
-  // Observador de interseção para ativar menu apenas na página pública
+  // Observador de interseção para ativar menu
   useEffect(() => {
     if (isAdminRoute) return;
 
@@ -88,13 +89,13 @@ export function App() {
     return () => observer.disconnect();
   }, [isAdminRoute, content]);
 
-  // Observador de Scroll Reveal ("Txamm") para animações cinematográficas ao fazer scroll
+  // Observador de Scroll Reveal estilo United Carriers
   useEffect(() => {
     if (isAdminRoute) return;
 
     const timeout = setTimeout(() => {
       const targets = document.querySelectorAll(
-        '.reveal-up, .reveal-fade, .reveal-scale, section > .wrap, .strip, .marq-logos, .grid .card, .reel, .tl li, .team article, .gcards .gcard, .cwrap'
+        '.reveal-up, .reveal-fade, .reveal-scale, section > .wrap, .uc-pillar-card, .uc-project-card, .uc-reel-card, .uc-metric-card, .uc-why-card, .uc-partner-tile, .uc-group-card, .uc-faq-item'
       );
 
       const revealObserver = new IntersectionObserver(
@@ -105,7 +106,7 @@ export function App() {
             }
           });
         },
-        { threshold: 0.08, rootMargin: '0px 0px -40px 0px' }
+        { threshold: 0.08, rootMargin: '0px 0px -30px 0px' }
       );
 
       targets.forEach((el) => {
@@ -116,7 +117,7 @@ export function App() {
       });
 
       return () => revealObserver.disconnect();
-    }, 80);
+    }, 100);
 
     return () => clearTimeout(timeout);
   }, [isAdminRoute, content]);
@@ -165,21 +166,22 @@ export function App() {
     );
   }
 
-  // Página pública original 100% limpa (sem botão de admin)
+  // Página pública 100% inspirada na estética e narrativa de United Carriers
   return (
     <div className="mizine-app">
       <Navbar />
-      <Hero content={content.hero} />
-      <Strip content={content.hero} onPlayShowreel={handleOpenVideo} />
-      <About content={content.about} />
-      <Reels reels={content.reels} onOpenReel={handleOpenVideo} />
+      <Hero content={content.hero} onPlayShowreel={handleOpenVideo} />
+      <IntroMetrics content={content.about} />
+      <ServicesPillars pillars={content.pillars || defaultContent.pillars} />
       <Projects projects={content.projects} />
+      <Reels reels={content.reels} onOpenReel={handleOpenVideo} />
+      <WhyMizine />
+      <ProjectCalculator heroContent={content.hero} />
       <Clients clients={content.clients} testimonials={content.testimonials} />
-      <Timeline timeline={content.timeline} />
-      <Team team={content.team} />
       <Group companies={content.group} />
+      <FAQ items={content.faq || defaultContent.faq} />
       <Contact hero={content.hero} />
-      <Footer />
+      <Footer hero={content.hero} />
 
       <Lightbox
         isOpen={lightbox.isOpen}

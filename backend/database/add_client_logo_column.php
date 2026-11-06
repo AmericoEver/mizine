@@ -25,3 +25,4 @@ foreach ($dbPaths as $path) {
         }
     }
 }
+

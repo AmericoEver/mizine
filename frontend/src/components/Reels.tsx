@@ -11,7 +11,7 @@ export const Reels: React.FC<ReelsProps> = ({ reels, onOpenReel }) => {
 
   const scroll = (direction: 'left' | 'right') => {
     if (trackRef.current) {
-      const distance = 280;
+      const distance = 320;
       trackRef.current.scrollBy({
         left: direction === 'right' ? distance : -distance,
         behavior: 'smooth'
@@ -20,24 +20,37 @@ export const Reels: React.FC<ReelsProps> = ({ reels, onOpenReel }) => {
   };
 
   return (
-    <section id="reels" style={{ paddingTop: 0 }}>
-      <div className="wrap head">
-        <h2>
-          Os nossos <span className="r">reels</span>
-        </h2>
-        <div className="arrows">
-          <button onClick={() => scroll('left')} aria-label="Anterior">←</button>
-          <button onClick={() => scroll('right')} aria-label="Seguinte">→</button>
+    <section className="uc-reels-section" id="reels" style={{ paddingTop: 0 }}>
+      <div className="wrap uc-reels-head reveal-up">
+        <div>
+          <div className="uc-meta-tag">
+            <span className="meta-bracket">[</span>
+            <span className="meta-index">REELS & SHORT-FORM</span>
+            <span className="meta-bracket">]</span>
+            <span className="meta-sep">•</span>
+            <span className="meta-title">FORMATO VERTICAL DE ALTA RETENÇÃO</span>
+          </div>
+          <h2 className="uc-section-title" style={{ margin: 0 }}>
+            Os Nossos <span className="text-red">Reels</span>
+          </h2>
+        </div>
+
+        <div className="uc-carousel-arrows">
+          <button onClick={() => scroll('left')} aria-label="Anterior" className="uc-arrow-btn">
+            ←
+          </button>
+          <button onClick={() => scroll('right')} aria-label="Seguinte" className="uc-arrow-btn">
+            →
+          </button>
         </div>
       </div>
 
-      <div className="track" ref={trackRef} id="track">
-        {reels.map((reel) => {
-          const artClass = reel.artClass || 'a1';
-          return (
+      <div className="uc-reels-track-container" ref={trackRef}>
+        <div className="uc-reels-track">
+          {reels.map((reel, idx) => (
             <button
               key={reel.id}
-              className="reel"
+              className="uc-reel-card reveal-up"
               onClick={() => onOpenReel(reel.title, reel.videoUrl)}
               aria-label={`Ver ${reel.title}`}
             >
@@ -47,36 +60,37 @@ export const Reels: React.FC<ReelsProps> = ({ reels, onOpenReel }) => {
                 <span>REC 4K</span>
               </div>
 
+              {/* Viewfinder Reticles */}
+              <div className="hud-corner top-right" />
+              <div className="hud-corner bottom-left" />
+
               {reel.imageUrl ? (
                 <img
                   src={reel.imageUrl}
                   alt={reel.title}
-                  className="art"
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  className="uc-reel-img"
+                  loading="lazy"
                 />
               ) : (
-                <div className={`art ${artClass}`} />
+                <div className="uc-reel-fallback-gradient" />
               )}
-              
-              {/* Overlay cinematográfico */}
-              <div
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  background: 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.2) 60%, rgba(225,6,0,0.1) 100%)',
-                  zIndex: 1,
-                  pointerEvents: 'none'
-                }}
-              />
 
-              <span className="play" style={{ zIndex: 3 }} />
-              <div className="meta" style={{ zIndex: 3 }}>
-                <h3>{reel.title}</h3>
-                <span>{reel.subtitle}</span>
+              {/* Overlay Cinematográfico */}
+              <div className="uc-reel-overlay" />
+
+              {/* Play Trigger */}
+              <div className="uc-reel-play-btn">
+                <span className="play-icon">▶</span>
+              </div>
+
+              <div className="uc-reel-meta">
+                <span className="reel-index">REEL #{idx + 1}</span>
+                <h3 className="reel-title">{reel.title}</h3>
+                <span className="reel-subtitle">{reel.subtitle}</span>
               </div>
             </button>
-          );
-        })}
+          ))}
+        </div>
       </div>
     </section>
   );

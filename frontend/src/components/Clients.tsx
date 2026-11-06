@@ -24,34 +24,41 @@ const getClientLogo = (c: ClientItem): string => {
 
 export const Clients: React.FC<ClientsProps> = ({ clients, testimonials }) => {
   return (
-    <section id="clientes" style={{ paddingTop: 0 }}>
-      <div className="wrap head reveal-up">
-        <h2>
-          Com quem já <span className="r">trabalhámos</span>
+    <section className="uc-clients-section" id="clientes" style={{ paddingTop: 0 }}>
+      <div className="wrap uc-section-header reveal-up">
+        <div className="uc-meta-tag">
+          <span className="meta-bracket">[</span>
+          <span className="meta-index">PARCEIROS</span>
+          <span className="meta-bracket">]</span>
+          <span className="meta-sep">•</span>
+          <span className="meta-title">RELAÇÕES DE CONFIANÇA & MARCAS</span>
+        </div>
+        <h2 className="uc-section-title">
+          Com quem já <span className="text-red">trabalhámos.</span>
         </h2>
-        <span style={{ color: '#888', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '2px' }}>
-          Marcas, Parceiros & Produções
-        </span>
+        <p className="uc-section-desc">
+          Empresas, marcas líderes e eventos exclusivos que confiaram a sua imagem e momentos à Mizine Multimédia.
+        </p>
       </div>
 
-      {/* Marquee Dinâmico de Logotipos */}
-      <div className="marq-logos reveal-fade" aria-label="Logotipos de Clientes">
-        <div className="marq-track">
+      {/* Infinite Logo Marquee */}
+      <div className="uc-marquee-wrap reveal-fade" aria-label="Logotipos de Clientes">
+        <div className="uc-marquee-track">
           {clients.concat(clients).map((c, i) => {
             const logo = getClientLogo(c);
             return (
-              <div key={`${c.id}-${i}`} className="client-badge" title={c.name}>
+              <div key={`${c.id}-${i}`} className="uc-marquee-badge" title={c.name}>
                 {logo ? (
                   <img
                     src={logo}
                     alt={c.name}
-                    className="client-img"
+                    className="uc-marquee-logo"
                     loading="lazy"
                   />
                 ) : (
-                  <div className="client-fallback">
-                    <span className="client-dot">●</span>
-                    <span className="client-text">{c.name}</span>
+                  <div className="uc-marquee-fallback">
+                    <span className="fallback-dot">●</span>
+                    <span className="fallback-text">{c.name}</span>
                   </div>
                 )}
               </div>
@@ -60,22 +67,22 @@ export const Clients: React.FC<ClientsProps> = ({ clients, testimonials }) => {
         </div>
       </div>
 
-      {/* Grelha de Logotipos em Destaque */}
+      {/* High-Contrast Partner Grid */}
       <div className="wrap" style={{ marginTop: '36px' }}>
-        <div className="clients-grid reveal-up">
+        <div className="uc-partners-grid reveal-up">
           {clients.map((c) => {
             const logo = getClientLogo(c);
             return (
-              <div key={c.id} className="client-grid-card" title={c.name}>
+              <div key={c.id} className="uc-partner-tile" title={c.name}>
                 {logo ? (
                   <img
                     src={logo}
                     alt={c.name}
-                    className="client-grid-img"
+                    className="uc-partner-tile-logo"
                     loading="lazy"
                   />
                 ) : (
-                  <span className="client-grid-name">{c.name}</span>
+                  <span className="uc-partner-tile-text">{c.name}</span>
                 )}
               </div>
             );
@@ -83,18 +90,20 @@ export const Clients: React.FC<ClientsProps> = ({ clients, testimonials }) => {
         </div>
       </div>
 
-      {/* Testemunhos com Efeito de Revelação */}
-      <div className="wrap quotes reveal-up" style={{ marginTop: '54px' }}>
-        {testimonials.map((item, idx) => (
-          <blockquote key={item.id} className="testimonial-card" style={{ animationDelay: `${idx * 0.15}s` }}>
-            <div className="quote-mark">“</div>
-            <p>{item.quote.replace(/^[“"']|[”"']$/g, '')}</p>
-            <cite>
-              <span className="cite-author">{item.author}</span>
-              <span className="cite-company">{item.company}</span>
-            </cite>
-          </blockquote>
-        ))}
+      {/* Testimonials Block */}
+      <div className="wrap" style={{ marginTop: '64px' }}>
+        <div className="uc-testimonials-grid reveal-up">
+          {testimonials.map((item) => (
+            <blockquote key={item.id} className="uc-testimonial-card">
+              <div className="testimonial-quotes-sign">“</div>
+              <p className="testimonial-quote-text">{item.quote.replace(/^[“"']|[”"']$/g, '')}</p>
+              <cite className="testimonial-author-block">
+                <span className="author-name">{item.author}</span>
+                <span className="author-company">{item.company}</span>
+              </cite>
+            </blockquote>
+          ))}
+        </div>
       </div>
     </section>
   );

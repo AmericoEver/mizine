@@ -94,6 +94,23 @@ export interface ContactMessage {
   createdAt?: string;
 }
 
+export interface ServicePillar {
+  id: string | number;
+  code: string;
+  title: string;
+  category: string;
+  description: string;
+  deliverables: string[];
+  badge?: string;
+  accent?: string;
+}
+
+export interface FaqItem {
+  id: string | number;
+  question: string;
+  answer: string;
+}
+
 export interface SiteContent {
   hero: HeroContent;
   about: AboutContent;
@@ -104,5 +121,7 @@ export interface SiteContent {
   timeline: TimelineItem[];
   team: TeamMember[];
   group: GroupCompany[];
+  pillars?: ServicePillar[];
+  faq?: FaqItem[];
 }
 

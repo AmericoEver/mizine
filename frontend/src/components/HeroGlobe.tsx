@@ -839,7 +839,8 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
       // durante o mergulho a fita desce para não tapar Moçambique (centrado a ~46% da altura)
       const reelCY = lerp(defaultCY, height * 0.8, reelP);
       const filmInclination = lerp(-0.30, -0.07, reelP);
-      const litP = smoothstep(0.15, 0.55, reelP); // fotogramas "expostos à luz do dia"
+      // No espaço: película escura (negativo). Depois das nuvens, os fotogramas "revelam-se" com as marcas.
+      const litP = smoothstep(0.56, 0.72, sp);
 
       // Alvo de aterragem: a fita real (DOM), fixa dentro da cena sticky — não se mexe durante a transição
       const landingStrip = document.getElementById('heroLandingStrip');
@@ -1030,10 +1031,10 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
         // 2. Janela do fotograma (separada por linhas de fotograma pretas)
         ctx.beginPath();
         quadPath(WIN_U0, 1 - WIN_U0, WIN_V0, WIN_V1);
-        // Película real desde o início: fotograma claro com o logo; no espaço só mais "à sombra"
-        const wr = Math.round(lerp(196, 245, litP));
-        const wg = Math.round(lerp(200, 246, litP));
-        const wb = Math.round(lerp(212, 249, litP));
+        // Espaço: celulóide escuro com tom âmbar de negativo; depois das nuvens: fotograma revelado (claro)
+        const wr = Math.round(lerp(42, 245, litP));
+        const wg = Math.round(lerp(31, 246, litP));
+        const wb = Math.round(lerp(24, 249, litP));
         ctx.fillStyle = `rgb(${wr}, ${wg}, ${wb})`;
         ctx.fill();
         if (isHovered && !isBack) {
@@ -1075,7 +1076,8 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
           const c = P(0.5, 0.5);
           // Layout idêntico ao .cine-frame-window da fita DOM (logo a 40%, nome a 77%, etiqueta a 89%)
           const showName = winH > 70;
-          ctx.globalAlpha = alpha;
+          // as marcas só aparecem quando a película é revelada (depois das nuvens)
+          ctx.globalAlpha = alpha * smoothstep(0.35, 0.9, litP);
           const ly = showName ? c.y - winH * 0.1 : c.y;
           const img = logoObj?.img;
           ctx.textAlign = 'center';

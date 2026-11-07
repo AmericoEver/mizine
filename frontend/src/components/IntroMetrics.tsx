@@ -1,52 +1,29 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { AboutContent } from '../types';
 
 interface IntroMetricsProps {
   content: AboutContent;
 }
 
-const REAL_PORTFOLIO_BRANDS = [
-  { name: 'CONFNES', tag: 'CONFERÊNCIA NACIONAL', logo: '/media/clients/confnes.png', frame: '01' },
-  { name: 'UNE', tag: 'UNIÃO DE ESTUDANTES', logo: '/media/clients/une.png', frame: '02' },
-  { name: 'INAS', tag: 'GOVERNO DE MOÇAMBIQUE', logo: '/media/clients/inas.png', frame: '03' },
-  { name: 'GOV. GAZA', tag: 'SETOR PÚBLICO', logo: '/media/clients/governo-gaza.png', frame: '04' },
-  { name: 'LIMPOPO TV', tag: 'TELEVISÃO & BROADCAST', logo: '/media/clients/limpopo-tv.png', frame: '05' },
-  { name: 'CREDMOZ', tag: 'FINTECH & CRÉDITO', logo: '/media/clients/credmoz.png', frame: '06' },
-  { name: 'CATALYST ACADEMY', tag: 'EDUCAÇÃO & NEGÓCIOS', logo: '/media/clients/catalyst-academy.png', frame: '07' },
-  { name: 'MOZCLEAN', tag: 'SOLUÇÕES CORPORATIVAS', logo: '/media/clients/mozclean.png', frame: '08' },
-  { name: 'CPC - GAZA', tag: 'CONSELHO PROVINCIAL', logo: '/media/clients/cpc-gaza.png', frame: '09' },
-  { name: 'GEEK EVER', tag: 'TECNOLOGIA & GAMING', logo: '/media/clients/geek.png', frame: '10' },
-  { name: 'QUAQUA', tag: 'COMUNICAÇÃO & BRANDING', logo: '/media/clients/quaqua.png', frame: '11' },
-  { name: 'FCDF', tag: 'FORMAÇÃO FOTOGRÁFICA', logo: '/media/clients/fcdf.png', frame: '12' },
-  { name: 'HOME SERVICE', tag: 'SERVIÇOS GERAIS', logo: '/media/clients/home-service.png', frame: '13' },
-  { name: 'CLM MAPUTO', tag: 'LOGÍSTICA & TRANSPORTE', logo: '/media/clients/confnes.png', frame: '14' }
-];
-
 export const IntroMetrics: React.FC<IntroMetricsProps> = ({ content }) => {
-  const [hoveredBrand, setHoveredBrand] = useState<string | null>(null);
-
-  // Duplicate for seamless infinite loop marquee
-  const marqueeBrands = [...REAL_PORTFOLIO_BRANDS, ...REAL_PORTFOLIO_BRANDS];
-
   return (
     <section className="uc-intro-section theme-daylight-section" id="sobre">
       <div className="wrap">
-        {/* Daylight Arrival Telemetry Header */}
+        {/* Continuação do roteiro: depois das marcas, a câmara continua a gravar → o criador */}
         <div className="uc-section-header reveal-up">
           <div className="uc-meta-tag daylight-meta">
             <span className="meta-bracket">[</span>
-            <span className="meta-index">02/06</span>
+            <span className="meta-index">03/06</span>
             <span className="meta-bracket">]</span>
             <span className="meta-sep">•</span>
-            <span className="meta-title">TERRA // MOÇAMBIQUE • DIA ENSOLARADO [ 12:00 ] ☀️</span>
+            <span className="meta-title">CÂMARA 01 // A GRAVAÇÃO CONTINUA ● REC</span>
           </div>
-          <span className="uc-header-sub daylight-sub">Sede Operacional & Ecossistema de Produção</span>
+          <span className="uc-header-sub daylight-sub">Sede Operacional em Maputo & Ecossistema de Produção</span>
         </div>
 
-        {/* Big Bold Manifesto Headline */}
         <div className="uc-manifesto-grid daylight-manifesto reveal-up">
           <h2 className="uc-manifesto-text daylight-text">
-            {content.mainHeading || 'Trabalhamos com marcas corajosas e momentos únicos para criar experiências que as pessoas sentem e partilham.'}
+            Por trás de cada fotograma, há quem esteja atrás da câmara.
           </h2>
           <div className="uc-manifesto-aside daylight-aside">
             <p className="uc-manifesto-sub daylight-subtext">
@@ -55,78 +32,6 @@ export const IntroMetrics: React.FC<IntroMetricsProps> = ({ content }) => {
             <div className="daylight-origin-badge">
               <span className="origin-flag">🇲🇿</span>
               <span className="origin-text">MAPUTO, MOÇAMBIQUE • ESTÚDIO CENTRAL</span>
-            </div>
-          </div>
-        </div>
-
-        {/* 24MM PHOTOGRAPHIC FILM REEL // MARCAS QUE JÁ TRABALHARAM COM MOISÉS MABUNDA */}
-        <div className="film-reel-24mm-daylight reveal-up">
-          <div className="film-reel-meta-bar">
-            <div className="film-reel-title">
-              <span className="rec-tally-dot" />
-              <span>FITA DE GRAVAÇÃO 24MM // MARCAS QUE CONFIAM NA MIZINE</span>
-            </div>
-            <div className="film-reel-spec">
-              <span>PADRÃO 24MM CELLULOID • 24 FPS • EXPOSIÇÃO LUZ DO DIA 5600K</span>
-            </div>
-          </div>
-
-          <div className="film-strip-viewport">
-            <div className="film-strip-track">
-              {marqueeBrands.map((brand, idx) => {
-                const isHovered = hoveredBrand === `${brand.name}-${idx}`;
-                return (
-                  <div
-                    key={`${brand.name}-${idx}`}
-                    className={`film-frame-24mm ${isHovered ? 'is-hovered' : ''}`}
-                    onMouseEnter={() => setHoveredBrand(`${brand.name}-${idx}`)}
-                    onMouseLeave={() => setHoveredBrand(null)}
-                  >
-                    {/* Top Sprocket Perforations */}
-                    <div className="film-sprockets top">
-                      <span className="sprocket-hole" />
-                      <span className="sprocket-hole" />
-                      <span className="sprocket-hole" />
-                      <span className="sprocket-hole" />
-                    </div>
-
-                    {/* Frame Content Window */}
-                    <div className="film-frame-window">
-                      <div className="frame-header-indicator">
-                        <span className="frame-counter">[ FR {brand.frame}/24 ]</span>
-                        <span className="frame-rec-status">
-                          <span className="mini-rec-dot" />
-                          <span>REC</span>
-                        </span>
-                      </div>
-
-                      <div className="film-logo-container">
-                        <img
-                          src={brand.logo}
-                          alt={brand.name}
-                          className="film-brand-logo"
-                          onError={(e) => {
-                            (e.currentTarget as HTMLElement).style.display = 'none';
-                          }}
-                        />
-                        <span className="film-brand-name">{brand.name}</span>
-                      </div>
-
-                      <div className="film-brand-category">
-                        <span>{brand.tag}</span>
-                      </div>
-                    </div>
-
-                    {/* Bottom Sprocket Perforations */}
-                    <div className="film-sprockets bottom">
-                      <span className="sprocket-hole" />
-                      <span className="sprocket-hole" />
-                      <span className="sprocket-hole" />
-                      <span className="sprocket-hole" />
-                    </div>
-                  </div>
-                );
-              })}
             </div>
           </div>
         </div>

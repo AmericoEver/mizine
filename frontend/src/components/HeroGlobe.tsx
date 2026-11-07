@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import worldData from '../data/worldPoints.json';
+import { CLIENT_BRANDS } from '../data/clientBrands';
 
 interface WorldPoint {
   lat: number;
@@ -73,22 +74,128 @@ const GLOBAL_ARCS = [
   { fromLat: -25.96, fromLon: 32.58, toLat: 39.93, toLon: 32.85, color: '#34c759' }    // Maputo -> Ásia / Turquia (Distribuição)
 ];
 
-// CLIENT LOGOS DO PORTFÓLIO OFICIAL MOISÉS MABUNDA (FITA 24MM INTERLIGADA)
-const CLIENT_LOGOS = [
-  { name: 'CONFNES', src: '/media/clients/confnes.png' },
-  { name: 'UNE', src: '/media/clients/une.png' },
-  { name: 'INAS', src: '/media/clients/inas.png' },
-  { name: 'GOV. GAZA', src: '/media/clients/governo-gaza.png' },
-  { name: 'CREDMOZ', src: '/media/clients/credmoz.png' },
-  { name: 'CATALYST ACADEMY', src: '/media/clients/catalyst-academy.png' },
-  { name: 'GEEK EVER', src: '/media/clients/geek.png' },
-  { name: 'MOZCLEAN', src: '/media/clients/mozclean.png' },
-  { name: 'LIMPOPO TV', src: '/media/clients/limpopo-tv.png' },
-  { name: 'CPC - GAZA', src: '/media/clients/cpc-gaza.png' },
-  { name: 'QUAQUA', src: '/media/clients/quaqua.png' },
-  { name: 'FCDF', src: '/media/clients/fcdf.png' },
-  { name: 'HOME SERVICE', src: '/media/clients/home-service.png' }
-];
+const smoothstep = (a: number, b: number, x: number) => {
+  const t = Math.max(0, Math.min(1, (x - a) / (b - a)));
+  return t * t * (3 - 2 * t);
+};
+const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+
+// --- Procedural value-noise (para nuvens realistas geradas uma única vez) ---
+const hash2 = (x: number, y: number, seed: number) => {
+  const s = Math.sin(x * 127.1 + y * 311.7 + seed * 74.7) * 43758.5453;
+  return s - Math.floor(s);
+};
+const valueNoise = (x: number, y: number, seed: number) => {
+  const xi = Math.floor(x);
+  const yi = Math.floor(y);
+  const xf = x - xi;
+  const yf = y - yi;
+  const u = xf * xf * (3 - 2 * xf);
+  const v = yf * yf * (3 - 2 * yf);
+  const a = hash2(xi, yi, seed);
+  const b = hash2(xi + 1, yi, seed);
+  const c = hash2(xi, yi + 1, seed);
+  const d = hash2(xi + 1, yi + 1, seed);
+  return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+};
+const fbm = (x: number, y: number, seed: number) => {
+  let sum = 0;
+  let amp = 0.5;
+  let freq = 1;
+  for (let o = 0; o < 6; o++) {
+    sum += amp * valueNoise(x * freq, y * freq, seed + o * 13);
+    freq *= 2.03;
+    amp *= 0.5;
+  }
+  return sum;
+};
+
+// Gera um "sprite" de cúmulo realista: vários "novelos" (couve-flor) sobrepostos numa cúpula de base plana,
+// erodidos por ruído fractal, com auto-sombra calculada na direcção do sol (cima-esquerda),
+// sombra azulada na base, e orla prateada onde a nuvem é fina.
+const makeCloudSprite = (w: number, h: number, seed: number): HTMLCanvasElement => {
+  const c = document.createElement('canvas');
+  c.width = w;
+  c.height = h;
+  const g = c.getContext('2d');
+  if (!g) return c;
+
+  // 1. Novelos: um núcleo grande + anéis de bolhas mais pequenas ao longo da cúpula
+  const rnd = (k: number) => hash2(k, seed * 7.3, seed);
+  const puffs: { x: number; y: number; r: number }[] = [];
+  const count = 16;
+  for (let k = 0; k < count; k++) {
+    const t = k / (count - 1);
+    const px = lerp(-0.72, 0.72, t) + (rnd(k) - 0.5) * 0.12;
+    const dome = Math.sqrt(Math.max(0, 1 - px * px * 1.4));
+    const r = 0.16 + dome * 0.24 + rnd(k + 40) * 0.08;
+    const py = 0.32 - dome * 0.5 + (rnd(k + 80) - 0.5) * 0.12;
+    puffs.push({ x: px, y: py, r });
+  }
+  for (let k = 0; k < 7; k++) {
+    puffs.push({ x: (rnd(k + 120) - 0.5) * 0.9, y: -0.2 - rnd(k + 160) * 0.35, r: 0.14 + rnd(k + 200) * 0.14 });
+  }
+
+  // 2. Campo de densidade (uma passagem) — guardado para a iluminação por amostragem
+  const dens = new Float32Array(w * h);
+  for (let y = 0; y < h; y++) {
+    const v = (y / h) * 2 - 1;
+    for (let x = 0; x < w; x++) {
+      const u = (x / w) * 2 - 1;
+      let d = 0;
+      for (let k = 0; k < puffs.length; k++) {
+        const p = puffs[k];
+        const dx = (u - p.x) / p.r;
+        const dy = (v - p.y) / p.r;
+        const q = 1 - (dx * dx + dy * dy);
+        if (q > 0) d = Math.max(d, q) + q * 0.18; // união suave dos novelos
+      }
+      // base plana: corta por baixo como um cúmulo real
+      d *= smoothstep(0.62, 0.36, v);
+      const n = fbm(u * 3.2 + seed * 3.1, v * 3.2 + seed * 1.7, seed);
+      const fine = valueNoise(u * 14 + seed, v * 14 - seed, seed + 7);
+      d = d * 1.15 + (n - 0.5) * 0.55 + (fine - 0.5) * 0.12;
+      // margem de segurança: nunca há rectângulos visíveis
+      d *= smoothstep(0.99, 0.82, Math.abs(u)) * smoothstep(0.99, 0.8, Math.abs(v));
+      dens[y * w + x] = d;
+    }
+  }
+
+  // 3. Iluminação: luz rasante do sol (cima-esquerda) — amostra a densidade "entre o pixel e o sol"
+  const img = g.createImageData(w, h);
+  const data = img.data;
+  const sx = -Math.round(w * 0.018);
+  const sy = -Math.round(h * 0.035);
+  const at = (x: number, y: number) => {
+    const xx = Math.min(w - 1, Math.max(0, x));
+    const yy = Math.min(h - 1, Math.max(0, y));
+    return dens[yy * w + xx];
+  };
+  for (let y = 0; y < h; y++) {
+    const v = (y / h) * 2 - 1;
+    for (let x = 0; x < w; x++) {
+      const d = dens[y * w + x];
+      const alpha = smoothstep(0.04, 0.36, d);
+      if (alpha <= 0.003) continue;
+      // densidade acumulada na direcção do sol → auto-sombra
+      const occl = (at(x + sx, y + sy) + at(x + sx * 2, y + sy * 2) * 0.7 + at(x + sx * 3, y + sy * 3) * 0.45) / 2.15;
+      let light = 1 - Math.max(0, occl - d * 0.35) * 1.05;
+      light -= smoothstep(-0.1, 0.55, v) * 0.42; // ventre da nuvem mais escuro
+      light = Math.max(0, Math.min(1, light));
+      // orla prateada onde a nuvem é fina (contraluz)
+      const rim = (1 - smoothstep(0.04, 0.3, d)) * 0.35;
+      const l = Math.min(1, light + rim);
+      const idx = (y * w + x) * 4;
+      // sombra azul-acinzentada do céu ↔ branco quente do sol
+      data[idx] = Math.round(lerp(150, 255, l));
+      data[idx + 1] = Math.round(lerp(166, 253, l));
+      data[idx + 2] = Math.round(lerp(196, 248, l));
+      data[idx + 3] = Math.round(alpha * 255);
+    }
+  }
+  g.putImageData(img, 0, 0);
+  return c;
+};
 
 interface CameraFlashStar {
   xNorm: number;
@@ -139,53 +246,70 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
     let smoothScrollProgress = 0;
 
     const onScroll = () => {
-      const scrollY = window.scrollY || document.documentElement.scrollTop || 0;
-      // Generous dead-zone at the top (0 to 90px): Hero stays 100% at rest!
-      if (scrollY <= 90) {
+      const track = document.querySelector('.uc-hero-scroll-track') as HTMLElement;
+      if (!track) {
+        const scrollY = window.scrollY || document.documentElement.scrollTop || 0;
+        targetScrollProgress = Math.min(1, Math.max(0, scrollY / 600));
+        return;
+      }
+      const rect = track.getBoundingClientRect();
+      const trackHeight = track.offsetHeight - window.innerHeight;
+      if (trackHeight <= 0) {
         targetScrollProgress = 0;
         return;
       }
-      const maxScroll = Math.max(window.innerHeight * 0.72, 500);
-      targetScrollProgress = Math.min(1, Math.max(0, (scrollY - 90) / maxScroll));
+      const scrolled = -rect.top;
+      targetScrollProgress = Math.min(1, Math.max(0, scrolled / trackHeight));
     };
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 
-    // Procedural atmospheric clouds (realistic multi-lobe volumetric cloud banks)
-    interface RealisticCloud {
-      xRel: number;
-      yRel: number;
-      baseR: number;
-      driftSpeed: number;
-      depthLayer: number; // 0: high cirrus, 1: mid cumulus, 2: low dense deck
-      lobeCount: number;
-      lobes: { dx: number; dy: number; rMul: number; alphaMul: number }[];
+    // Nuvens realistas: sprites procedurais (fbm noise) gerados uma vez,
+    // depois a câmara "voa" através delas em perspectiva durante a descida.
+    const cloudSprites: HTMLCanvasElement[] = [];
+    for (let s = 0; s < 6; s++) {
+      cloudSprites.push(makeCloudSprite(360, 210, s * 1.37 + 0.5));
     }
-    const clouds: RealisticCloud[] = [];
-    for (let i = 0; i < 24; i++) {
-      const lobeCount = 4 + Math.floor(Math.random() * 4);
-      const lobes = [];
-      for (let l = 0; l < lobeCount; l++) {
-        lobes.push({
-          dx: (Math.random() - 0.5) * 120,
-          dy: (Math.random() - 0.5) * 60,
-          rMul: 0.65 + Math.random() * 0.55,
-          alphaMul: 0.75 + Math.random() * 0.25
-        });
-      }
-      clouds.push({
-        xRel: (Math.random() - 0.5) * 1.5,
-        yRel: (Math.random() - 0.5) * 1.3,
-        baseR: 180 + Math.random() * 220,
-        driftSpeed: 0.4 + Math.random() * 0.8,
-        depthLayer: i % 3,
-        lobeCount,
-        lobes
+
+    interface FlyCloud {
+      x: number; // -1.6..1.6 (lateral)
+      y: number; // -0.4..0.9 (vertical, positivo = abaixo do horizonte)
+      z: number; // profundidade inicial
+      size: number;
+      sprite: number;
+      flip: boolean;
+      drift: number;
+    }
+    const flyClouds: FlyCloud[] = [];
+    for (let i = 0; i < 46; i++) {
+      flyClouds.push({
+        x: (Math.random() - 0.5) * 3.2,
+        y: -0.35 + Math.random() * 1.25,
+        z: 0.15 + (i / 46) * 1.35 + Math.random() * 0.05,
+        size: 0.55 + Math.random() * 0.75,
+        sprite: i % cloudSprites.length,
+        flip: Math.random() > 0.5,
+        drift: (Math.random() - 0.5) * 0.04
       });
     }
 
+    // Mar de nuvens no horizonte (camadas que sobem e cobrem a transição)
+    interface DeckCloud { x: number; row: number; size: number; sprite: number; flip: boolean }
+    const deckClouds: DeckCloud[] = [];
+    for (let row = 0; row < 4; row++) {
+      for (let k = 0; k < 9; k++) {
+        deckClouds.push({
+          x: k / 9 + Math.random() * 0.06,
+          row,
+          size: 0.9 + Math.random() * 0.5,
+          sprite: (row * 9 + k) % cloudSprites.length,
+          flip: Math.random() > 0.5
+        });
+      }
+    }
+
     let filmOrbitAngle = 0;
-    const filmOrbitSpeed = 0.0036;
+    const filmOrbitSpeed = 0.0030;
 
     const latLonToVec = (lat: number, lon: number) => {
       const phi = (lat * Math.PI) / 180;
@@ -222,12 +346,23 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
     }
 
     // Preload client brand logos for interconnected 24mm film reel
-    const clientLogoImages: { name: string; img: HTMLImageElement }[] = [];
-    CLIENT_LOGOS.forEach(item => {
-      const img = new Image();
-      img.src = item.src;
+    const clientLogoImages: { name: string; img: HTMLImageElement | null }[] = [];
+    CLIENT_BRANDS.forEach(item => {
+      let img: HTMLImageElement | null = null;
+      if (item.logo) {
+        img = new Image();
+        img.src = item.logo;
+      }
       clientLogoImages.push({ name: item.name, img });
     });
+
+    // Fita DOM de aterragem: o canvas controla a sua posição; o hover pausa a fita
+    let stripHover = false;
+    const stripEl = document.getElementById('heroLandingStrip');
+    const onStripEnter = () => { stripHover = true; };
+    const onStripLeave = () => { stripHover = false; };
+    stripEl?.addEventListener('mouseenter', onStripEnter);
+    stripEl?.addEventListener('mouseleave', onStripLeave);
 
     const handleResize = () => {
       if (!canvas) return;
@@ -353,16 +488,22 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
 
     const render = () => {
       time += 0.015;
-      filmOrbitAngle += filmOrbitSpeed;
+      // Depois de aterrar, a fita abranda para os logos se lerem; o hover pausa-a
+      const settled = smoothstep(0.8, 0.97, smoothScrollProgress);
+      if (!(stripHover && settled > 0.99)) {
+        filmOrbitAngle += filmOrbitSpeed * (1 - 0.8 * settled);
+      }
 
-      // Continuous natural planet rotation (never stops!)
+      // Continuous natural planet rotation (slows down as the camera locks onto Mozambique)
       if (!isDragging) {
-        rotY -= 0.0022;
+        rotY -= 0.0022 * (1 - smoothstep(0, 0.35, smoothScrollProgress));
       }
 
       mouseTiltX += (targetMouseTiltX - mouseTiltX) * 0.08;
       mouseTiltY += (targetMouseTiltY - mouseTiltY) * 0.08;
 
+      ctx.globalAlpha = 1;
+      ctx.shadowBlur = 0;
       ctx.clearRect(0, 0, width, height);
 
       // --- SCROLL INTERPOLATION & ZOOM INTO MOÇAMBIQUE ---
@@ -374,6 +515,7 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
         }
       } else {
         smoothScrollProgress += (targetScrollProgress - smoothScrollProgress) * 0.12;
+        if (Math.abs(targetScrollProgress - smoothScrollProgress) < 0.0015) smoothScrollProgress = targetScrollProgress;
       }
       const sp = smoothScrollProgress <= 0.001 ? 0 : smoothScrollProgress;
 
@@ -385,7 +527,7 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
           vp.style.transform = 'translateY(0px)';
           vp.style.pointerEvents = 'auto';
         } else {
-          const fadeOut = Math.max(0, 1 - sp * 1.5);
+          const fadeOut = Math.max(0, 1 - sp * 2.6);
           vp.style.opacity = fadeOut.toFixed(3);
           vp.style.transform = `translateY(${(-sp * 60).toFixed(1)}px)`;
           vp.style.pointerEvents = fadeOut < 0.1 ? 'none' : 'auto';
@@ -399,45 +541,79 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
       if (scrollInd) {
         scrollInd.style.opacity = sp === 0 ? '1' : Math.max(0, 1 - sp * 2.2).toFixed(3);
       }
-      const cloudTransitionEl = document.querySelector('.uc-hero-cloud-transition') as HTMLElement;
-      if (cloudTransitionEl) {
-        if (sp <= 0.05) {
-          cloudTransitionEl.style.opacity = '0';
-          cloudTransitionEl.style.transform = 'translateY(36px)';
+
+      // ================= LINHA TEMPORAL DA DESCIDA (sp 0 → 1) =================
+      // 0.00–0.35  câmara roda e centra Maputo
+      // 0.02–0.52  mergulho exponencial até Moçambique preencher o ecrã
+      // 0.30–0.68  atmosfera: preto → azul profundo → céu
+      // 0.48–0.97  voo através das nuvens + mar de nuvens a subir
+      // 0.76–0.92  luz do dia (#f8f9fc) — igual ao fundo da secção seguinte
+      // 0.76–0.92  fita aterra exactamente sobre a fita real (fixa no ecrã); troca canvas→DOM 0.92–0.96
+      // 0.84–0.94  "TRABALHAMOS COM MARCAS CORAJOSAS" aparece e aponta para a fita
+      const rotP = smoothstep(0, 0.35, sp);
+      const zoomP = smoothstep(0.02, 0.52, sp);
+      const atmoP = smoothstep(0.30, 0.68, sp);
+      const washP = smoothstep(0.76, 0.92, sp);
+      const reelP = smoothstep(0.05, 0.76, sp);
+      const landP = smoothstep(0.76, 0.92, sp);
+
+      // Altímetro fixo (no <body>)
+      const flightHudEl = document.getElementById('flightTelemetryHud');
+      if (flightHudEl) {
+        if (sp > 0.03 && sp < 0.88) {
+          flightHudEl.classList.add('is-active');
+          const altProgress = Math.min(1, (sp - 0.03) / 0.9);
+          const altM = 24800 * Math.pow(1 - altProgress, 1.7);
+          const altValEl = document.getElementById('hudAltitudeVal');
+          const altUnitEl = document.getElementById('hudAltUnit');
+          const machValEl = document.getElementById('hudMachVal');
+          const tapeEl = document.getElementById('hudAltTape');
+          const barEl = document.getElementById('hudAltBar');
+          if (altValEl) altValEl.textContent = altM >= 1000 ? (altM / 1000).toFixed(1) : Math.round(altM).toString();
+          if (altUnitEl) altUnitEl.textContent = altM >= 1000 ? 'KM' : 'M';
+          if (machValEl) {
+            const mach = 12.4 * Math.pow(1 - altProgress, 1.3);
+            machValEl.textContent = mach >= 1 ? `MACH ${mach.toFixed(1)}` : `${Math.round(mach * 1225)} KM/H`;
+          }
+          if (tapeEl) tapeEl.style.backgroundPositionY = `${(altM / 40).toFixed(1)}px`;
+          if (barEl) barEl.style.transform = `scaleX(${altProgress.toFixed(3)})`;
         } else {
-          const cFade = Math.min(1, (sp - 0.05) / 0.50);
-          cloudTransitionEl.style.opacity = cFade.toFixed(3);
-          cloudTransitionEl.style.transform = `translateY(${((1 - cFade) * 36).toFixed(1)}px)`;
+          flightHudEl.classList.remove('is-active');
         }
       }
 
-      const easeP = sp * sp * (3 - 2 * sp); // Hermite smoothstep
-
-      // --- 100% PERFECT CIRCUMFERENCE ALIGNED TO THE RIGHT AT REST, ZOOMING TO FULLSCREEN ---
+      // --- PLANETA À DIREITA EM REPOUSO, MERGULHO ATÉ MOÇAMBIQUE ---
       const isMobile = width < 900;
       const baseRadius = isMobile
         ? Math.min(width * 0.42, height * 0.32)
         : Math.min(height * 0.39, width * 0.26);
 
-      // Colossal growth into Mozambique: up to 5.6x radius on scroll!
-      const radius = baseRadius * (1 + easeP * 4.6);
+      // Zoom exponencial (sensação de velocidade constante): até 11x — Moçambique enche o ecrã
+      const radius = baseRadius * Math.pow(11, zoomP);
 
-      const defaultCX = isMobile ? width * 0.50 : width - baseRadius - 75;
-      const defaultCY = isMobile ? height * 0.36 : height * 0.50;
-      const targetCX = width * 0.50;
-      const targetCY = height * 0.50;
+      // Orientação alvo: Maputo (lat -25.96, lon 32.58) virado para a câmara
+      const targetRotX = 0.4531;
+      const baseTargetRotY = - (32.58 * Math.PI) / 180;
+      const diffY = ((baseTargetRotY - rotY) % (Math.PI * 2) + Math.PI * 3) % (Math.PI * 2) - Math.PI;
+      const targetRotY = rotY + diffY;
 
-      const cx = defaultCX + (targetCX - defaultCX) * easeP;
-      const cy = defaultCY + (targetCY - defaultCY) * easeP;
-
-      // Continuous natural planet rotation (the planet NEVER stops rotating!)
-      const currentRotY = rotY;
-      const currentRotX = rotX;
+      const currentRotY = rotY + (targetRotY - rotY) * rotP;
+      const currentRotX = rotX + (targetRotX - rotX) * rotP;
 
       const cosY = Math.cos(currentRotY);
       const sinY = Math.sin(currentRotY);
       const cosX = Math.cos(currentRotX);
       const sinX = Math.sin(currentRotX);
+
+      const defaultCX = isMobile ? width * 0.50 : width - baseRadius - 75;
+      const defaultCY = isMobile ? height * 0.36 : height * 0.50;
+
+      // Centro do globo calculado para que Maputo fique EXACTAMENTE no centro do ecrã
+      const mozVec = latLonToVec(-25.96, 32.58);
+      const mozRot = rotate3D(mozVec, cosY, sinY, cosX, sinX);
+      const centerP = smoothstep(0, 0.40, sp);
+      const cx = lerp(defaultCX, width * 0.50 - mozRot.x * radius, centerP);
+      const cy = lerp(defaultCY, height * 0.46 - mozRot.y * radius, centerP);
 
       // --- LAYER 1: ENLARGED MOON WITH DISCREET LUNAR PHASES & EASTER EGG ---
       const textPaddingLeft = Math.min(100, Math.max(40, width * 0.06));
@@ -646,25 +822,71 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
             ctx.fill();
           }
         }
-        ctx.restore();
       }
+      ctx.restore();
     }
 
-      // --- LAYER 3: 24MM PHOTOGRAPHIC FILM REEL INTERCONNECTED DESCENT & CLIENT LOGOS ---
-      const filmFrames = 54;
-      // As scroll proceeds, the 24mm reel uncurls, expands and descends gracefully towards the bottom
-      const filmDescendY = easeP * height * 0.50;
-      const filmCenterY = cy + filmDescendY;
-      const currentOrbitRadius = radius * (1.18 + easeP * 0.65);
-      const currentFilmWidth = radius * (0.076 + easeP * 0.038);
-      const currentFilmInclination = -0.26 * (1 - easeP * 0.88);
-      const filmAlpha = 1.0;
+      // --- LAYER 3: FITA DE CINEMA REAL (base preta contínua + perfurações) QUE DESCE E ATERRA NA PÁGINA ---
+      // Múltiplo exacto do nº de marcas → a sequência de logos não tem "costura" e coincide com a fita DOM
+      const brandCount = Math.max(1, clientLogoImages.length);
+      const filmFrames = brandCount * Math.max(1, Math.round(44 / brandCount));
+      const frameAspect = 208 / 190; // mesma proporção da fita DOM (.cine-frame)
+      const orbitR = lerp(baseRadius * 1.24, Math.max(width * 0.62, baseRadius * 1.6), reelP);
+      const frameLen = (Math.PI * 2 * orbitR) / filmFrames;
+      const filmW = frameLen / frameAspect;
+      const reelCX = lerp(defaultCX, width * 0.5, smoothstep(0.05, 0.45, sp));
+      const reelCY = lerp(defaultCY, height * 0.60, reelP);
+      const filmInclination = lerp(-0.30, -0.07, reelP);
+      const litP = smoothstep(0.15, 0.55, reelP); // fotogramas "expostos à luz do dia"
 
+      // Alvo de aterragem: a fita real (DOM), fixa dentro da cena sticky — não se mexe durante a transição
+      const landingStrip = document.getElementById('heroLandingStrip');
+      const landingTrack = document.getElementById('heroLandingTrack');
+      const landingHead = document.getElementById('heroLandingHead');
+      let landY = height * 0.7;
+      let landH = 190;
+      let landFrameW = 208;
+      let stripLeft = 0;
+      if (landingStrip) {
+        const r = landingStrip.getBoundingClientRect();
+        const cr = canvas.getBoundingClientRect();
+        landY = r.top - cr.top + r.height / 2;
+        landH = r.height;
+        stripLeft = r.left - cr.left;
+        const fr = landingStrip.querySelector('.cine-frame') as HTMLElement | null;
+        if (fr && fr.offsetWidth > 0) landFrameW = fr.offsetWidth;
+      }
+      const landFlatR = (landFrameW * filmFrames) / (Math.PI * 2);
+      const reelAlpha = 1 - smoothstep(0.935, 0.965, sp);
+
+      // Fita DOM: mesma fase que a fita do canvas (fotograma i do canvas ≡ fotograma k da DOM, k ≡ −i mod nº marcas)
+      if (landingTrack) {
+        const cycle = brandCount * landFrameW;
+        const phase = ((filmOrbitAngle + Math.PI / 2) * filmFrames) / (Math.PI * 2);
+        let tx = width * 0.5 - stripLeft + (phase - 1.002) * landFrameW;
+        tx = (((tx % cycle) + cycle) % cycle) - cycle;
+        landingTrack.style.transform = `translate3d(${tx.toFixed(2)}px, 0, 0)`;
+      }
+      if (landingStrip) {
+        const o = smoothstep(0.92, 0.945, sp);
+        landingStrip.style.opacity = o.toFixed(3);
+        landingStrip.style.pointerEvents = o > 0.6 ? 'auto' : 'none';
+      }
+      const reelMeta = document.querySelector('.landing-reel .film-reel-meta-bar') as HTMLElement | null;
+      if (reelMeta) reelMeta.style.opacity = smoothstep(0.9, 0.96, sp).toFixed(3);
+      if (landingHead) {
+        const ho = smoothstep(0.84, 0.94, sp);
+        landingHead.style.opacity = ho.toFixed(3);
+        landingHead.style.transform = `translateY(${((1 - ho) * 28).toFixed(1)}px)`;
+        landingHead.style.pointerEvents = ho > 0.6 ? 'auto' : 'none';
+      }
+
+      interface ScreenPt { x: number; y: number; z: number }
       interface FilmQuad {
-        tl: { x: number; y: number; z: number };
-        tr: { x: number; y: number; z: number };
-        br: { x: number; y: number; z: number };
-        bl: { x: number; y: number; z: number };
+        tl: ScreenPt;
+        tr: ScreenPt;
+        br: ScreenPt;
+        bl: ScreenPt;
         centerZ: number;
         index: number;
         screenCenterX: number;
@@ -674,43 +896,62 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
       const filmQuads: FilmQuad[] = [];
       const cosMouseY = Math.cos(mouseTiltY);
       const sinMouseY = Math.sin(mouseTiltY);
-      const cosMouseX = Math.cos(rotX + mouseTiltX);
-      const sinMouseX = Math.sin(rotX + mouseTiltX);
+      const cosMouseX = Math.cos(rotX * (1 - reelP) + mouseTiltX);
+      const sinMouseX = Math.sin(rotX * (1 - reelP) + mouseTiltX);
+      const cosIncl = Math.cos(filmInclination);
+      const sinIncl = Math.sin(filmInclination);
+
+      const getFilmEdge = (angle: number, offset: number): ScreenPt => {
+        const ox = orbitR * Math.cos(angle);
+        const oz = orbitR * Math.sin(angle);
+        const y0 = oz * sinIncl + offset * cosIncl;
+        const z0 = oz * cosIncl - offset * sinIncl;
+        const xCam = ox * cosMouseY + z0 * sinMouseY;
+        const zTmp = -ox * sinMouseY + z0 * cosMouseY;
+        const yCam = y0 * cosMouseX - zTmp * sinMouseX;
+        const zCam = y0 * sinMouseX + zTmp * cosMouseX;
+        return { x: reelCX + xCam, y: reelCY + yCam, z: zCam };
+      };
 
       for (let i = 0; i < filmFrames; i++) {
         const a1 = (i / filmFrames) * Math.PI * 2 - filmOrbitAngle;
-        const a2 = ((i + 0.85) / filmFrames) * Math.PI * 2 - filmOrbitAngle;
+        const a2 = ((i + 1.004) / filmFrames) * Math.PI * 2 - filmOrbitAngle;
+        let tl = getFilmEdge(a1, filmW * 0.5);
+        let tr = getFilmEdge(a2, filmW * 0.5);
+        let br = getFilmEdge(a2, -filmW * 0.5);
+        let bl = getFilmEdge(a1, -filmW * 0.5);
 
-        const getFilmEdge = (angle: number, offset: number) => {
-          const ox = currentOrbitRadius * Math.cos(angle);
-          const oz = currentOrbitRadius * Math.sin(angle);
-          const x0 = ox;
-          const y0 = oz * Math.sin(currentFilmInclination) + offset * Math.cos(currentFilmInclination);
-          const z0 = oz * Math.cos(currentFilmInclination) - offset * Math.sin(currentFilmInclination);
-
-          const xCam = x0 * cosMouseY + z0 * sinMouseY;
-          const zCamTemp = -x0 * sinMouseY + z0 * cosMouseY;
-          const yCam = y0 * cosMouseX - zCamTemp * sinMouseX;
-          const zCam = y0 * sinMouseX + zCamTemp * cosMouseX;
-
-          return { x: xCam, y: yCam, z: zCam };
-        };
-
-        const tl = getFilmEdge(a1, currentFilmWidth * 0.5);
-        const tr = getFilmEdge(a2, currentFilmWidth * 0.5);
-        const br = getFilmEdge(a2, -currentFilmWidth * 0.5);
-        const bl = getFilmEdge(a1, -currentFilmWidth * 0.5);
+        // Aterragem: a fita "desenrola" e alinha-se pixel a pixel com a fita DOM
+        if (landP > 0) {
+          const aC = (a1 + a2) / 2;
+          const daC = (((aC - Math.PI / 2 + Math.PI) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2) - Math.PI;
+          const fxC = width * 0.5 - daC * landFlatR;
+          const fx1 = fxC + landFrameW / 2;
+          const fx2 = fxC - landFrameW / 2;
+          const fyA = landY + landH / 2;
+          const fyB = landY - landH / 2;
+          const mix = (p: ScreenPt, fx: number, fy: number): ScreenPt => ({
+            x: lerp(p.x, fx, landP),
+            y: lerp(p.y, fy, landP),
+            z: lerp(p.z, Math.abs(daC) < Math.PI / 2 ? 1 : -1, landP)
+          });
+          tl = mix(tl, fx1, fyA);
+          tr = mix(tr, fx2, fyA);
+          br = mix(br, fx2, fyB);
+          bl = mix(bl, fx1, fyB);
+        }
 
         const centerZ = (tl.z + tr.z + br.z + bl.z) / 4;
-        const screenCenterX = cx + (tl.x + tr.x + br.x + bl.x) / 4;
-        const screenCenterY = filmCenterY + (tl.y + tr.y + br.y + bl.y) / 4;
-
-        filmQuads.push({ tl, tr, br, bl, centerZ, index: i, screenCenterX, screenCenterY });
+        filmQuads.push({
+          tl, tr, br, bl, centerZ, index: i,
+          screenCenterX: (tl.x + tr.x + br.x + bl.x) / 4,
+          screenCenterY: (tl.y + tr.y + br.y + bl.y) / 4
+        });
       }
 
       hoveredFilmIndex = -1;
       if (sp < 0.2) {
-        let closestDist = 32;
+        let closestDist = Math.max(28, frameLen * 0.5);
         for (let i = 0; i < filmQuads.length; i++) {
           const q = filmQuads[i];
           if (q.centerZ > 0) {
@@ -729,135 +970,157 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
         canvas.style.cursor = isDragging ? 'grabbing' : 'default';
       }
 
+      // Proporções idênticas às do CSS da fita DOM (fita 35mm real)
+      const PERF_COUNT = 8;
+      const PERF_W = 14 / 208;
+      const PERF_V0 = 0.045;
+      const PERF_V1 = 0.118;
+      const WIN_U0 = 0.016;
+      const WIN_V0 = 0.165;
+      const WIN_V1 = 0.835;
+
       const drawFilmQuad = (q: FilmQuad, isBack: boolean) => {
-        if (filmAlpha < 0.01) return;
+        const backFade = isBack ? lerp(0.5, 0, smoothstep(0.25, 0.75, reelP)) : 1;
+        const alpha = reelAlpha * backFade;
+        if (alpha < 0.01) return;
         const isHovered = q.index === hoveredFilmIndex;
-        const scale = isHovered ? 1.35 : 1.0;
+        const scale = isHovered ? 1.22 : 1.0;
+        const mx = q.screenCenterX;
+        const my = q.screenCenterY;
 
-        const centerX = (q.tl.x + q.tr.x + q.br.x + q.bl.x) / 4;
-        const centerY = (q.tl.y + q.tr.y + q.br.y + q.bl.y) / 4;
-
-        const scalePoint = (p: { x: number; y: number }) => ({
-          px: cx + centerX + (p.x - centerX) * scale,
-          py: filmCenterY + centerY + (p.y - centerY) * scale
-        });
-
-        const pTL = scalePoint(q.tl);
-        const pTR = scalePoint(q.tr);
-        const pBR = scalePoint(q.br);
-        const pBL = scalePoint(q.bl);
-
-        const daylightTransition = Math.max(0, Math.min(1, (easeP - 0.10) / 0.50));
+        // Ponto bilinear dentro do fotograma: u ao longo da fita, v através (0 = borda tl/tr)
+        const P = (u: number, v: number) => {
+          const topX = lerp(q.tl.x, q.tr.x, u);
+          const topY = lerp(q.tl.y, q.tr.y, u);
+          const botX = lerp(q.bl.x, q.br.x, u);
+          const botY = lerp(q.bl.y, q.br.y, u);
+          return {
+            x: mx + (lerp(topX, botX, v) - mx) * scale,
+            y: my + (lerp(topY, botY, v) - my) * scale
+          };
+        };
+        const quadPath = (u0: number, u1: number, v0: number, v1: number) => {
+          const a = P(u0, v0);
+          const b = P(u1, v0);
+          const c = P(u1, v1);
+          const d = P(u0, v1);
+          ctx.moveTo(a.x, a.y);
+          ctx.lineTo(b.x, b.y);
+          ctx.lineTo(c.x, c.y);
+          ctx.lineTo(d.x, d.y);
+          ctx.closePath();
+        };
 
         ctx.save();
-        ctx.globalAlpha = isBack
-          ? (filmAlpha * Math.max(0.08, 1 - daylightTransition * 0.85) * 0.45)
-          : filmAlpha;
+        ctx.globalAlpha = alpha;
 
+        // 1. Base de acetato preta contínua
         ctx.beginPath();
-        ctx.moveTo(pTL.px, pTL.py);
-        ctx.lineTo(pTR.px, pTR.py);
-        ctx.lineTo(pBR.px, pBR.py);
-        ctx.lineTo(pBL.px, pBL.py);
-        ctx.closePath();
-
-        // In space: dark cinematic celluloid. In daylight: crisp white celluloid card!
-        if (daylightTransition > 0.45) {
-          ctx.fillStyle = '#ffffff';
-        } else if (daylightTransition > 0.05) {
-          const t = daylightTransition / 0.45;
-          ctx.fillStyle = `rgba(${Math.round(14 + t * 241)}, ${Math.round(14 + t * 241)}, ${Math.round(20 + t * 235)}, 0.96)`;
-        } else {
-          ctx.fillStyle = isBack
-            ? 'rgba(10, 10, 16, 0.50)'
-            : (isHovered ? 'rgba(20, 20, 32, 0.98)' : 'rgba(14, 14, 20, 0.94)');
+        quadPath(0, 1, 0, 1);
+        ctx.fillStyle = isBack ? 'rgba(8, 8, 12, 0.85)' : '#0c0c10';
+        if (isHovered) {
+          ctx.shadowColor = '#00d4ff';
+          ctx.shadowBlur = 16;
         }
         ctx.fill();
-
-        // Film Frame Outer Border
-        if (daylightTransition > 0.45) {
-          ctx.strokeStyle = isHovered ? '#ff3b30' : 'rgba(220, 38, 38, 0.65)';
-          ctx.lineWidth = isHovered ? 2.2 : 1.2;
-        } else {
-          ctx.strokeStyle = isHovered
-            ? '#00d4ff'
-            : (isBack ? 'rgba(255, 140, 20, 0.25)' : 'rgba(255, 140, 40, 0.85)');
-          ctx.lineWidth = isHovered ? 2.2 : 1;
-        }
-        if (isHovered) {
-          ctx.shadowColor = daylightTransition > 0.45 ? '#ff3b30' : '#00d4ff';
-          ctx.shadowBlur = 12;
-        }
-        ctx.stroke();
         ctx.shadowBlur = 0;
 
-        // Frame Inner Window (where video or client logo is displayed)
-        const inset = 0.18;
-        const wTLx = pTL.px + (pBL.px - pTL.px) * inset + (pTR.px - pTL.px) * 0.15;
-        const wTLy = pTL.py + (pBL.py - pTL.py) * inset + (pTR.py - pTL.py) * 0.15;
-        const wTRx = pTR.px + (pBR.px - pTR.px) * inset - (pTR.px - pTL.px) * 0.15;
-        const wTRy = pTR.py + (pBR.py - pTR.py) * inset - (pTR.py - pTL.py) * 0.15;
-        const wBRx = pBR.px - (pBR.px - pTR.px) * inset - (pTR.px - pTL.px) * 0.15;
-        const wBRy = pBR.py - (pBR.py - pTR.py) * inset - (pTR.py - pTL.py) * 0.15;
-        const wBLx = pBL.px - (pBL.px - pTL.px) * inset + (pTR.px - pTL.px) * 0.15;
-        const wBLy = pBL.py - (pBL.py - pTL.py) * inset + (pTR.py - pTL.py) * 0.15;
-
+        // 2. Janela do fotograma (separada por linhas de fotograma pretas)
         ctx.beginPath();
-        ctx.moveTo(wTLx, wTLy);
-        ctx.lineTo(wTRx, wTRy);
-        ctx.lineTo(wBRx, wBRy);
-        ctx.lineTo(wBLx, wBLy);
-        ctx.closePath();
-
-        if (daylightTransition > 0.35) {
-          ctx.fillStyle = '#ffffff';
-          ctx.fill();
-          ctx.strokeStyle = 'rgba(0, 0, 0, 0.08)';
-          ctx.lineWidth = 0.8;
-          ctx.stroke();
-        } else {
-          const isCyan = q.index % 2 === 0;
+        quadPath(WIN_U0, 1 - WIN_U0, WIN_V0, WIN_V1);
+        const wr = Math.round(lerp(30, 245, litP));
+        const wg = Math.round(lerp(31, 246, litP));
+        const wb = Math.round(lerp(42, 249, litP));
+        ctx.fillStyle = `rgb(${wr}, ${wg}, ${wb})`;
+        ctx.fill();
+        if (litP < 1 && !isBack) {
           ctx.fillStyle = isHovered
             ? 'rgba(0, 212, 255, 0.45)'
-            : (isCyan
-              ? (isBack ? 'rgba(0, 212, 255, 0.10)' : 'rgba(0, 212, 255, 0.22)')
-              : (isBack ? 'rgba(255, 120, 0, 0.10)' : 'rgba(255, 120, 0, 0.25)'));
+            : (q.index % 2 === 0 ? `rgba(0, 212, 255, ${0.24 * (1 - litP)})` : `rgba(255, 120, 0, ${0.26 * (1 - litP)})`);
+          ctx.fill();
+        }
+        // Brilho do celulóide (reflexo diagonal subtil)
+        if (!isBack && litP > 0.3) {
+          const g0 = P(0, WIN_V0);
+          const g1 = P(1, WIN_V1);
+          const sheen = ctx.createLinearGradient(g0.x, g0.y, g1.x, g1.y);
+          sheen.addColorStop(0, 'rgba(255,255,255,0)');
+          sheen.addColorStop(0.45, `rgba(200,206,220,${0.22 * litP})`);
+          sheen.addColorStop(1, 'rgba(255,255,255,0)');
+          ctx.fillStyle = sheen;
           ctx.fill();
         }
 
-        // DRAW CLIENT LOGO IN THE FRAME WINDOW ON TRANSITION / DAYLIGHT
-        if (daylightTransition > 0.10 && !isBack) {
+        // 3. Perfurações (8 por fotograma, em cima e em baixo — como fita 35mm)
+        ctx.beginPath();
+        for (let k = 0; k < PERF_COUNT; k++) {
+          const uc = (k + 0.5) / PERF_COUNT;
+          quadPath(uc - PERF_W / 2, uc + PERF_W / 2, PERF_V0, PERF_V1);
+          quadPath(uc - PERF_W / 2, uc + PERF_W / 2, 1 - PERF_V1, 1 - PERF_V0);
+        }
+        ctx.fillStyle = isBack
+          ? 'rgba(200, 208, 225, 0.35)'
+          : `rgba(${Math.round(lerp(205, 248, litP))}, ${Math.round(lerp(212, 249, litP))}, ${Math.round(lerp(228, 252, litP))}, 0.95)`;
+        ctx.fill();
+
+        // 4. Logótipo do cliente + nome (igual à fita DOM)
+        if (!isBack && litP > 0.2) {
           const logoObj = clientLogoImages[q.index % clientLogoImages.length];
-          if (logoObj && logoObj.img.complete && logoObj.img.naturalWidth > 0) {
-            ctx.save();
-            const logoAlpha = Math.min(1, (daylightTransition - 0.10) / 0.35);
-            ctx.globalAlpha = logoAlpha;
-            const midX = (wTLx + wTRx + wBRx + wBLx) / 4;
-            const midY = (wTLy + wTRy + wBRy + wBLy) / 4;
-            const qw = Math.hypot(wTRx - wTLx, wTRy - wTLy);
-            const qh = Math.hypot(wBLx - wTLx, wBLy - wTLy);
-            const maxW = Math.max(16, qw * 0.72);
-            const maxH = Math.max(12, qh * 0.68);
-            const aspect = logoObj.img.naturalWidth / (logoObj.img.naturalHeight || 1);
+          const w0 = P(WIN_U0, WIN_V0);
+          const w1 = P(1 - WIN_U0, WIN_V0);
+          const w3 = P(WIN_U0, WIN_V1);
+          const winW = Math.hypot(w1.x - w0.x, w1.y - w0.y);
+          const winH = Math.hypot(w3.x - w0.x, w3.y - w0.y);
+          const c = P(0.5, 0.5);
+          // Layout idêntico ao .cine-frame-window da fita DOM (logo a 40%, nome a 77%, etiqueta a 89%)
+          const showName = winH > 70;
+          ctx.globalAlpha = alpha * smoothstep(0.2, 0.55, litP);
+          const ly = showName ? c.y - winH * 0.1 : c.y;
+          const img = logoObj?.img;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          if (img && img.complete && img.naturalWidth > 0 && winW > 10) {
+            const maxW = winW * 0.7;
+            const maxH = winH * (showName ? 0.4 : 0.6);
+            const aspect = img.naturalWidth / (img.naturalHeight || 1);
             let dw = maxW;
             let dh = dw / aspect;
             if (dh > maxH) {
               dh = maxH;
               dw = dh * aspect;
             }
-            ctx.drawImage(logoObj.img, midX - dw / 2, midY - dh / 2, dw, dh);
-            ctx.restore();
+            ctx.drawImage(img, c.x - dw / 2, ly - dh / 2, dw, dh);
+          } else if (logoObj && !img && winW > 10) {
+            // Logotipo tipográfico (marcas ainda sem ficheiro de logo)
+            // mesma regra que o CSS (.cine-frame-wordmark): 16% da janela, reduzido para nomes longos
+            const fs = Math.min(winH * 0.16, (winW * 0.8) / (0.62 * logoObj.name.length));
+            ctx.font = `900 ${fs.toFixed(1)}px "Space Grotesk", sans-serif`;
+            ctx.fillStyle = '#111218';
+            ctx.fillText(logoObj.name, c.x, ly);
+            ctx.fillStyle = '#ff3b30';
+            ctx.fillRect(c.x - winW * 0.08, ly + fs * 0.62, winW * 0.16, Math.max(1.5, winH * 0.018));
           }
+          if (showName && logoObj) {
+            if (img) {
+              ctx.font = `800 ${Math.max(8, Math.round(winH * 0.085))}px "Space Grotesk", sans-serif`;
+              ctx.fillStyle = '#111218';
+              ctx.fillText(logoObj.name, c.x, c.y + winH * 0.27);
+            }
+            ctx.font = `600 ${Math.max(6, Math.round(winH * 0.055))}px "JetBrains Mono", monospace`;
+            ctx.fillStyle = '#ff3b30';
+            ctx.fillText(CLIENT_BRANDS[q.index % brandCount]?.tag ?? '', c.x, c.y + winH * 0.39);
+          }
+          ctx.textBaseline = 'alphabetic';
         }
 
-        if (isHovered && daylightTransition <= 0.35) {
+        if (isHovered && litP <= 0.35) {
+          const c = P(0.5, 0.5);
+          ctx.globalAlpha = 1;
           ctx.fillStyle = '#ffffff';
           ctx.beginPath();
-          const midX = (wTLx + wTRx + wBRx + wBLx) / 4;
-          const midY = (wTLy + wTRy + wBRy + wBLy) / 4;
-          ctx.moveTo(midX - 4, midY - 6);
-          ctx.lineTo(midX + 7, midY);
-          ctx.lineTo(midX - 4, midY + 6);
+          ctx.moveTo(c.x - 4, c.y - 6);
+          ctx.lineTo(c.x + 7, c.y);
+          ctx.lineTo(c.x - 4, c.y + 6);
           ctx.closePath();
           ctx.fill();
 
@@ -867,40 +1130,17 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
           ctx.fillStyle = '#030408';
           ctx.strokeStyle = '#00d4ff';
           ctx.lineWidth = 1.2;
-          ctx.fillRect(midX - tipW / 2, midY - 32, tipW, 22);
-          ctx.strokeRect(midX - tipW / 2, midY - 32, tipW, 22);
-
+          ctx.fillRect(c.x - tipW / 2, c.y - 44, tipW, 22);
+          ctx.strokeRect(c.x - tipW / 2, c.y - 44, tipW, 22);
           ctx.fillStyle = '#ffffff';
           ctx.textAlign = 'center';
-          ctx.fillText(tipText, midX, midY - 18);
+          ctx.fillText(tipText, c.x, c.y - 30);
         }
-
-        // Authentic 24mm Film Sprockets Perforations (Top & Bottom)
-        const sprocketW = Math.max(2.2, 4.2 * scale);
-        const sprocketH = Math.max(1.8, 3.0 * scale);
-        const spFill = daylightTransition > 0.4 ? '#181822' : '#020205';
-
-        // Top sprockets (2 holes)
-        ctx.fillStyle = spFill;
-        const spTopX1 = pTL.px + (pTR.px - pTL.px) * 0.30 + (pBL.px - pTL.px) * 0.08;
-        const spTopY1 = pTL.py + (pTR.py - pTL.py) * 0.30 + (pBL.py - pTL.py) * 0.08;
-        const spTopX2 = pTL.px + (pTR.px - pTL.px) * 0.70 + (pBL.px - pTL.px) * 0.08;
-        const spTopY2 = pTL.py + (pTR.py - pTL.py) * 0.70 + (pBL.py - pTL.py) * 0.08;
-        ctx.fillRect(spTopX1 - sprocketW / 2, spTopY1 - sprocketH / 2, sprocketW, sprocketH);
-        ctx.fillRect(spTopX2 - sprocketW / 2, spTopY2 - sprocketH / 2, sprocketW, sprocketH);
-
-        // Bottom sprockets (2 holes)
-        const spBotX1 = pBL.px + (pBR.px - pBL.px) * 0.30 - (pBL.px - pTL.px) * 0.08;
-        const spBotY1 = pBL.py + (pBR.py - pBL.py) * 0.30 - (pBL.py - pTL.py) * 0.08;
-        const spBotX2 = pBL.px + (pBR.px - pBL.px) * 0.70 - (pBL.px - pTL.px) * 0.08;
-        const spBotY2 = pBL.py + (pBR.py - pBL.py) * 0.70 - (pBL.py - pTL.py) * 0.08;
-        ctx.fillRect(spBotX1 - sprocketW / 2, spBotY1 - sprocketH / 2, sprocketW, sprocketH);
-        ctx.fillRect(spBotX2 - sprocketW / 2, spBotY2 - sprocketH / 2, sprocketW, sprocketH);
 
         ctx.restore();
       };
 
-      // --- PHASE A: DRAW BACK HALF OF FILM REEL (Z < 0) ---
+      // --- PHASE A: METADE DE TRÁS DA FITA (atrás do planeta) ---
       for (let i = 0; i < filmQuads.length; i++) {
         if (filmQuads[i].centerZ < 0) {
           drawFilmQuad(filmQuads[i], true);
@@ -972,13 +1212,33 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
 
       projectedPoints.sort((a, b) => a.z - b.z);
 
+      // Território de Moçambique preenchido (os pontos fundem-se num só bloco ao aproximar)
+      const mozFillA = smoothstep(0.06, 0.4, sp);
+      if (mozFillA > 0.01) {
+        const blobR = Math.max(2, radius * 0.0115);
+        ctx.save();
+        ctx.beginPath();
+        for (let i = 0; i < projectedPoints.length; i++) {
+          const pt = projectedPoints[i];
+          if (!pt.moz || pt.z < 0.05) continue;
+          ctx.moveTo(pt.px + blobR, pt.py);
+          ctx.arc(pt.px, pt.py, blobR, 0, Math.PI * 2);
+        }
+        ctx.fillStyle = `rgba(255, 59, 48, ${0.30 * mozFillA})`;
+        ctx.shadowColor = 'rgba(255, 59, 48, 0.9)';
+        ctx.shadowBlur = 30 * mozFillA;
+        ctx.fill();
+        ctx.restore();
+      }
+      const dotGrow = 1 + zoomP * 1.6;
+
       for (let i = 0; i < projectedPoints.length; i++) {
         const pt = projectedPoints[i];
         const depth = pt.z;
 
         if (pt.moz) {
           const isBorder = pt.coast;
-          const rMoz = (isBorder ? 1.55 : 1.2) * (0.65 + depth * 0.55);
+          const rMoz = (isBorder ? 1.55 : 1.2) * (0.65 + depth * 0.55) * dotGrow;
           ctx.beginPath();
           ctx.arc(pt.px, pt.py, rMoz, 0, Math.PI * 2);
           ctx.fillStyle = isBorder
@@ -987,7 +1247,7 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
           ctx.fill();
         } else {
           const isCoast = pt.coast;
-          const r = (isCoast ? 1.4 : 1.1) * (0.65 + depth * 0.45);
+          const r = (isCoast ? 1.4 : 1.1) * (0.65 + depth * 0.45) * dotGrow;
           let alpha = (isCoast ? 0.98 : 0.78) * (0.40 + depth * 0.60);
 
           const dist = Math.hypot(pt.px - cx, pt.py - cy) / radius;
@@ -1003,7 +1263,8 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
       }
 
       // --- PHASE D: "TUDO SAI DE MOÇAMBIQUE PARA O MUNDO" ARCS & STREAMING PACKETS ---
-      for (let i = 0; i < GLOBAL_ARCS.length; i++) {
+      const arcFade = 1 - smoothstep(0.08, 0.35, sp);
+      for (let i = 0; i < GLOBAL_ARCS.length && arcFade > 0.01; i++) {
         const arc = GLOBAL_ARCS[i];
         const fromVec = latLonToVec(arc.fromLat, arc.fromLon);
         const toVec = latLonToVec(arc.toLat, arc.toLon);
@@ -1025,7 +1286,7 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
           const midPX = cx + midVec.x * radius;
           const midPY = cy + midVec.y * radius;
 
-          const arcAlpha = Math.max(0.1, (rotFrom.z + rotTo.z + 1.2) / 2.4);
+          const arcAlpha = Math.max(0.1, (rotFrom.z + rotTo.z + 1.2) / 2.4) * arcFade;
 
           // Glowing Distribution Trajectory Arc
           ctx.save();
@@ -1191,175 +1452,112 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
         }
       }
 
-      // --- PHASE G: ATMOSPHERIC BLUE PENETRATION & VOLUMETRIC CLOUDS ---
-      // "ao entrar no ponto moçambique azul ficam as nuvens"
-      if (sp > 0.38) {
-        const blueEntryProgress = Math.max(0, Math.min(1, (sp - 0.35) / 0.45));
-        const auraR = radius * (1.1 + blueEntryProgress * 0.4);
-        const blueGlow = ctx.createRadialGradient(cx, cy, radius * 0.05, cx, cy, auraR);
-        blueGlow.addColorStop(0, `rgba(0, 212, 255, ${0.85 * blueEntryProgress})`);
-        blueGlow.addColorStop(0.35, `rgba(0, 130, 255, ${0.68 * blueEntryProgress})`);
-        blueGlow.addColorStop(0.70, `rgba(2, 10, 35, ${0.48 * blueEntryProgress})`);
-        blueGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      // --- PHASE G: ATMOSFERA (preto do espaço → azul profundo → céu de Maputo) ---
+      const atmoA = smoothstep(0.30, 0.66, sp) * 0.86;
+      if (atmoA > 0.001) {
+        const t = atmoP;
+        const sky = ctx.createLinearGradient(0, 0, 0, height);
+        sky.addColorStop(0, `rgba(${Math.round(lerp(4, 92, t))}, ${Math.round(lerp(14, 150, t))}, ${Math.round(lerp(48, 222, t))}, ${atmoA})`);
+        sky.addColorStop(0.55, `rgba(${Math.round(lerp(14, 160, t))}, ${Math.round(lerp(52, 200, t))}, ${Math.round(lerp(130, 240, t))}, ${atmoA * 0.82})`);
+        sky.addColorStop(1, `rgba(${Math.round(lerp(40, 222, t))}, ${Math.round(lerp(96, 232, t))}, ${Math.round(lerp(170, 248, t))}, ${atmoA * 0.9})`);
         ctx.save();
-        ctx.fillStyle = blueGlow;
+        ctx.fillStyle = sky;
         ctx.fillRect(0, 0, width, height);
         ctx.restore();
       }
 
-      // --- PHASE G: REALISTIC VOLUMETRIC CLOUDS THAT DISGUISE THE SEAM COMPLETELY ---
-      // As user scrolls, clouds rise from the bottom, billow across the viewport,
-      // and completely dissolve the dark space into pure daylight white #f8f9fc!
-      const cloudDeckAlpha = sp <= 0.05 ? 0 : Math.min(1, Math.max(0, (sp - 0.05) * 1.8));
-      if (cloudDeckAlpha > 0.01) {
+      // --- PHASE G2: VOO ATRAVÉS DAS NUVENS (sprites procedurais em perspectiva) ---
+      const cloudIn = smoothstep(0.48, 0.62, sp);
+      if (cloudIn > 0.001) {
+        const camZ = smoothstep(0.48, 0.97, sp) * 1.5;
+        const horizonY = height * 0.44;
         ctx.save();
-
-        // 1. Bottom Atmospheric Fog Layer that seamlessly blends to #f8f9fc
-        const deckH = Math.min(height * 0.70, 160 + sp * height * 0.45);
-        const deckGrad = ctx.createLinearGradient(0, height - deckH, 0, height);
-        deckGrad.addColorStop(0, 'rgba(248, 249, 252, 0)');
-        deckGrad.addColorStop(0.35, `rgba(240, 244, 255, ${cloudDeckAlpha * 0.45})`);
-        deckGrad.addColorStop(0.70, `rgba(245, 248, 255, ${cloudDeckAlpha * 0.88})`);
-        deckGrad.addColorStop(1, `rgba(248, 249, 252, ${cloudDeckAlpha * 1.0})`);
-        ctx.fillStyle = deckGrad;
-        ctx.fillRect(0, height - deckH, width, deckH);
-
-        // 2. High-altitude atmospheric haze bands
-        for (let b = 0; b < 3; b++) {
-          const bandY = height * (0.32 + b * 0.20) + Math.sin(time * 0.4 + b) * 12;
-          const bandH = height * 0.28;
-          const bandGrad = ctx.createLinearGradient(0, bandY - bandH / 2, 0, bandY + bandH / 2);
-          const bandA = cloudDeckAlpha * 0.45;
-          bandGrad.addColorStop(0, 'rgba(255, 255, 255, 0)');
-          bandGrad.addColorStop(0.5, `rgba(200, 235, 255, ${bandA})`);
-          bandGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
-          ctx.fillStyle = bandGrad;
-          ctx.fillRect(0, bandY - bandH / 2, width, bandH);
-        }
-
-        // 3. Multi-lobe Volumetric Cumulus Cloud Clusters
-        for (let i = 0; i < clouds.length; i++) {
-          const cl = clouds[i];
-          const expandMul = 1 + sp * 1.8;
-          const clusterCX = width * 0.5 + cl.xRel * width * 0.65 * expandMul + Math.sin(time * cl.driftSpeed) * 30;
-          // Clouds rise up from bottom to envelope the descent
-          const clusterCY = height - (deckH * 0.60) + cl.yRel * deckH * 0.5 + Math.cos(time * cl.driftSpeed * 0.8) * 15;
-
-          for (let l = 0; l < cl.lobes.length; l++) {
-            const lobe = cl.lobes[l];
-            const lx = clusterCX + lobe.dx * expandMul;
-            const ly = clusterCY + lobe.dy * expandMul;
-            const lr = cl.baseR * lobe.rMul * expandMul;
-
-            const cGrad = ctx.createRadialGradient(lx - lr * 0.15, ly - lr * 0.15, lr * 0.05, lx, ly, lr);
-            const a = cloudDeckAlpha * lobe.alphaMul * 0.92;
-
-            // Sunlight scattering on upper rim (sun-facing)
-            cGrad.addColorStop(0, `rgba(255, 255, 255, ${a * 0.98})`);
-            cGrad.addColorStop(0.35, `rgba(235, 245, 255, ${a * 0.88})`);
-            cGrad.addColorStop(0.70, `rgba(180, 220, 255, ${a * 0.50})`);
-            cGrad.addColorStop(0.95, `rgba(248, 249, 252, ${a * 0.20})`);
-            cGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-
-            ctx.fillStyle = cGrad;
-            ctx.beginPath();
-            ctx.arc(lx, ly, lr, 0, Math.PI * 2);
-            ctx.fill();
+        for (let i = flyClouds.length - 1; i >= 0; i--) {
+          const c = flyClouds[i];
+          const d = c.z - camZ;
+          if (d < 0.035) continue;
+          const persp = 0.3 / d;
+          const spr = cloudSprites[c.sprite];
+          const cw = width * c.size * persp;
+          const ch = cw * (spr.height / spr.width);
+          const sx = width * 0.5 + (c.x + Math.sin(time * 0.05 + i) * c.drift) * width * persp * 0.5;
+          const sy = horizonY + c.y * height * persp * 0.5;
+          if (sx + cw / 2 < 0 || sx - cw / 2 > width || sy + ch / 2 < 0 || sy - ch / 2 > height) continue;
+          const near = smoothstep(0.035, 0.2, d);
+          const far = 1 - smoothstep(0.95, 1.45, d);
+          const a = cloudIn * near * far;
+          if (a < 0.01) continue;
+          ctx.globalAlpha = a;
+          if (c.flip) {
+            ctx.save();
+            ctx.translate(sx, sy);
+            ctx.scale(-1, 1);
+            ctx.drawImage(spr, -cw / 2, -ch / 2, cw, ch);
+            ctx.restore();
+          } else {
+            ctx.drawImage(spr, sx - cw / 2, sy - ch / 2, cw, ch);
           }
         }
         ctx.restore();
       }
 
-      // --- PHASE G2: 24MM PHOTOGRAPHIC FILM REEL WITH CLIENT LOGOS DESCENDING OVER CLOUDS ---
-      for (let i = 0; i < filmQuads.length; i++) {
-        if (filmQuads[i].centerZ >= 0) {
-          drawFilmQuad(filmQuads[i], false);
+      // --- PHASE G3: MAR DE NUVENS QUE SOBE E ENVOLVE A TRANSIÇÃO ---
+      const deckP = smoothstep(0.58, 0.93, sp);
+      if (deckP > 0.001) {
+        ctx.save();
+        let lowestTop = height;
+        for (let row = 0; row < 4; row++) {
+          const rowScale = 0.55 + row * 0.3;
+          const rowTop = lerp(height * 1.3, height * (0.46 + row * 0.12), deckP);
+          lowestTop = Math.min(lowestTop, rowTop);
+          for (let k = 0; k < deckClouds.length; k++) {
+            const c = deckClouds[k];
+            if (c.row !== row) continue;
+            const spr = cloudSprites[c.sprite];
+            const cw = width * 0.36 * c.size * rowScale;
+            const ch = cw * (spr.height / spr.width);
+            const span = width + cw;
+            const sx = ((((c.x + time * 0.0025 * (row + 1)) % 1) + 1) % 1) * span - cw / 2;
+            const sy = rowTop + ch * 0.12;
+            ctx.globalAlpha = deckP * (0.75 + row * 0.08);
+            if (c.flip) {
+              ctx.save();
+              ctx.translate(sx, sy);
+              ctx.scale(-1, 1);
+              ctx.drawImage(spr, -cw / 2, -ch / 2, cw, ch);
+              ctx.restore();
+            } else {
+              ctx.drawImage(spr, sx - cw / 2, sy - ch / 2, cw, ch);
+            }
+          }
+          // Corpo denso por baixo de cada camada (sem buracos para o espaço)
+          const bodyTop = rowTop + width * 0.36 * rowScale * 0.25;
+          if (bodyTop < height) {
+            const body = ctx.createLinearGradient(0, bodyTop - 40, 0, height);
+            body.addColorStop(0, 'rgba(236, 240, 247, 0)');
+            body.addColorStop(0.25, `rgba(236, 240, 247, ${deckP * 0.92})`);
+            body.addColorStop(1, `rgba(244, 246, 250, ${deckP})`);
+            ctx.globalAlpha = 1;
+            ctx.fillStyle = body;
+            ctx.fillRect(0, bodyTop - 40, width, height - bodyTop + 40);
+          }
         }
+        ctx.restore();
       }
 
-      // --- PHASE H: FULL WHITE DAYLIGHT WASH AS USER PENETRATES DEEP CLOUDS (sp > 0.72) ---
-      if (sp > 0.72) {
-        const daylightWash = Math.min(1, (sp - 0.72) / 0.26);
+      // --- PHASE H: LUZ DO DIA — termina exactamente na cor da secção seguinte (#f8f9fc) ---
+      if (washP > 0.001) {
         ctx.save();
-        ctx.fillStyle = `rgba(248, 249, 252, ${daylightWash * 1.0})`;
+        ctx.fillStyle = `rgba(248, 249, 252, ${washP})`;
         ctx.fillRect(0, 0, width, height);
         ctx.restore();
       }
 
-      // --- BOLD INTEGRATED AEROSPACE TELEMETRY HUD // POUSO EM MOÇAMBIQUE [HQ] ---
-      // Centered exactly in the middle of the viewport with gentle, smooth sinusoidal transition!
-      if (sp > 0.16 && sp < 0.62) {
-        const hudNorm = (sp - 0.16) / 0.46;
-        const hudAlpha = Math.sin(Math.PI * hudNorm) * 0.88;
-        ctx.save();
-        ctx.globalAlpha = hudAlpha;
-
-        const hudW = Math.min(width * 0.90, 520);
-        const hudH = 76;
-        const hudX = (width - hudW) / 2;
-        const hudY = (height - hudH) / 2; // EXACT CENTER OF SCREEN!
-
-        // Glassmorphism HUD Backdrop
-        ctx.fillStyle = 'rgba(2, 6, 18, 0.90)';
-        ctx.fillRect(hudX, hudY, hudW, hudH);
-
-        // Sleek hairline cyan border
-        ctx.strokeStyle = 'rgba(0, 212, 255, 0.75)';
-        ctx.lineWidth = 1.2;
-        ctx.strokeRect(hudX, hudY, hudW, hudH);
-
-        // Glowing Corner Brackets
-        const cLen = 12;
-        ctx.lineWidth = 2.2;
-        ctx.strokeStyle = '#00d4ff';
-        // TL
-        ctx.beginPath(); ctx.moveTo(hudX, hudY + cLen); ctx.lineTo(hudX, hudY); ctx.lineTo(hudX + cLen, hudY); ctx.stroke();
-        // TR
-        ctx.beginPath(); ctx.moveTo(hudX + hudW - cLen, hudY); ctx.lineTo(hudX + hudW, hudY); ctx.lineTo(hudX + hudW, hudY + cLen); ctx.stroke();
-        // BL
-        ctx.beginPath(); ctx.moveTo(hudX, hudY + hudH - cLen); ctx.lineTo(hudX, hudY + hudH); ctx.lineTo(hudX + cLen, hudY + hudH); ctx.stroke();
-        // BR
-        ctx.beginPath(); ctx.moveTo(hudX + hudW - cLen, hudY + hudH); ctx.lineTo(hudX + hudW, hudY + hudH); ctx.lineTo(hudX + hudW, hudY + hudH - cLen); ctx.stroke();
-
-        // Top Telemetry Header Row
-        const isBlink = Math.sin(time * 6) > 0;
-        ctx.font = '700 9px "JetBrains Mono", monospace';
-        ctx.fillStyle = isBlink ? '#ff3b30' : 'rgba(255, 59, 48, 0.45)';
-        ctx.textAlign = 'left';
-        ctx.fillText('● REC', hudX + 16, hudY + 18);
-
-        ctx.fillStyle = '#00d4ff';
-        ctx.fillText('// TELEMETRIA AEROESPACIAL MIZINE • ENTRADA ATMOSFÉRICA', hudX + 62, hudY + 18);
-
-        // Big Altitude Readout (Smooth countdown)
-        const altKm = (22.5 * (1 - hudNorm) + 1.2).toFixed(1);
-        const altDisplay = hudNorm > 0.90 ? `${Math.round((1 - hudNorm) * 22500)} M` : `${altKm} KM`;
-
-        ctx.font = '900 22px "Space Grotesk", sans-serif';
-        ctx.fillStyle = '#ffffff';
-        ctx.fillText(`ALTITUDE: ${altDisplay}`, hudX + 16, hudY + 46);
-
-        // Mach Speed & Target Coordinates
-        ctx.font = '600 9.5px "JetBrains Mono", monospace';
-        ctx.fillStyle = '#ff9500';
-        const mach = (14.2 * (1 - hudNorm) + 1.1).toFixed(1);
-        ctx.fillText(`VELOCIDADE: MACH ${mach}`, hudX + 16, hudY + 64);
-
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
-        ctx.textAlign = 'right';
-        ctx.fillText('ALVO: MOÇAMBIQUE [HQ] • 25°57\'S 32°35\'E', hudX + hudW - 16, hudY + 44);
-
-        ctx.fillStyle = '#34c759';
-        ctx.fillText('● DIA ENSOLARADO NA TERRA // MODO CLARO ATIVO ☀️', hudX + hudW - 16, hudY + 64);
-
-        // Descent Progress Bar at Bottom of HUD
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
-        ctx.fillRect(hudX + 16, hudY + hudH - 5, hudW - 32, 2.5);
-
-        ctx.fillStyle = '#00d4ff';
-        ctx.fillRect(hudX + 16, hudY + hudH - 5, (hudW - 32) * hudNorm, 2.5);
-
-        ctx.restore();
+      // --- PHASE I: FITA DA FRENTE (por cima de tudo — desce e aterra na fita real) ---
+      for (let i = 0; i < filmQuads.length; i++) {
+        if (filmQuads[i].centerZ >= 0) {
+          drawFilmQuad(filmQuads[i], false);
+        }
       }
 
       if (shutterFlash > 0.02) {
@@ -1383,6 +1581,8 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
       window.removeEventListener('touchstart', onTouchStart);
       window.removeEventListener('touchmove', onTouchMove);
       window.removeEventListener('touchend', onTouchEnd);
+      stripEl?.removeEventListener('mouseenter', onStripEnter);
+      stripEl?.removeEventListener('mouseleave', onStripLeave);
     };
   }, [onPlayVideo]);
 

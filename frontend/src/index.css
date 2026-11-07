@@ -537,47 +537,28 @@ a {
 }
 
 /* ==========================================================================
-   HERO SECTION (EXACT UNITED CARRIERS 2-COLUMN + 3D SPHERE SPEC)
+   HERO SECTION (SEAMLESS INTERACTIVE DESCENT INTO MOZAMBIQUE)
    ========================================================================== */
 
-.uc-hero-section {
+/* Hero Scroll Track: 200vh gives ample interactive depth for the landing */
+.uc-hero-scroll-track {
   position: relative;
-  min-height: calc(100vh - 75px);
+  /* 300vh: 200vh de descida (zoom → atmosfera → nuvens → aterragem da fita) */
+  height: 300vh;
+  background: #020204;
+}
+
+.uc-hero-section {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  width: 100%;
   display: flex;
   flex-direction: column;
   justify-content: center;
   overflow: hidden;
   background: #020204;
-  padding: 40px 0 60px 0;
-}
-
-/* Cloud Deck Transition Boundary: Masks the seam between dark space & daylight Earth */
-.uc-hero-cloud-transition {
-  position: absolute;
-  bottom: -1px;
-  left: 0;
-  right: 0;
-  height: 240px;
-  pointer-events: none;
-  z-index: 8;
-  display: flex;
-  align-items: flex-end;
-  opacity: 0; /* 100% invisible at rest! Space is pure deep black at rest */
-  will-change: opacity, transform;
-  transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  background: linear-gradient(to bottom, 
-    rgba(2, 2, 4, 0) 0%, 
-    rgba(248, 249, 252, 0.15) 30%, 
-    rgba(248, 249, 252, 0.65) 65%, 
-    #f8f9fc 100%
-  );
-}
-
-.cloud-seam-svg {
-  width: 100%;
-  height: 120px;
-  display: block;
-  transform: translateY(2px);
+  padding: 0;
 }
 
 /* Scroll Down Mouse Indicator */
@@ -3815,3 +3796,387 @@ a {
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
+
+/* ==========================================================================
+   ALTÍMETRO DE DESCIDA (fixo no ecrã via portal — não acompanha o scroll)
+   ========================================================================== */
+.flight-altimeter {
+  position: fixed;
+  right: 28px;
+  top: 96px;
+  z-index: 95;
+  width: 232px;
+  padding: 14px 16px 14px;
+  background: rgba(4, 8, 20, 0.72);
+  border: 1px solid rgba(0, 212, 255, 0.32);
+  border-radius: 14px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  color: #ffffff;
+  font-family: 'JetBrains Mono', monospace;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateX(18px);
+  transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.flight-altimeter.is-active {
+  opacity: 1;
+  transform: translateX(0);
+}
+.flight-altimeter .alt-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: #ff3b30;
+  margin-bottom: 12px;
+}
+.flight-altimeter .hud-rec-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ff3b30;
+  box-shadow: 0 0 8px #ff3b30;
+  animation: recBlink 1.2s ease-in-out infinite;
+}
+.alt-body {
+  display: grid;
+  grid-template-columns: 30px 1fr;
+  gap: 14px;
+  align-items: center;
+}
+.alt-tape {
+  position: relative;
+  height: 112px;
+  border-left: 1px solid rgba(255, 255, 255, 0.25);
+  background-image:
+    repeating-linear-gradient(to bottom, rgba(0, 212, 255, 0.95) 0 2px, transparent 2px 50px),
+    repeating-linear-gradient(to bottom, rgba(255, 255, 255, 0.5) 0 1px, transparent 1px 10px);
+  background-size: 22px 50px, 11px 10px;
+  background-repeat: repeat-y;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 25%, #000 75%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 25%, #000 75%, transparent);
+}
+.alt-tape-needle {
+  position: absolute;
+  left: -1px;
+  right: -8px;
+  top: 50%;
+  height: 2px;
+  margin-top: -1px;
+  background: #ff3b30;
+  box-shadow: 0 0 8px #ff3b30;
+}
+.alt-readout {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.alt-lbl {
+  font-size: 8px;
+  letter-spacing: 0.18em;
+  color: rgba(255, 255, 255, 0.5);
+}
+.alt-val {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+  margin-bottom: 6px;
+}
+.alt-unit {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: #00d4ff;
+}
+.alt-sub {
+  font-size: 12px;
+  font-weight: 700;
+  color: #00d4ff;
+}
+.alt-target {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.15);
+}
+.alt-target-val {
+  font-size: 10px;
+  font-weight: 700;
+  color: #ff3b30;
+}
+.alt-progress {
+  height: 2px;
+  margin-top: 10px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+.alt-progress span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #00d4ff, #ff3b30);
+  transform-origin: left center;
+  transform: scaleX(0);
+}
+@media (max-width: 700px) {
+  .flight-altimeter {
+    right: 10px;
+    top: 80px;
+    width: 148px;
+    padding: 10px 12px;
+  }
+  .alt-tape { height: 64px; }
+  .alt-val { font-size: 22px; margin-bottom: 2px; }
+  .alt-body { grid-template-columns: 18px 1fr; gap: 10px; }
+  .flight-altimeter .alt-head { font-size: 8px; margin-bottom: 8px; }
+  .alt-target { display: none; }
+}
+@media (max-width: 700px) {
+  .uc-hero-landing .film-reel-meta-bar { padding: 0 16px 12px; }
+}
+
+/* ==========================================================================
+   ATERRAGEM: a fita do espaço termina AQUI, na fita real — sem corte entre secções
+   ========================================================================== */
+/* Cena final do hero (já em luz do dia): título que aponta para a fita + a fita onde o canvas aterra */
+.uc-hero-landing {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: clamp(28px, 5.5vh, 64px);
+  padding: 96px 0 clamp(16px, 3vh, 40px);
+  pointer-events: none;
+}
+.landing-head {
+  opacity: 0;
+  will-change: opacity, transform;
+}
+.landing-title {
+  margin: 22px 0 14px;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(38px, 6.4vw, 104px);
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  color: #0c0d14;
+  max-width: 14ch;
+}
+.landing-title .text-crimson-gradient {
+  /* versão para luz do dia (o gradiente original começa em branco, pensado para o espaço) */
+  background: linear-gradient(92deg, #e10600 0%, #ff3b30 45%, #ff7a1a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+.landing-sub {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #626578;
+}
+.landing-arrow {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 59, 48, 0.45);
+  color: #ff3b30;
+  font-size: 15px;
+  animation: landingArrow 1.6s ease-in-out infinite;
+}
+@keyframes landingArrow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(5px); }
+}
+.landing-reel .film-reel-meta-bar {
+  border-bottom: none;
+  padding: 0 0 14px;
+  opacity: 0;
+}
+.uc-hero-landing .film-reel-title { color: #111218; }
+.uc-hero-landing .film-reel-spec { color: #727588; }
+.uc-hero-landing .cine-strip {
+  opacity: 0;
+}
+.uc-hero-landing .cine-strip-track {
+  animation: none;
+  will-change: transform;
+}
+
+.uc-intro-section.theme-daylight-section {
+  border-top: none !important;
+  padding-top: clamp(32px, 5vh, 56px);
+}
+
+@media (max-width: 700px) {
+  .uc-hero-landing { padding-top: 84px; gap: 26px; }
+  .landing-reel .film-reel-meta-bar { padding: 0 16px 10px; }
+  .landing-reel .film-reel-spec { display: none; }
+  .landing-sub { font-size: 10px; letter-spacing: 0.1em; }
+  .landing-head .uc-meta-tag .meta-title { font-size: 8px; }
+}
+@media (max-height: 720px) and (min-width: 701px) {
+  .landing-title { font-size: clamp(34px, 5vw, 72px); margin: 14px 0 10px; }
+}
+
+/* ==========================================================================
+   FITA DE CINEMA 35MM REAL — base preta contínua, perfurações em toda a fita
+   (proporções iguais às do canvas em HeroGlobe.tsx: não alterar uma sem a outra)
+   ========================================================================== */
+.cine-strip {
+  --fw: 208px;
+  --fh: 190px;
+  --hole: #f8f9fc;
+  position: relative;
+  width: 100%;
+  height: var(--fh);
+  overflow: hidden;
+  background: #0c0c10;
+  box-shadow: 0 22px 40px rgba(10, 12, 25, 0.18), 0 2px 0 rgba(255, 255, 255, 0.04) inset;
+}
+.cine-strip::after {
+  /* reflexo do acetato */
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0) 30%, rgba(255, 255, 255, 0) 70%, rgba(255, 255, 255, 0.05) 100%);
+}
+.cine-strip-track {
+  display: flex;
+  width: max-content;
+  animation: filmMarquee 48s linear infinite;
+}
+.cine-strip:hover .cine-strip-track {
+  animation-play-state: paused;
+}
+.cine-frame {
+  position: relative;
+  flex: none;
+  width: var(--fw);
+  height: var(--fh);
+  background: #0c0c10;
+  cursor: pointer;
+}
+.cine-frame::before,
+.cine-frame::after {
+  /* 8 perfurações por fotograma, em cima e em baixo */
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: calc(var(--fh) * 0.073);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='14' viewBox='0 0 26 14'%3E%3Crect x='6' y='0' width='14' height='14' rx='2.6' fill='%23f8f9fc'/%3E%3C/svg%3E");
+  background-size: calc(var(--fw) / 8) 100%;
+  background-repeat: repeat-x;
+}
+.cine-frame::before { top: calc(var(--fh) * 0.045); }
+.cine-frame::after { bottom: calc(var(--fh) * 0.045); }
+
+.cine-frame-window {
+  position: absolute;
+  top: calc(var(--fh) * 0.165);
+  height: calc(var(--fh) * 0.67);
+  left: calc(var(--fw) * 0.016);
+  right: calc(var(--fw) * 0.016);
+  border-radius: 2px;
+  background: linear-gradient(135deg, #f5f6f9 0%, #e6e9ef 45%, #f7f8fa 100%);
+  transition: box-shadow 0.25s ease, background 0.25s ease;
+}
+.cine-frame:hover .cine-frame-window {
+  background: #ffffff;
+  box-shadow: inset 0 0 0 2px #ff3b30;
+}
+/* Posições iguais às do canvas (HeroGlobe drawFilmQuad): logo a 40%, nome a 77%, etiqueta a 89% */
+.cine-frame-logo,
+.cine-frame-wordmark,
+.cine-frame-name,
+.cine-frame-tag {
+  position: absolute;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  white-space: nowrap;
+}
+.cine-frame-logo {
+  top: 40%;
+  max-width: 70%;
+  max-height: 40%;
+  object-fit: contain;
+}
+.cine-frame-wordmark {
+  top: 40%;
+  font-family: var(--font-display);
+  /* mesma regra do canvas: 16% da janela, reduzido para nomes longos (--len = nº de caracteres) */
+  font-size: min(calc(var(--fh) * 0.1072), calc(var(--fw) * 1.249 / var(--len, 6)));
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  line-height: 1;
+  color: #111218;
+  max-width: 80%;
+}
+.cine-frame-wordmark::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 1.12em; /* = centro + 0.62em, como no canvas */
+  width: calc(var(--fw) * 0.155);
+  height: max(1.5px, calc(var(--fh) * 0.012));
+  transform: translateX(-50%);
+  background: #ff3b30;
+}
+.cine-frame-name {
+  top: 77%;
+  font-family: var(--font-display);
+  font-size: calc(var(--fh) * 0.057);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #111218;
+  line-height: 1.1;
+}
+.cine-frame-tag {
+  top: 89%;
+  font-family: var(--font-mono);
+  font-size: 7px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: #ff3b30;
+}
+.cine-edge-code {
+  position: absolute;
+  left: 10px;
+  bottom: 0;
+  font-family: var(--font-mono);
+  font-size: 6.5px;
+  line-height: calc(var(--fh) * 0.045);
+  letter-spacing: 0.12em;
+  color: rgba(226, 162, 58, 0.75);
+  z-index: 1;
+}
+@media (max-width: 700px) {
+  .cine-strip {
+    --fw: 160px;
+    --fh: 146px;
+  }
+  .cine-frame-tag { display: none; }
+}

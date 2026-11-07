@@ -1,56 +1,59 @@
 import React from 'react';
 
-export const WhyMizine: React.FC = () => {
-  const points = [
-    {
-      code: '01',
-      title: 'Um Único Interlocutor Criativo',
-      desc: 'Sem necessidade de coordenar 5 freelancers diferentes. Assumimos toda a cadeia: do roteiro e captação à colorização, áudio e entrega final sem fricção.'
-    },
-    {
-      code: '02',
-      title: 'Equipamento & Olhar de Cinema',
-      desc: 'Câmaras 4K/6K profissionais, lentes de cinema, iluminação avançada e pós-produção broadcast para que o seu produto pareça internacional.'
-    },
-    {
-      code: '03',
-      title: 'Psicologia de Retenção nos 3s',
-      desc: 'Não fazemos apenas vídeos bonitos — desenhamos ganchos visuais para parar o scroll, reter a atenção nas redes sociais e converter espectadores em clientes.'
-    },
-    {
-      code: '04',
-      title: 'Cumprimento Sagrado de Prazos',
-      desc: 'No audiovisual, um dia de atraso estraga um lançamento. Na Mizine, o calendário acordado é uma garantia irrevogável.'
-    }
-  ];
+const POINTS = [
+  { code: '01', title: 'Um único interlocutor', desc: 'Do roteiro à captação, cor, áudio e entrega. Sem coordenar cinco freelancers, sem passagens de testemunho.' },
+  { code: '02', title: 'Olhar e equipamento de cinema', desc: 'Câmaras 4K/6K, lentes cine, luz e pós-produção broadcast — para a tua marca parecer internacional.' },
+  { code: '03', title: 'Retenção nos primeiros 3 segundos', desc: 'Desenhamos ganchos visuais que param o scroll e transformam espectadores em clientes.' },
+  { code: '04', title: 'Prazos sagrados', desc: 'Um dia de atraso estraga um lançamento. O calendário acordado é uma garantia, não uma estimativa.' }
+];
 
+const STATS = [
+  { value: '+150', label: 'Produções entregues' },
+  { value: '100%', label: 'Entregas no prazo' },
+  { value: '+5M', label: 'Visualizações orgânicas' },
+  { value: '13+', label: 'Marcas que confiam em nós' }
+];
+
+export const WhyMizine: React.FC = () => {
   return (
-    <section className="uc-why-section" id="porque">
+    <section className="why2-section" id="porque">
+      {/* saída do buraco negro: o universo escuro abre-se para a luz do dia */}
+      <div className="why2-exit" aria-hidden="true">
+        <span className="why2-exit-label">SAÍDA DO HORIZONTE • REGRESSO A MAPUTO ☀️</span>
+      </div>
+
       <div className="wrap">
-        <div className="uc-section-header reveal-up">
-          <div className="uc-meta-tag">
-            <span className="meta-bracket">[</span>
-            <span className="meta-index">DIFERENCIAIS</span>
-            <span className="meta-bracket">]</span>
-            <span className="meta-sep">•</span>
-            <span className="meta-title">PORQUÊ A MIZINE MULTIMÉDIA</span>
+        <div className="why2-grid">
+          <div className="why2-statement reveal-up">
+            <span className="why2-kicker">PORQUÊ A MIZINE</span>
+            <h2>
+              Criamos media.<br />
+              <span className="text-red">Assumimos o resultado.</span>
+            </h2>
+            <p>Uma equipa, um ponto de contacto, nenhuma passagem de testemunho. Construído para marcas e eventos que não podem arriscar amadorismo ou atrasos.</p>
+            <a href="#contacto" className="why2-cta">
+              Fala connosco <span>→</span>
+            </a>
           </div>
-          <h2 className="uc-section-title">
-            Criamos media.<br />
-            <span className="text-red">Assumimos o resultado.</span>
-          </h2>
-          <p className="uc-section-desc">
-            Construído para marcas e eventos que não podem arriscar amadorismo ou atrasos.
-          </p>
+
+          <ol className="why2-list reveal-up">
+            {POINTS.map(p => (
+              <li key={p.code}>
+                <span className="why2-code">{p.code}</span>
+                <div>
+                  <h3>{p.title}</h3>
+                  <p>{p.desc}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
         </div>
 
-        <div className="uc-why-grid reveal-up">
-          {points.map((p, idx) => (
-            <div key={idx} className="uc-why-card">
-              <div className="why-code">{p.code}</div>
-              <h3 className="why-title">{p.title}</h3>
-              <p className="why-desc">{p.desc}</p>
-              <div className="why-corner-accent" />
+        <div className="why2-stats reveal-up">
+          {STATS.map(s => (
+            <div key={s.label} className="why2-stat">
+              <strong>{s.value}</strong>
+              <span>{s.label}</span>
             </div>
           ))}
         </div>
@@ -58,4 +61,3 @@ export const WhyMizine: React.FC = () => {
     </section>
   );
 };
-

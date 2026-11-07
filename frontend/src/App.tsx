@@ -188,8 +188,8 @@ export function App() {
       <ServicesPillars pillars={content.pillars || defaultContent.pillars} />
       <Projects projects={content.projects} />
       <Reels reels={content.reels} onOpenReel={handleOpenVideo} />
-      <WhyMizine />
       <ProjectCalculator heroContent={content.hero} />
+      <WhyMizine />
       <Clients clients={content.clients} testimonials={content.testimonials} />
       <Group companies={content.group} />
       <FAQ items={content.faq || defaultContent.faq} />

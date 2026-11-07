@@ -836,7 +836,8 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
       const frameLen = (Math.PI * 2 * orbitR) / filmFrames;
       const filmW = frameLen / frameAspect;
       const reelCX = lerp(defaultCX, width * 0.5, smoothstep(0.05, 0.45, sp));
-      const reelCY = lerp(defaultCY, height * 0.60, reelP);
+      // durante o mergulho a fita desce para não tapar Moçambique (centrado a ~46% da altura)
+      const reelCY = lerp(defaultCY, height * 0.8, reelP);
       const filmInclination = lerp(-0.30, -0.07, reelP);
       const litP = smoothstep(0.15, 0.55, reelP); // fotogramas "expostos à luz do dia"
 
@@ -1029,24 +1030,23 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
         // 2. Janela do fotograma (separada por linhas de fotograma pretas)
         ctx.beginPath();
         quadPath(WIN_U0, 1 - WIN_U0, WIN_V0, WIN_V1);
-        const wr = Math.round(lerp(30, 245, litP));
-        const wg = Math.round(lerp(31, 246, litP));
-        const wb = Math.round(lerp(42, 249, litP));
+        // Película real desde o início: fotograma claro com o logo; no espaço só mais "à sombra"
+        const wr = Math.round(lerp(196, 245, litP));
+        const wg = Math.round(lerp(200, 246, litP));
+        const wb = Math.round(lerp(212, 249, litP));
         ctx.fillStyle = `rgb(${wr}, ${wg}, ${wb})`;
         ctx.fill();
-        if (litP < 1 && !isBack) {
-          ctx.fillStyle = isHovered
-            ? 'rgba(0, 212, 255, 0.45)'
-            : (q.index % 2 === 0 ? `rgba(0, 212, 255, ${0.24 * (1 - litP)})` : `rgba(255, 120, 0, ${0.26 * (1 - litP)})`);
+        if (isHovered && !isBack) {
+          ctx.fillStyle = 'rgba(0, 212, 255, 0.25)';
           ctx.fill();
         }
         // Brilho do celulóide (reflexo diagonal subtil)
-        if (!isBack && litP > 0.3) {
+        if (!isBack) {
           const g0 = P(0, WIN_V0);
           const g1 = P(1, WIN_V1);
           const sheen = ctx.createLinearGradient(g0.x, g0.y, g1.x, g1.y);
           sheen.addColorStop(0, 'rgba(255,255,255,0)');
-          sheen.addColorStop(0.45, `rgba(200,206,220,${0.22 * litP})`);
+          sheen.addColorStop(0.45, `rgba(200,206,220,${0.12 + 0.1 * litP})`);
           sheen.addColorStop(1, 'rgba(255,255,255,0)');
           ctx.fillStyle = sheen;
           ctx.fill();
@@ -1065,7 +1065,7 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
         ctx.fill();
 
         // 4. Logótipo do cliente + nome (igual à fita DOM)
-        if (!isBack && litP > 0.2) {
+        if (!isBack) {
           const logoObj = clientLogoImages[q.index % clientLogoImages.length];
           const w0 = P(WIN_U0, WIN_V0);
           const w1 = P(1 - WIN_U0, WIN_V0);
@@ -1075,7 +1075,7 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
           const c = P(0.5, 0.5);
           // Layout idêntico ao .cine-frame-window da fita DOM (logo a 40%, nome a 77%, etiqueta a 89%)
           const showName = winH > 70;
-          ctx.globalAlpha = alpha * smoothstep(0.2, 0.55, litP);
+          ctx.globalAlpha = alpha;
           const ly = showName ? c.y - winH * 0.1 : c.y;
           const img = logoObj?.img;
           ctx.textAlign = 'center';
@@ -1327,7 +1327,9 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
         if (rot.z > 0.05) {
           const mx = cx + rot.x * radius;
           const my = cy + rot.y * radius;
-          const alpha = Math.min(1, (rot.z - 0.05) * 2.8);
+          // as etiquetas desaparecem ao entrar na atmosfera (não ficam "fantasma" sobre as nuvens)
+          const alpha = Math.min(1, (rot.z - 0.05) * 2.8) * (1 - smoothstep(0.42, 0.6, sp));
+          if (alpha < 0.01) continue;
 
           ctx.save();
           ctx.globalAlpha = alpha;

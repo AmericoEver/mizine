@@ -10,7 +10,7 @@
 .uc-intro-section.theme-daylight-section { padding-bottom: 0; }
 .cam-track {
   position: relative;
-  height: 340vh;
+  height: 420vh;
   margin-top: clamp(24px, 4vh, 48px);
 }
 .cam-stage {
@@ -624,4 +624,164 @@
   .bh-strip { justify-content: flex-start; padding: 0 16px; }
   .bh-reel { width: 104px; }
   .bh-core-quote { margin-top: 100px; font-size: 15px; }
+}
+
+
+/* --- Capítulo 03 v2: monitor imersivo com B-roll real (substitui o rig desenhado) --- */
+.cam-screen {
+  position: absolute;
+  z-index: 2;
+  overflow: hidden;
+  border-radius: 6px;
+  background: #050507;
+  color: #fff;
+  font-family: var(--font-mono);
+  transform-origin: 50% 50%;
+  box-shadow: 0 0 0 6px #111218, 0 0 0 7px #2a2d38, 0 40px 90px rgba(8, 10, 24, 0.35);
+}
+.cam-shot,
+.cam-screen .cam-feed {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  will-change: transform, opacity;
+}
+.cam-shot { transition: opacity 0.18s linear; }
+.cam-screen .cam-feed { opacity: 0; object-position: 50% 5%; }
+.cam-cut {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  opacity: 0;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+.cam-grain {
+  position: absolute;
+  inset: -50%;
+  pointer-events: none;
+  opacity: 0.09;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: camGrain 0.6s steps(4) infinite;
+}
+@keyframes camGrain {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(-3%, 2%); }
+  50% { transform: translate(2%, -3%); }
+  75% { transform: translate(-2%, -1%); }
+  100% { transform: translate(0, 0); }
+}
+.cam-intro {
+  position: absolute;
+  left: 64px;
+  bottom: 96px;
+  max-width: 56%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  opacity: 0;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.75);
+}
+.cam-intro-tag { font-size: 10px; font-weight: 700; letter-spacing: 0.2em; color: #ffd166; }
+.cam-intro strong {
+  font-family: var(--font-display);
+  font-size: clamp(30px, 4.2vw, 68px);
+  font-weight: 800;
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+.cam-intro-takes { font-size: 11px; font-weight: 700; letter-spacing: 0.16em; color: rgba(255, 255, 255, 0.8); }
+.cam-intro-takes b { color: #ff3b30; font-size: 14px; }
+.cam-slate {
+  position: absolute;
+  right: 64px;
+  bottom: 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  padding: 10px 14px;
+  border-left: 3px solid #ff3b30;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
+}
+.cam-slate-num { font-size: 10px; font-weight: 700; letter-spacing: 0.18em; color: #ff3b30; }
+.cam-slate-scene { font-size: 12px; font-weight: 700; letter-spacing: 0.12em; }
+.cam-screen .cam-hud-top,
+.cam-screen .cam-hud-bottom,
+.cam-screen .cam-hud-grid,
+.cam-screen .cam-hud-corner,
+.cam-screen .cam-focus,
+.cam-screen .cam-subject { z-index: 3; }
+.cam-screen .cam-intro,
+.cam-screen .cam-slate { z-index: 4; }
+@media (max-width: 760px) {
+  .cam-screen { border-radius: 0; box-shadow: 0 20px 50px rgba(8, 10, 24, 0.3); }
+  .cam-intro { left: 16px; bottom: 34px; max-width: 80%; gap: 4px; }
+  .cam-intro strong { font-size: 22px; }
+  .cam-intro-tag, .cam-intro-takes { font-size: 8px; }
+  .cam-slate { right: 10px; bottom: auto; top: 30px; padding: 5px 8px; }
+  .cam-slate-num { font-size: 7px; }
+  .cam-slate-scene { font-size: 8px; }
+}
+
+
+/* --- Capítulo 06 v2: Gargantua em WebGL + órbita de reels + núcleo Mizine --- */
+.gargantua-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.bh-stage { background: #000; }
+.bh-orbit { position: absolute; inset: 0; z-index: 5; pointer-events: none; }
+.bh-orbit-reel {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 58px;
+  height: 100px;
+  padding: 0;
+  border: 0;
+  border-left: 5px solid #0b0b0f;
+  border-right: 5px solid #0b0b0f;
+  background: #0b0b0f;
+  overflow: hidden;
+  cursor: pointer;
+  opacity: 0;
+  box-shadow: 0 0 18px rgba(255, 140, 40, 0.35);
+}
+.bh-orbit-reel img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.bh-orbit-reel span {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.25);
+}
+.bh-orbit-reel:hover { box-shadow: 0 0 0 2px #ff3b30, 0 0 26px rgba(255, 59, 48, 0.6); }
+
+.bh-core-emblem {
+  background: none;
+  box-shadow: none;
+  transform: scale(calc(0.7 + var(--core) * 0.3));
+}
+.bh-core-ring { inset: 6px; border-color: rgba(255, 210, 160, 0.35); border-top-color: transparent; border-bottom-color: transparent; }
+.bh-core-logo {
+  font-size: clamp(26px, 2.6vw, 40px);
+  letter-spacing: 0.12em;
+  margin-top: 0;
+  text-shadow: 0 0 24px rgba(255, 120, 40, 0.9), 0 0 2px #fff;
+}
+.bh-core-sub { top: 86px; }
+.bh-core-quote { margin-top: 28vh; }
+@media (max-width: 760px) {
+  .bh-orbit-reel { width: 40px; height: 70px; }
+  .bh-core-quote { margin-top: 22vh; }
 }

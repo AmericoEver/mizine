@@ -1,6 +1,7 @@
-import React, { useRef } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { ReelItem } from '../types';
 import { BlackHoleVortex } from './BlackHoleVortex';
+import { GargantuaGL } from './GargantuaGL';
 import { useScrollScene, smoothstep, lerp, clamp01 } from '../hooks/useScrollScene';
 
 interface ReelsProps {
@@ -22,6 +23,9 @@ export const Reels: React.FC<ReelsProps> = ({ reels, onOpenReel }) => {
   const coreRef = useRef<HTMLDivElement | null>(null);
   const cardRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const pullRef = useRef(0);
+  const orbitRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const [noGL, setNoGL] = useState(false);
+  const onUnsupported = useCallback(() => setNoGL(true), []);
   const n = Math.max(1, reels.length);
 
   useScrollScene(trackRef, (q, t) => {
@@ -30,7 +34,8 @@ export const Reels: React.FC<ReelsProps> = ({ reels, onOpenReel }) => {
     const W = stage.clientWidth;
     const H = stage.clientHeight;
     const cx = W * 0.5;
-    const cy = H * 0.52; // = centro do buraco negro no canvas (BlackHoleVortex: cy = height * 0.52)
+    // centro do buraco negro: shader WebGL = centro do ecrã; canvas antigo = 52% da altura
+    const cy = H * (noGL ? 0.52 : 0.5);
 
     // a fita desliza para a esquerda com o scroll, como película a correr no projector
     if (stripRef.current) {
@@ -88,6 +93,25 @@ export const Reels: React.FC<ReelsProps> = ({ reels, onOpenReel }) => {
     if (headRef.current) {
       headRef.current.style.opacity = (1 - smoothstep(0.78, 0.9, q) * 0.65).toFixed(3);
     }
+    // depois de engolidos, os reels ficam em órbita à volta do núcleo (clicáveis)
+    const orbitIn = smoothstep(0.84, 0.96, q);
+    const Rx = Math.min(W * 0.4, 560);
+    const Ry = Rx * 0.16;
+    orbitRefs.current.forEach((el, i) => {
+      if (!el) return;
+      const a = (i / n) * Math.PI * 2 + t * 0.22;
+      const z = Math.sin(a);
+      const x = cx + Math.cos(a) * Rx * lerp(0.4, 1, orbitIn);
+      const y = cy + z * Ry * lerp(0.4, 1, orbitIn);
+      const s = lerp(0.62, 1, (z + 1) / 2);
+      el.style.transform = `translate3d(${(x - el.offsetWidth / 2).toFixed(1)}px, ${(y - el.offsetHeight / 2).toFixed(1)}px, 0) scale(${s.toFixed(3)})`;
+      // atrás do buraco negro fica escondido pela sombra
+      const behind = z < 0 && Math.abs(x - cx) < Rx * 0.32;
+      el.style.opacity = (orbitIn * (behind ? 0.08 : z < 0 ? 0.55 : 1)).toFixed(3);
+      el.style.zIndex = z > 0 ? '6' : '2';
+      el.style.pointerEvents = orbitIn > 0.6 && !behind ? 'auto' : 'none';
+    });
+
     if (coreRef.current) {
       const c = smoothstep(0.74, 0.92, q);
       coreRef.current.style.top = `${cy.toFixed(1)}px`;
@@ -102,7 +126,27 @@ export const Reels: React.FC<ReelsProps> = ({ reels, onOpenReel }) => {
       <div className="bh-track" ref={trackRef}>
         <div className="bh-stage" ref={stageRef}>
           <div className="bh-universe">
-            <BlackHoleVortex reels={reels} onOpenReel={onOpenReel} pullRef={pullRef} showManifesto={false} />
+            {noGL ? (
+              <BlackHoleVortex reels={reels} onOpenReel={onOpenReel} pullRef={pullRef} showManifesto={false} />
+            ) : (
+              <GargantuaGL pullRef={pullRef} onUnsupported={onUnsupported} />
+            )}
+          </div>
+
+          {/* reels em órbita depois de atravessarem o horizonte */}
+          <div className="bh-orbit">
+            {reels.map((reel, idx) => (
+              <button
+                key={reel.id}
+                ref={el => { orbitRefs.current[idx] = el; }}
+                className="bh-orbit-reel"
+                onClick={() => onOpenReel(reel.title, reel.videoUrl)}
+                aria-label={`Ver ${reel.title}`}
+              >
+                {reel.imageUrl ? <img src={reel.imageUrl} alt="" loading="lazy" /> : null}
+                <span>▶</span>
+              </button>
+            ))}
           </div>
 
           <div className="wrap bh-head" ref={headRef}>

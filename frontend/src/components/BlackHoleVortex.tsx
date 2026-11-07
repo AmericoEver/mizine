@@ -4,9 +4,12 @@ import { ReelItem } from '../types';
 interface BlackHoleVortexProps {
   reels: ReelItem[];
   onOpenReel: (title: string, videoUrl?: string) => void;
+  /** 0→1: quanto da fita de reels já foi engolida (cena guiada pelo scroll em Reels.tsx) */
+  pullRef?: React.MutableRefObject<number>;
+  showManifesto?: boolean;
 }
 
-export const BlackHoleVortex: React.FC<BlackHoleVortexProps> = ({ reels, onOpenReel }) => {
+export const BlackHoleVortex: React.FC<BlackHoleVortexProps> = ({ reels, onOpenReel, pullRef, showManifesto = true }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
@@ -125,6 +128,7 @@ export const BlackHoleVortex: React.FC<BlackHoleVortexProps> = ({ reels, onOpenR
 
     const render = () => {
       time += 0.02;
+      const pull = pullRef ? Math.min(1, Math.max(0, pullRef.current)) : 1;
       tiltX += (targetTiltX - tiltX) * 0.06;
       tiltY += (targetTiltY - tiltY) * 0.06;
 
@@ -213,7 +217,7 @@ export const BlackHoleVortex: React.FC<BlackHoleVortexProps> = ({ reels, onOpenR
       // Draw swirling dust & plasma particles
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
-        p.angle += p.speed;
+        p.angle += p.speed * (1 + pull * 1.4);
 
         // Spiral inward pull towards the event horizon
         p.radius -= 0.0003;
@@ -303,7 +307,10 @@ export const BlackHoleVortex: React.FC<BlackHoleVortexProps> = ({ reels, onOpenR
 
         const depthScale = 0.55 + ((rz + 1) / 2) * 0.55;
         const scale = depthScale * (1 - spiralProgress * 0.45);
-        const alpha = Math.min(1, Math.max(0.15, (1 - spiralProgress * 0.3) * (rz > 0 ? 1 : 0.45)));
+        // os reels só "entram em órbita" depois de a fita ser engolida
+        const orbitIn = pullRef ? Math.min(1, Math.max(0, (pull - 0.55) / 0.35)) : 1;
+        const alpha = orbitIn * Math.min(1, Math.max(0.15, (1 - spiralProgress * 0.3) * (rz > 0 ? 1 : 0.45)));
+        if (alpha < 0.02) continue;
 
         reelFrames.push({
           index: i,
@@ -345,7 +352,7 @@ export const BlackHoleVortex: React.FC<BlackHoleVortexProps> = ({ reels, onOpenR
         ctx.translate(-rf.x, -rf.y);
 
         // Record hit zone for clicking
-        if (rf.z > -0.2) {
+        if (rf.z > -0.2 && rf.alpha > 0.3) {
           reelHitZones.push({
             x: rf.x,
             y: rf.y,
@@ -422,9 +429,11 @@ export const BlackHoleVortex: React.FC<BlackHoleVortexProps> = ({ reels, onOpenR
       // =========================================================================
       ctx.save();
       const corePulse = 1 + Math.sin(time * 3) * 0.12;
+      // quanto mais a fita é engolida, mais a singularidade Mizine acende
+      const coreBoost = pullRef ? Math.min(1, Math.max(0, (pull - 0.35) / 0.6)) : 0;
 
       // Neon Crimson Core Emblem at the Singularity
-      const coreR = (isMobile ? 22 : 30) * corePulse;
+      const coreR = (isMobile ? 22 : 30) * corePulse * (1 + coreBoost * 1.6);
       const coreGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, coreR);
       coreGrad.addColorStop(0, '#ffffff');
       coreGrad.addColorStop(0.35, '#ff3b30');
@@ -436,7 +445,12 @@ export const BlackHoleVortex: React.FC<BlackHoleVortexProps> = ({ reels, onOpenR
       ctx.arc(cx, cy, coreR, 0, Math.PI * 2);
       ctx.fill();
 
-      // Mizine Singularity Core Typography
+      // Mizine Singularity Core Typography (com pullRef, o logotipo grande é DOM — ver Reels.tsx)
+      if (pullRef) {
+        ctx.restore();
+        animId = requestAnimationFrame(render);
+        return;
+      }
       ctx.font = '900 13px "Space Grotesk", sans-serif';
       ctx.fillStyle = '#ffffff';
       ctx.textAlign = 'center';
@@ -463,14 +477,14 @@ export const BlackHoleVortex: React.FC<BlackHoleVortexProps> = ({ reels, onOpenR
       canvas.removeEventListener('mousemove', onMouseMove);
       canvas.removeEventListener('click', onClick);
     };
-  }, [reels, onOpenReel]);
+  }, [reels, onOpenReel, pullRef]);
 
   return (
     <div className="black-hole-vortex-universe">
       <canvas ref={canvasRef} className="black-hole-canvas" />
 
       {/* Interactive Core Statement Badge */}
-      <div className="black-hole-core-manifesto">
+      {showManifesto && <div className="black-hole-core-manifesto">
         <div className="singularity-pill">
           <span className="singularity-dot" />
           <span>SINGULARIDADE GRAVITACIONAL // INTERSTELLAR REELS</span>
@@ -481,7 +495,7 @@ export const BlackHoleVortex: React.FC<BlackHoleVortexProps> = ({ reels, onOpenR
         <span className="singularity-hint">
           ✦ Clica em qualquer reel em órbita ou na fita abaixo para reproduzir em 4K
         </span>
-      </div>
+      </div>}
     </div>
   );
 };

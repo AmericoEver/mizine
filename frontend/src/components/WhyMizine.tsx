@@ -30,7 +30,7 @@ export const WhyMizine: React.FC = () => {
         <div className="uc-section-header reveal-up">
           <div className="uc-meta-tag">
             <span className="meta-bracket">[</span>
-            <span className="meta-index">04/06</span>
+            <span className="meta-index">DIFERENCIAIS</span>
             <span className="meta-bracket">]</span>
             <span className="meta-sep">•</span>
             <span className="meta-title">PORQUÊ A MIZINE MULTIMÉDIA</span>

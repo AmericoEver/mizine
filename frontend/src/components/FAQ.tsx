@@ -18,7 +18,7 @@ export const FAQ: React.FC<FAQProps> = ({ items = [] }) => {
         <div className="uc-section-header reveal-up">
           <div className="uc-meta-tag">
             <span className="meta-bracket">[</span>
-            <span className="meta-index">06/06</span>
+            <span className="meta-index">FAQ</span>
             <span className="meta-bracket">]</span>
             <span className="meta-sep">•</span>
             <span className="meta-title">DÚVIDAS FREQUENTES & PROCESSO</span>

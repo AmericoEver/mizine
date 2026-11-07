@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { ProjectItem } from '../types';
+import { useInteractiveCards } from '../hooks/useInteractiveCards';
 
 interface ProjectsProps {
   projects: ProjectItem[];
@@ -7,6 +8,8 @@ interface ProjectsProps {
 
 export const Projects: React.FC<ProjectsProps> = ({ projects }) => {
   const [activeFilter, setActiveFilter] = useState<'all' | 'video' | 'social' | 'celebrate'>('all');
+  const sectionRef = useRef<HTMLElement | null>(null);
+  useInteractiveCards(sectionRef, [projects.length]);
 
   const filters = [
     { id: 'all', label: 'Todos os Projetos' },
@@ -16,12 +19,12 @@ export const Projects: React.FC<ProjectsProps> = ({ projects }) => {
   ];
 
   return (
-    <section className="uc-projects-section theme-daylight-section" id="trabalhos">
+    <section className="uc-projects-section theme-daylight-section" id="trabalhos" ref={sectionRef}>
       <div className="wrap">
         <div className="uc-section-header reveal-up">
           <div className="uc-meta-tag daylight-meta">
             <span className="meta-bracket">[</span>
-            <span className="meta-index">PORTFÓLIO</span>
+            <span className="meta-index">05/06</span>
             <span className="meta-bracket">]</span>
             <span className="meta-sep">•</span>
             <span className="meta-title">PRODUÇÕES & CAMPANHAS EM DESTAQUE</span>
@@ -57,11 +60,13 @@ export const Projects: React.FC<ProjectsProps> = ({ projects }) => {
             return (
               <a
                 key={proj.id}
-                className={`uc-project-card ${isWide ? 'wide' : ''}`}
+                className={`uc-project-card ix-card ${isWide ? 'wide' : ''}`}
                 href={link}
                 target={link.startsWith('http') ? '_blank' : '_self'}
                 rel="noreferrer"
               >
+                <span className="ix-glare" aria-hidden="true" />
+                <span className="ix-flash" aria-hidden="true" />
                 {/* Viewfinder HUD Corner Accents */}
                 <div className="hud-corner top-left" />
                 <div className="hud-corner top-right" />

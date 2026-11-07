@@ -560,7 +560,8 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
       // Altímetro fixo (no <body>)
       const flightHudEl = document.getElementById('flightTelemetryHud');
       if (flightHudEl) {
-        if (sp > 0.03 && sp < 0.88) {
+        // também pela posição real (saltos pelo menu não mostram o altímetro a "rebobinar")
+        if (sp > 0.03 && sp < 0.88 && targetScrollProgress < 0.9) {
           flightHudEl.classList.add('is-active');
           const altProgress = Math.min(1, (sp - 0.03) / 0.9);
           const altM = 24800 * Math.pow(1 - altProgress, 1.7);

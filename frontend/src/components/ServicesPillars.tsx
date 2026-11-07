@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { ServicePillar } from '../types';
+import { useInteractiveCards } from '../hooks/useInteractiveCards';
 
 interface ServicesPillarsProps {
   pillars?: ServicePillar[];
@@ -7,15 +8,17 @@ interface ServicesPillarsProps {
 
 export const ServicesPillars: React.FC<ServicesPillarsProps> = ({ pillars = [] }) => {
   const [activeCode, setActiveCode] = useState<string>('01');
+  const sectionRef = useRef<HTMLElement | null>(null);
+  useInteractiveCards(sectionRef, [pillars.length]);
 
   return (
-    <section className="uc-services-section theme-daylight-section" id="pilares">
+    <section className="uc-services-section theme-daylight-section" id="pilares" ref={sectionRef}>
       <div className="wrap">
         {/* Daylight Section Header */}
         <div className="uc-section-header reveal-up">
           <div className="uc-meta-tag daylight-meta">
             <span className="meta-bracket">[</span>
-            <span className="meta-index">03/06</span>
+            <span className="meta-index">04/06</span>
             <span className="meta-bracket">]</span>
             <span className="meta-sep">•</span>
             <span className="meta-title">SERVIÇOS & SUBDIVISÕES INTEGRADAS</span>
@@ -36,10 +39,15 @@ export const ServicesPillars: React.FC<ServicesPillarsProps> = ({ pillars = [] }
             return (
               <div
                 key={pillar.id}
-                className={`uc-pillar-card daylight-white-card ${isActive ? 'is-active' : ''}`}
+                className={`uc-pillar-card daylight-white-card ix-card ${isActive ? 'is-active' : ''}`}
                 onMouseEnter={() => setActiveCode(pillar.code)}
                 onClick={() => setActiveCode(pillar.code)}
               >
+                {/* camada interactiva: luz do cursor, retícula de visor, REC e flash do obturador */}
+                <span className="ix-glare" aria-hidden="true" />
+                <span className="ix-reticle" aria-hidden="true"><i /><i /><i /><i /></span>
+                <span className="ix-rec" aria-hidden="true">● REC {pillar.code}</span>
+                <span className="ix-flash" aria-hidden="true" />
                 <div className="pillar-top daylight-pillar-top">
                   <span className="pillar-code daylight-code">{pillar.code}</span>
                   <span className="pillar-badge daylight-badge">{pillar.badge}</span>

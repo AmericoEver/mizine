@@ -422,3 +422,13 @@
   .crew-grid { grid-template-columns: 1fr; gap: 40px; }
   .crew-photo { aspect-ratio: 4 / 4.4; }
 }
+
+
+/* equipa dentro do monitor da câmara */
+.cam-screen .cam-crew { opacity: 0; object-position: 50% 10%; }
+.cam-crew-line { max-width: 40ch; margin-top: 6px; font-family: var(--font-body); font-size: 15px; line-height: 1.5; letter-spacing: 0; color: rgba(255, 255, 255, 0.85); }
+.cam-track { height: 720vh !important; }
+@media (max-width: 760px) {
+  .cam-track { height: 620vh !important; }
+  .cam-crew-line { font-size: 12px; }
+}

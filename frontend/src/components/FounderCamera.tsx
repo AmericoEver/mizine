@@ -24,6 +24,15 @@ const METRICS = [
   { key: 'ontime', label: 'COMPROMISSO', unit: 'ON-TIME', to: 100, suffix: '%', text: 'Pontualidade sagrada em cada entrega.' }
 ];
 
+/** Depois do fundador, a câmara continua a gravar a família Mizine (mesma animação). */
+const CREW = [
+  { name: 'Américo Mabunda', tag: 'SUJEITO 02 // POR TRÁS DO CÓDIGO', role: 'Co-fundador • Desenvolvimento & Tecnologia', line: 'Constrói as plataformas e a experiência digital do grupo.', src: '/media/team/americo.jpg', pos: '50% 12%', face: { l: 10, t: 14, w: 36, h: 66 }, faceM: { l: 10, t: 13, w: 36, h: 30 } },
+  { name: 'Jorge Mabunda', tag: 'SUJEITO 03 // QUEM FEZ A IDEIA EXISTIR', role: 'Co-fundador • Director Executivo', line: 'Incentivou tudo desde o primeiro dia — a visão que tornou a Mizine possível.', src: '/media/team/jorge.jpg', pos: '50% 5%', face: { l: 35, t: 5, w: 34, h: 70 }, faceM: { l: 35, t: 5, w: 34, h: 32 } }
+];
+/** fracção do scroll dedicada ao B-roll + fundador; o resto é para a equipa */
+const M_END = 0.56;
+const CREW_LEN = (1 - M_END - 0.02) / CREW.length;
+
 const B_START = 0.03;
 const B_END = 0.5;
 const pad = (n: number) => String(Math.floor(n)).padStart(2, '0');
@@ -48,8 +57,12 @@ export const FounderCamera: React.FC = () => {
   const tcRef = useRef<HTMLElement | null>(null);
   const metricRefs = useRef<(HTMLSpanElement | null)[]>([]);
   const lastShot = useRef(-1);
+  const crewImgRefs = useRef<(HTMLImageElement | null)[]>([]);
+  const crewCapRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-  useScrollScene(trackRef, (p, t) => {
+  useScrollScene(trackRef, (pRaw, t) => {
+    // a parte do fundador corre em [0, M_END]; depois entra a equipa
+    const p = clamp01(pRaw / M_END);
     const stage = stageRef.current;
     const screen = screenRef.current;
     if (!stage || !screen) return;
@@ -105,19 +118,24 @@ export const FounderCamera: React.FC = () => {
       introRef.current.style.transform = `translateY(${((1 - io) * 14).toFixed(1)}px)`;
     }
 
+    // a câmara sai do Moisés quando entra o primeiro membro da equipa
+    const crewIn = smoothstep(M_END + 0.01, M_END + 0.05, pRaw);
+
     // O fundador entra no whip-pan: desfocado → nítido
     if (feedRef.current) {
       const f = feedRef.current;
       f.style.opacity = smoothstep(0.52, 0.58, p).toFixed(3);
       const slide = (1 - whip) * 38;
       const blur = 12 * (1 - smoothstep(0.55, 0.68, p)) + (p > 0.58 && p < 0.66 ? Math.abs(Math.sin(t * 6)) * 1.2 : 0);
-      f.style.transform = `translate3d(${slide.toFixed(2)}%, 0, 0) scale(${lerp(1.08, 1, smoothstep(0.55, 0.75, p)).toFixed(4)})`;
-      f.style.filter = `blur(${blur.toFixed(2)}px)`;
+      const outSlide = crewIn * -38;
+      f.style.transform = `translate3d(${(slide + outSlide).toFixed(2)}%, 0, 0) scale(${lerp(1.08, 1, smoothstep(0.55, 0.75, p)).toFixed(4)})`;
+      f.style.filter = `blur(${(blur + crewIn * 14 * (1 - crewIn) * 4).toFixed(2)}px)`;
+      f.style.opacity = (smoothstep(0.52, 0.58, p) * (1 - smoothstep(0.6, 1, crewIn))).toFixed(3);
     }
 
     // Caixa de focagem: a passear no B-roll → procura → bloqueia no rosto
     const lock = smoothstep(0.62, 0.74, p);
-    if (focusRef.current) {
+    if (focusRef.current && crewIn <= 0) {
       const fr = focusRef.current;
       const roam = 1 - smoothstep(0.5, 0.6, p);
       const rx = 38 + Math.sin(t * 0.7) * 10 * roam;
@@ -132,7 +150,7 @@ export const FounderCamera: React.FC = () => {
     }
     if (subjectRef.current) {
       const so = smoothstep(0.7, 0.78, p);
-      subjectRef.current.style.opacity = so.toFixed(3);
+      subjectRef.current.style.opacity = (so * (1 - crewIn)).toFixed(3);
       subjectRef.current.style.transform = `translateX(${((1 - so) * -16).toFixed(1)}px)`;
     }
     const yp = smoothstep(0.74, 0.88, p);
@@ -140,15 +158,50 @@ export const FounderCamera: React.FC = () => {
     if (yearsBarRef.current) yearsBarRef.current.style.transform = `scaleX(${yp.toFixed(3)})`;
     if (dossierRef.current) {
       const d = smoothstep(0.8, 0.92, p);
-      dossierRef.current.style.opacity = d.toFixed(3);
-      dossierRef.current.style.transform = `translateY(${((1 - d) * 24).toFixed(1)}px)`;
-      dossierRef.current.style.pointerEvents = d > 0.6 ? 'auto' : 'none';
+      const dOut = 1 - smoothstep(M_END - 0.02, M_END + 0.02, pRaw);
+      dossierRef.current.style.opacity = (d * dOut).toFixed(3);
+      dossierRef.current.style.transform = `translateY(${((1 - d) * 24 + (1 - dOut) * -24).toFixed(1)}px)`;
+      dossierRef.current.style.pointerEvents = d * dOut > 0.6 ? 'auto' : 'none';
       const mp = smoothstep(0.82, 0.97, p);
       METRICS.forEach((m, i) => {
         const el = metricRefs.current[i];
         if (el) el.textContent = `${m.prefix ?? ''}${Math.round(m.to * mp)}${m.suffix ?? ''}`;
       });
     }
+    // EQUIPA: cada membro entra com whip-pan, focagem procura → bloqueia no rosto, legenda
+    CREW.forEach((c, k) => {
+      const s0 = M_END + 0.01 + k * CREW_LEN;
+      const u = (pRaw - s0) / CREW_LEN;
+      const img = crewImgRefs.current[k];
+      const cap = crewCapRefs.current[k];
+      const last = k === CREW.length - 1;
+      const win = smoothstep(0, 0.14, u);
+      const wout = last ? 0 : smoothstep(0.86, 1, u);
+      const vis = u > -0.05 && (last || u < 1.05);
+      if (img) {
+        const blur = 14 * (1 - smoothstep(0.08, 0.3, u)) + wout * 14 + (u > 0.2 && u < 0.32 ? Math.abs(Math.sin(t * 6)) * 1.2 : 0);
+        img.style.opacity = vis ? (win * (1 - wout)).toFixed(3) : '0';
+        img.style.transform = `translate3d(${((1 - win) * 38 - wout * 38).toFixed(2)}%, 0, 0) scale(${lerp(1.1, 1, smoothstep(0.05, 0.6, u)).toFixed(4)})`;
+        img.style.filter = `blur(${blur.toFixed(2)}px)`;
+      }
+      if (cap) {
+        const co = smoothstep(0.32, 0.46, u) * (1 - (last ? 0 : smoothstep(0.82, 0.9, u)));
+        cap.style.opacity = vis ? co.toFixed(3) : '0';
+        cap.style.transform = `translateX(${((1 - co) * -16).toFixed(1)}px)`;
+      }
+      if (focusRef.current && vis && u >= 0 && (last || u < 1)) {
+        const fr = focusRef.current;
+        const lk = smoothstep(0.16, 0.38, u);
+        const f = mobile ? c.faceM : c.face;
+        const hunt = (1 - lk) * Math.sin(t * 3.1) * 3;
+        fr.style.left = `${lerp(40, f.l, lk) + hunt}%`;
+        fr.style.top = `${lerp(24, f.t, lk)}%`;
+        fr.style.width = `${lerp(24, f.w, lk)}%`;
+        fr.style.height = `${lerp(mobile ? 30 : 44, f.h, lk)}%`;
+        fr.classList.toggle('is-locked', lk > 0.98 && wout < 0.05);
+      }
+    });
+
     const frames = Math.floor(t * 24);
     if (tcRef.current) {
       tcRef.current.textContent = `01:${pad((frames / 24 / 60) % 60)}:${pad((frames / 24) % 60)}:${pad(frames % 24)}`;
@@ -173,6 +226,17 @@ export const FounderCamera: React.FC = () => {
           ))}
           {/* o fundador (whip-pan) */}
           <img ref={feedRef} src="/media/founder/moises-cinema-set.jpg" alt="Moisés Jorge Mabunda" className="cam-feed" />
+          {CREW.map((c, k) => (
+            <img
+              key={c.src}
+              ref={el => { crewImgRefs.current[k] = el; }}
+              src={c.src}
+              alt={c.name}
+              className="cam-feed cam-crew"
+              style={{ objectPosition: c.pos }}
+              loading="lazy"
+            />
+          ))}
           <div className="cam-cut" ref={cutRef} />
           <div className="cam-grain" aria-hidden="true" />
 
@@ -215,7 +279,7 @@ export const FounderCamera: React.FC = () => {
           <div className="cam-subject" ref={subjectRef}>
             <span className="cam-subject-tag">SUJEITO 01 // POR TRÁS DA CÂMARA</span>
             <strong>Moisés Jorge Mabunda</strong>
-            <span className="cam-subject-role">Fundador & Diretor Criativo • Licenciado em Cinema e Audiovisual</span>
+            <span className="cam-subject-role">Co-fundador • Diretor Criativo • Licenciado em Cinema e Audiovisual</span>
             <div className="cam-years">
               <span className="cam-years-num" ref={yearsRef}>+0</span>
               <span className="cam-years-lbl">
@@ -226,6 +290,15 @@ export const FounderCamera: React.FC = () => {
               </span>
             </div>
           </div>
+
+          {CREW.map((c, k) => (
+            <div key={c.name} className="cam-subject cam-crew-cap" ref={el => { crewCapRefs.current[k] = el; }}>
+              <span className="cam-subject-tag">{c.tag}</span>
+              <strong>{c.name}</strong>
+              <span className="cam-subject-role">{c.role}</span>
+              <span className="cam-crew-line">{c.line}</span>
+            </div>
+          ))}
 
           <div className="cam-hud-bottom">
             <span>1/48s • 180°</span>

@@ -21,7 +21,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onBackToSite, isAdminView }) => 
             <>
               {/* Clean Nav Links */}
               <ul className={`uc-nav-links ${isOpen ? 'is-active' : ''}`}>
-                <li><a href="#sobre" onClick={() => setIsOpen(false)}>FUNDADOR</a></li>
+                <li><a href="#sobre" onClick={() => setIsOpen(false)}>FUNDADORES</a></li>
                 <li><a href="#pilares" onClick={() => setIsOpen(false)}>SERVIÇOS</a></li>
                 <li><a href="#trabalhos" onClick={() => setIsOpen(false)}>TRABALHOS</a></li>
                 <li><a href="#reels" onClick={() => setIsOpen(false)}>REELS</a></li>

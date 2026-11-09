@@ -28,7 +28,7 @@ export const Footer: React.FC<FooterProps> = ({ hero }) => {
         <div>
           <h4>Navegar</h4>
           <a href="#topo">Início</a>
-          <a href="#sobre">Fundador</a>
+          <a href="#sobre">Fundadores</a>
           <a href="#pilares">Serviços</a>
           <a href="#trabalhos">Trabalhos</a>
           <a href="#reels">Reels</a>

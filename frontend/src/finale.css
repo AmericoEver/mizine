@@ -373,3 +373,52 @@
   .works-foot { flex-direction: column; }
   .uc-section-title { font-size: clamp(32px, 9vw, 44px) !important; }
 }
+
+
+/* ==========================================================================
+   A EQUIPA — Moisés, Américo, Jorge
+   ========================================================================== */
+.crew { padding-top: clamp(80px, 12vh, 140px); padding-bottom: clamp(70px, 10vh, 120px); }
+.crew-head { margin-bottom: 48px; }
+.crew-head h2 { margin: 0; font-family: var(--font-display); font-size: clamp(40px, 5vw, 80px); font-weight: 800; line-height: 0.93; letter-spacing: -0.035em; color: #0c0d14; }
+.crew-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
+.crew-card { color: #111218; }
+.crew-photo {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border-radius: 14px;
+  background: #e9eaf0;
+  margin-bottom: 20px;
+}
+.crew-photo img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(0.25); transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1), filter 0.4s ease; }
+.crew-card:hover .crew-photo img { transform: scale(1.04); filter: none; }
+.crew-initials { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--font-display); font-size: 72px; font-weight: 800; color: #c6c8d2; }
+.crew-corners i { position: absolute; width: 22px; height: 22px; border: 0 solid rgba(255, 255, 255, 0.9); opacity: 0; transition: opacity 0.3s ease, transform 0.35s ease; }
+.crew-corners i:nth-child(1) { left: 14px; top: 14px; border-left-width: 2px; border-top-width: 2px; transform: translate(-6px, -6px); }
+.crew-corners i:nth-child(2) { right: 14px; top: 14px; border-right-width: 2px; border-top-width: 2px; transform: translate(6px, -6px); }
+.crew-corners i:nth-child(3) { left: 14px; bottom: 14px; border-left-width: 2px; border-bottom-width: 2px; transform: translate(-6px, 6px); }
+.crew-corners i:nth-child(4) { right: 14px; bottom: 14px; border-right-width: 2px; border-bottom-width: 2px; transform: translate(6px, 6px); }
+.crew-card:hover .crew-corners i { opacity: 1; transform: none; }
+.crew-line {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(12, 13, 20, 0.72);
+  backdrop-filter: blur(6px);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #fff;
+}
+.crew-card h3 { margin: 0 0 4px; font-family: var(--font-display); font-size: clamp(24px, 2.2vw, 32px); font-weight: 800; letter-spacing: -0.02em; text-transform: uppercase; }
+.crew-role { font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #ff3b30; }
+.crew-card p { margin: 12px 0 0; max-width: 34ch; font-size: 14.5px; line-height: 1.6; color: #4a4d62; }
+@media (max-width: 900px) {
+  .crew-grid { grid-template-columns: 1fr; gap: 40px; }
+  .crew-photo { aspect-ratio: 4 / 4.4; }
+}

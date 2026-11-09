@@ -2,6 +2,7 @@ import React from 'react';
 import { AboutContent } from '../types';
 import { Icon } from './Icon';
 import { FounderCamera } from './FounderCamera';
+import { TeamCrew } from './TeamCrew';
 
 interface IntroMetricsProps {
   content: AboutContent;
@@ -41,6 +42,9 @@ export const IntroMetrics: React.FC<IntroMetricsProps> = ({ content }) => {
 
       {/* CÂMARA NO TRIPÉ → PUSH-IN NO MONITOR → RELANCE DO FUNDADOR (cena guiada pelo scroll) */}
       <FounderCamera />
+
+      {/* depois do relance do fundador: a família por trás da Mizine */}
+      <TeamCrew />
     </section>
   );
 };

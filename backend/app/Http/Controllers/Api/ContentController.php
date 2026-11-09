@@ -4,10 +4,27 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class ContentController extends Controller
 {
+    /** Validade da sessão de administração (horas) */
+    private const TOKEN_TTL_HOURS = 12;
+
+    /**
+     * Verifica o token Bearer emitido no login (guardado em cache, só o hash).
+     * Devolve uma resposta 401 quando o pedido não está autenticado, ou null quando está.
+     */
+    private function denyUnlessAdmin(Request $request)
+    {
+        $token = (string) $request->bearerToken();
+        if ($token === '' || !Cache::store('file')->has('admin_token:' . hash('sha256', $token))) {
+            return response()->json(['success' => false, 'message' => 'Não autorizado.'], 401);
+        }
+        return null;
+    }
+
     // Retorna todo o conteúdo do site
     public function getContent()
     {
@@ -156,11 +173,13 @@ class ContentController extends Controller
     // Login Admin
     public function login(Request $request)
     {
-        $password = $request->input('password');
-        $validPassword = env('ADMIN_PASSWORD', 'mizine2026');
+        $password = (string) $request->input('password');
+        $validPassword = (string) env('ADMIN_PASSWORD', '');
 
-        if ($password === $validPassword || $password === 'admin123') {
+        // Sem ADMIN_PASSWORD configurada no .env do servidor, o painel fica fechado.
+        if ($validPassword !== '' && hash_equals($validPassword, $password)) {
             $token = bin2hex(random_bytes(32));
+            Cache::store('file')->put('admin_token:' . hash('sha256', $token), true, now()->addHours(self::TOKEN_TTL_HOURS));
             return response()->json([
                 'success' => true,
                 'token' => $token,
@@ -177,6 +196,9 @@ class ContentController extends Controller
     // Salvar conteúdo integral pelo Admin
     public function updateFullContent(Request $request)
     {
+        if ($deny = $this->denyUnlessAdmin($request)) {
+            return $deny;
+        }
         $data = $request->all();
 
         // Atualizar Hero
@@ -338,8 +360,11 @@ class ContentController extends Controller
     }
 
     // Mensagens de contacto
-    public function getMessages()
+    public function getMessages(Request $request)
     {
+        if ($deny = $this->denyUnlessAdmin($request)) {
+            return $deny;
+        }
         $messages = DB::table('contact_messages')
             ->orderBy('created_at', 'desc')
             ->get()
@@ -358,8 +383,11 @@ class ContentController extends Controller
         return response()->json($messages);
     }
 
-    public function deleteMessage($id)
+    public function deleteMessage(Request $request, $id)
     {
+        if ($deny = $this->denyUnlessAdmin($request)) {
+            return $deny;
+        }
         DB::table('contact_messages')->where('id', $id)->delete();
         return response()->json(['success' => true]);
     }
@@ -367,12 +395,17 @@ class ContentController extends Controller
     // Upload de arquivo / imagem de capa a partir do computador
     public function uploadFile(Request $request)
     {
+        if ($deny = $this->denyUnlessAdmin($request)) {
+            return $deny;
+        }
+        // SVG excluído: pode transportar scripts (XSS)
         $request->validate([
-            'file' => 'required|file|mimes:jpeg,png,jpg,gif,webp,svg,mp4,mov|max:51200',
+            'file' => 'required|file|mimes:jpeg,png,jpg,gif,webp,mp4,mov|max:51200',
         ]);
 
         $file = $request->file('file');
-        $ext = $file->getClientOriginalExtension() ?: 'jpg';
+        // extensão a partir do conteúdo real do ficheiro, não do nome enviado
+        $ext = $file->guessExtension() ?: 'jpg';
         $filename = 'cover_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
 
         $targetDir = dirname(base_path()) . '/media/uploads';

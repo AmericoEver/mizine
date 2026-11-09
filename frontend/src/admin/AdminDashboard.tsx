@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { SiteContent, ContactMessage, ReelItem, ProjectItem, ClientItem, TestimonialItem, TimelineItem, TeamMember, GroupCompany } from '../types';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { SiteContent, ContactMessage } from '../types';
 import { apiService } from '../services/api';
+import { Icon, IconName } from '../components/Icon';
 
 interface AdminDashboardProps {
   initialContent: SiteContent;
@@ -8,1194 +9,515 @@ interface AdminDashboardProps {
   onContentUpdated: (updated: SiteContent) => void;
 }
 
-type TabType = 'hero' | 'about' | 'reels' | 'projects' | 'clients' | 'timeline' | 'team' | 'group' | 'messages';
+type SectionId = 'geral' | 'fundador' | 'reels' | 'grupo' | 'mensagens' | 'arquivo';
 
-const DEFAULT_BRAND_LOGOS: Record<string, string> = {
-  'GEEK EVER': '/media/clients/geek-ever.svg',
-  'MIZINE CELEBRATE': '/media/clients/mizine-celebrate.svg',
-  'MAPUTO CREATIVE': '/media/clients/maputo-creative.svg',
-  'STUDIO 8': '/media/clients/studio-8.svg',
-  'VALOR DIGITAL': '/media/clients/valor-digital.svg',
-  'BRAND MZ': '/media/clients/brand-mz.svg',
-  'XAI ART': '/media/clients/xai-art.svg',
+/* --------------------------------------------------------------------------
+   Campos reutilizáveis
+   -------------------------------------------------------------------------- */
+type FieldType = 'text' | 'textarea' | 'url' | 'image' | 'video';
+interface FieldDef<T> { key: keyof T & string; label: string; type?: FieldType; hint?: string; placeholder?: string }
+
+const Field: React.FC<{
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  type?: FieldType;
+  hint?: string;
+  placeholder?: string;
+  onUpload?: (file: File) => Promise<string | null>;
+}> = ({ label, value, onChange, type = 'text', hint, placeholder, onUpload }) => {
+  const [busy, setBusy] = useState(false);
+  const fileRef = useRef<HTMLInputElement | null>(null);
+  const isMedia = type === 'image' || type === 'video';
+  return (
+    <label className={`adm-field ${isMedia ? 'is-media' : ''}`}>
+      <span className="adm-label">{label}</span>
+      {type === 'textarea' ? (
+        <textarea value={value} onChange={e => onChange(e.target.value)} rows={4} placeholder={placeholder} />
+      ) : (
+        <input type={type === 'url' ? 'url' : 'text'} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder ?? (isMedia ? 'https://… ou carrega do computador' : '')} />
+      )}
+      {isMedia && (
+        <div className="adm-media">
+          <div className="adm-media-preview">
+            {value ? (
+              type === 'image' ? <img src={value} alt="" /> : <video src={value} muted playsInline preload="metadata" />
+            ) : (
+              <span><Icon name={type === 'image' ? 'camera' : 'play'} size={18} /> Sem ficheiro</span>
+            )}
+          </div>
+          {onUpload && (
+            <>
+              <button type="button" className="adm-btn ghost" disabled={busy} onClick={() => fileRef.current?.click()}>
+                {busy ? 'A carregar…' : 'Carregar do computador'}
+              </button>
+              <input
+                ref={fileRef}
+                type="file"
+                hidden
+                accept={type === 'image' ? 'image/jpeg,image/png,image/webp,image/gif' : 'video/mp4,video/quicktime'}
+                onChange={async e => {
+                  const f = e.target.files?.[0];
+                  e.target.value = '';
+                  if (!f) return;
+                  setBusy(true);
+                  const url = await onUpload(f);
+                  setBusy(false);
+                  if (url) onChange(url);
+                }}
+              />
+            </>
+          )}
+        </div>
+      )}
+      {hint && <span className="adm-hint">{hint}</span>}
+    </label>
+  );
 };
 
-export const AdminDashboard: React.FC<AdminDashboardProps> = ({
-  initialContent,
-  onClose,
-  onContentUpdated
-}) => {
+/** Editor genérico de listas: cartões com campos, reordenar, remover e adicionar. */
+function ListEditor<T extends { id: number | string }>({
+  items,
+  onChange,
+  fields,
+  titleOf,
+  newItem,
+  addLabel,
+  onUpload
+}: {
+  items: T[];
+  onChange: (next: T[]) => void;
+  fields: FieldDef<T>[];
+  titleOf: (item: T, i: number) => string;
+  newItem: () => T;
+  addLabel: string;
+  onUpload: (file: File) => Promise<string | null>;
+}) {
+  const [open, setOpen] = useState<number | string | null>(items[0]?.id ?? null);
+  const move = (i: number, d: number) => {
+    const j = i + d;
+    if (j < 0 || j >= items.length) return;
+    const next = [...items];
+    [next[i], next[j]] = [next[j], next[i]];
+    onChange(next);
+  };
+  return (
+    <div className="adm-list">
+      {items.map((item, i) => {
+        const isOpen = open === item.id;
+        return (
+          <div key={item.id} className={`adm-item ${isOpen ? 'is-open' : ''}`}>
+            <div className="adm-item-head">
+              <button type="button" className="adm-item-title" onClick={() => setOpen(isOpen ? null : item.id)}>
+                <span className="adm-item-num">{String(i + 1).padStart(2, '0')}</span>
+                <span>{titleOf(item, i) || 'Sem título'}</span>
+              </button>
+              <div className="adm-item-actions">
+                <button type="button" title="Subir" onClick={() => move(i, -1)} disabled={i === 0}>↑</button>
+                <button type="button" title="Descer" onClick={() => move(i, 1)} disabled={i === items.length - 1}>↓</button>
+                <button
+                  type="button"
+                  title="Remover"
+                  className="danger"
+                  onClick={() => {
+                    if (confirm(`Remover "${titleOf(item, i) || 'item'}"?`)) onChange(items.filter(x => x.id !== item.id));
+                  }}
+                >
+                  <Icon name="close" size={14} />
+                </button>
+              </div>
+            </div>
+            {isOpen && (
+              <div className="adm-item-body">
+                {fields.map(f => (
+                  <Field
+                    key={f.key}
+                    label={f.label}
+                    type={f.type}
+                    hint={f.hint}
+                    placeholder={f.placeholder}
+                    value={String((item[f.key] as unknown as string) ?? '')}
+                    onChange={v => onChange(items.map(x => (x.id === item.id ? { ...x, [f.key]: v } : x)))}
+                    onUpload={f.type === 'image' || f.type === 'video' ? onUpload : undefined}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
+      <button
+        type="button"
+        className="adm-add"
+        onClick={() => {
+          const it = newItem();
+          onChange([...items, it]);
+          setOpen(it.id);
+        }}
+      >
+        + {addLabel}
+      </button>
+    </div>
+  );
+}
+
+/* --------------------------------------------------------------------------
+   Painel
+   -------------------------------------------------------------------------- */
+const NAV: { id: SectionId; label: string; icon: IconName; group: string }[] = [
+  { id: 'geral', label: 'Geral & contactos', icon: 'globe', group: 'No site' },
+  { id: 'fundador', label: 'Fundador', icon: 'camera', group: 'No site' },
+  { id: 'reels', label: 'Reels', icon: 'reel', group: 'No site' },
+  { id: 'grupo', label: 'Marcas do grupo', icon: 'orbit', group: 'No site' },
+  { id: 'mensagens', label: 'Mensagens', icon: 'mail', group: 'Caixa' },
+  { id: 'arquivo', label: 'Arquivo', icon: 'academy', group: 'Fora do site' }
+];
+
+export const AdminDashboard: React.FC<AdminDashboardProps> = ({ initialContent, onClose, onContentUpdated }) => {
   const [content, setContent] = useState<SiteContent>(initialContent);
-  const [activeTab, setActiveTab] = useState<TabType>('hero');
+  const [saved, setSaved] = useState(() => JSON.stringify(initialContent));
+  const [section, setSection] = useState<SectionId>('geral');
   const [messages, setMessages] = useState<ContactMessage[]>([]);
   const [isSaving, setIsSaving] = useState(false);
-  const [saveStatus, setSaveStatus] = useState<string>('');
+  const [toast, setToast] = useState<{ text: string; kind: 'ok' | 'err' } | null>(null);
+  const [archiveTab, setArchiveTab] = useState<'projects' | 'clients' | 'testimonials' | 'team' | 'timeline'>('testimonials');
+
+  const dirty = useMemo(() => JSON.stringify(content) !== saved, [content, saved]);
+
+  const notify = (text: string, kind: 'ok' | 'err' = 'ok') => {
+    setToast({ text, kind });
+    window.setTimeout(() => setToast(null), 3800);
+  };
 
   useEffect(() => {
-    loadMessages();
+    apiService.getMessages().then(setMessages);
   }, []);
 
-  const loadMessages = async () => {
-    const list = await apiService.getMessages();
-    setMessages(list);
-  };
-
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
+    if (isSaving) return;
     setIsSaving(true);
-    setSaveStatus('A guardar alterações no backend...');
-    const success = await apiService.saveFullContent(content);
+    const ok = await apiService.saveFullContent(content);
     setIsSaving(false);
-    if (success) {
-      setSaveStatus('Guardado com sucesso!');
+    if (ok) {
+      setSaved(JSON.stringify(content));
       onContentUpdated(content);
-      setTimeout(() => setSaveStatus(''), 3000);
+      notify('Publicado no site.');
+    } else if (!apiService.isAuthenticated()) {
+      notify('Sessão expirada. Entra novamente — as alterações continuam aqui.', 'err');
     } else {
-      setSaveStatus('Erro ao guardar no backend. Alterações guardadas localmente.');
+      notify('Não foi possível publicar. Verifica a ligação e tenta outra vez.', 'err');
     }
-  };
+  }, [content, isSaving, onContentUpdated]);
 
-  const handleDeleteMessage = async (id: number | string) => {
-    if (!confirm('Tem a certeza que deseja eliminar esta mensagem?')) return;
-    await apiService.deleteMessage(id);
-    setMessages(messages.filter((m) => m.id !== id));
-  };
-
-  const [isUploading, setIsUploading] = useState(false);
-
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, target: 'cover' | 'reel' | 'project' | 'client', index?: number) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setIsUploading(true);
-    setSaveStatus('A carregar ficheiro do seu computador...');
-
-    const res = await apiService.uploadFile(file);
-    setIsUploading(false);
-
-    if (res.success && res.url) {
-      if (target === 'cover') {
-        setContent((prev) => ({
-          ...prev,
-          hero: {
-            ...prev.hero,
-            coverImageUrl: res.url
-          }
-        }));
-        setSaveStatus('Capa carregada com sucesso! Clique em "Guardar Alterações" para aplicar.');
-      } else if (target === 'client' && typeof index === 'number') {
-        const updated = [...content.clients];
-        updated[index].logoUrl = res.url;
-        setContent((prev) => ({ ...prev, clients: updated }));
-        setSaveStatus(`Logo da marca "${updated[index].name || 'Cliente'}" carregado com sucesso!`);
-      } else if (target === 'reel' && typeof index === 'number') {
-        const updated = [...content.reels];
-        updated[index].imageUrl = res.url;
-        setContent((prev) => ({ ...prev, reels: updated }));
-        setSaveStatus('Capa do Reel carregada!');
-      } else if (target === 'project' && typeof index === 'number') {
-        const updated = [...content.projects];
-        updated[index].imageUrl = res.url;
-        setContent((prev) => ({ ...prev, projects: updated }));
-        setSaveStatus('Capa do Projeto carregada!');
+  // Ctrl/Cmd + S para guardar; aviso ao sair com alterações por guardar
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        handleSave();
       }
-      setTimeout(() => setSaveStatus(''), 4000);
-    } else {
-      setSaveStatus('Erro ao carregar o ficheiro: ' + (res.error || 'Falha no processamento'));
+    };
+    const onLeave = (e: BeforeUnloadEvent) => {
+      if (dirty) e.preventDefault();
+    };
+    window.addEventListener('keydown', onKey);
+    window.addEventListener('beforeunload', onLeave);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('beforeunload', onLeave);
+    };
+  }, [handleSave, dirty]);
+
+  const upload = useCallback(async (file: File) => {
+    const res = await apiService.uploadFile(file);
+    if (res.success) {
+      notify('Ficheiro carregado. Guarda para publicar.');
+      return res.url;
     }
+    notify(res.error || 'Falha no carregamento.', 'err');
+    return null;
+  }, []);
+
+  const leave = (fn: () => void) => {
+    if (dirty && !confirm('Tens alterações por publicar. Sair mesmo assim?')) return;
+    fn();
   };
 
-  // Funções de manipulação de listas
-  const addReel = () => {
-    const newReel: ReelItem = {
-      id: Date.now(),
-      title: `Reel ${content.reels.length + 1}`,
-      subtitle: '[Cliente / ano]',
-      artClass: 'a1',
-      videoUrl: ''
-    };
-    setContent({ ...content, reels: [...content.reels, newReel] });
-  };
-
-  const removeReel = (id: number | string) => {
-    setContent({ ...content, reels: content.reels.filter((r) => r.id !== id) });
-  };
-
-  const addProject = () => {
-    const newProj: ProjectItem = {
-      id: Date.now(),
-      title: 'Novo Projeto',
-      description: 'Descrição do projeto.',
-      isWide: false,
-      artClass: 'a3',
-      linkUrl: '#contacto'
-    };
-    setContent({ ...content, projects: [...content.projects, newProj] });
-  };
-
-  const removeProject = (id: number | string) => {
-    setContent({ ...content, projects: content.projects.filter((p) => p.id !== id) });
-  };
-
-  const addClient = () => {
-    const newClient: ClientItem = {
-      id: Date.now(),
-      name: `Nova Marca ${content.clients.length + 1}`,
-      logoUrl: ''
-    };
-    setContent({ ...content, clients: [...content.clients, newClient] });
-  };
-
-  const removeClient = (id: number | string) => {
-    setContent({ ...content, clients: content.clients.filter((c) => c.id !== id) });
-  };
-
-  const addTestimonial = () => {
-    const newT: TestimonialItem = {
-      id: Date.now(),
-      quote: '“Excelente trabalho e compromisso com o resultado.”',
-      author: 'Novo Cliente',
-      company: 'Empresa'
-    };
-    setContent({ ...content, testimonials: [...content.testimonials, newT] });
-  };
-
-  const removeTestimonial = (id: number | string) => {
-    setContent({ ...content, testimonials: content.testimonials.filter((t) => t.id !== id) });
-  };
-
-  const addTimeline = () => {
-    const newT: TimelineItem = {
-      id: Date.now(),
-      yearLabel: '2026',
-      title: 'Nova Conquista',
-      description: 'Descrição do marco alcançado.'
-    };
-    setContent({ ...content, timeline: [...content.timeline, newT] });
-  };
-
-  const removeTimeline = (id: number | string) => {
-    setContent({ ...content, timeline: content.timeline.filter((t) => t.id !== id) });
-  };
-
-  const addTeamMember = () => {
-    const newM: TeamMember = {
-      id: Date.now(),
-      name: 'Novo Membro',
-      role: 'Função',
-      initial: 'M'
-    };
-    setContent({ ...content, team: [...content.team, newM] });
-  };
-
-  const removeTeamMember = (id: number | string) => {
-    setContent({ ...content, team: content.team.filter((m) => m.id !== id) });
-  };
-
-  const addGroupCompany = () => {
-    const newG: GroupCompany = {
-      id: Date.now(),
-      name: 'Nova Empresa',
-      description: 'Descrição de uma linha da empresa parceira.',
-      buttonText: 'Visitar',
-      linkUrl: '#'
-    };
-    setContent({ ...content, group: [...content.group, newG] });
-  };
-
-  const removeGroupCompany = (id: number | string) => {
-    setContent({ ...content, group: content.group.filter((g) => g.id !== id) });
-  };
+  const setHero = (k: keyof SiteContent['hero'], v: string) => setContent(c => ({ ...c, hero: { ...c.hero, [k]: v } }));
+  const unread = messages.filter(m => !m.isRead).length;
+  const current = NAV.find(n => n.id === section)!;
+  const id = () => Date.now() + Math.floor(Math.random() * 1000);
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0a0a0a', color: '#fff', paddingTop: '80px', paddingBottom: '60px' }}>
-      <div className="wrap">
-        {/* Barra superior do Admin */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '16px',
-          borderBottom: '1px solid var(--line)',
-          paddingBottom: '20px',
-          marginBottom: '28px'
-        }}>
-          <div>
-            <h1 style={{ fontSize: '38px', lineHeight: 1 }}>
-              PAINEL DE <span className="r">ADMINISTRAÇÃO</span>
-            </h1>
-            <p style={{ color: 'var(--mute)', margin: '4px 0 0', fontSize: '14px' }}>
-              Popule e edite todos os campos e conteúdos do site em tempo real
-            </p>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            {saveStatus && (
-              <span style={{ fontSize: '13px', color: saveStatus.includes('Erro') ? '#ff4d4f' : '#52c41a', fontWeight: 600 }}>
-                {saveStatus}
-              </span>
-            )}
-            <button
-              onClick={handleSave}
-              className="btn red"
-              disabled={isSaving}
-            >
-              {isSaving ? 'A guardar...' : 'Guardar Alterações'}
-            </button>
-            <button onClick={onClose} className="btn outline">
-              Ver Site
-            </button>
-            <button
-              onClick={() => {
+    <div className="adm">
+      <aside className="adm-side">
+        <div className="adm-brand">
+          MIZINE<i>.</i> <small>ADMIN</small>
+        </div>
+        <nav className="adm-nav">
+          {['No site', 'Caixa', 'Fora do site'].map(g => (
+            <div key={g} className="adm-nav-group">
+              <span className="adm-nav-label">{g}</span>
+              {NAV.filter(n => n.group === g).map(n => (
+                <button key={n.id} type="button" className={`adm-nav-item ${section === n.id ? 'is-on' : ''}`} onClick={() => setSection(n.id)}>
+                  <Icon name={n.icon} size={17} />
+                  <span>{n.label}</span>
+                  {n.id === 'mensagens' && messages.length > 0 && <em className={unread ? 'is-new' : ''}>{unread || messages.length}</em>}
+                </button>
+              ))}
+            </div>
+          ))}
+        </nav>
+        <div className="adm-side-foot">
+          <button type="button" className="adm-link" onClick={() => leave(onClose)}>
+            <Icon name="arrow-up-right" size={14} /> Ver site
+          </button>
+          <button
+            type="button"
+            className="adm-link danger"
+            onClick={() =>
+              leave(() => {
                 apiService.logout();
                 onClose();
-              }}
-              className="btn outline"
-              style={{ color: '#ff6666', borderColor: '#441111' }}
-            >
-              Sair
+              })
+            }
+          >
+            Terminar sessão
+          </button>
+        </div>
+      </aside>
+
+      <main className="adm-main">
+        <header className="adm-top">
+          <div>
+            <span className="adm-crumb">{current.group}</span>
+            <h1>{current.label}</h1>
+          </div>
+          <div className="adm-top-actions">
+            <span className={`adm-state ${dirty ? 'is-dirty' : ''}`}>{dirty ? '● Alterações por publicar' : 'Tudo publicado'}</span>
+            <button type="button" className="adm-btn primary" onClick={handleSave} disabled={isSaving || !dirty}>
+              {isSaving ? 'A publicar…' : 'Publicar'} <kbd>Ctrl S</kbd>
             </button>
           </div>
-        </div>
+        </header>
 
-        {/* Abas */}
-        <div style={{
-          display: 'flex',
-          gap: '8px',
-          overflowX: 'auto',
-          paddingBottom: '12px',
-          marginBottom: '32px',
-          borderBottom: '1px solid #1f1f1f'
-        }}>
-          {[
-            { id: 'hero', label: 'Geral & Hero' },
-            { id: 'about', label: 'Sobre / Abordagem' },
-            { id: 'reels', label: `Reels (${content.reels.length})` },
-            { id: 'projects', label: `Projetos (${content.projects.length})` },
-            { id: 'clients', label: `Clientes & Testemunhos` },
-            { id: 'timeline', label: `Percurso (${content.timeline.length})` },
-            { id: 'team', label: `Equipa (${content.team.length})` },
-            { id: 'group', label: `Grupo Mizine (${content.group.length})` },
-            { id: 'messages', label: `Mensagens (${messages.length})` },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as TabType)}
-              style={{
-                background: activeTab === tab.id ? 'var(--red)' : '#141414',
-                color: activeTab === tab.id ? '#fff' : '#aaa',
-                border: '1px solid',
-                borderColor: activeTab === tab.id ? 'var(--red)' : '#262626',
-                padding: '10px 16px',
-                fontSize: '13px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-                transition: 'all 0.2s'
-              }}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Conteúdo da Aba Ativa */}
-        <div style={{ background: '#0e0e0e', border: '1px solid var(--line)', padding: '32px' }}>
-          
-          {/* TAB: HERO & GERAL */}
-          {activeTab === 'hero' && (
-            <div style={{ display: 'grid', gap: '24px' }}>
-              <div>
-                <h2 style={{ fontSize: '26px', margin: 0 }}>Capa Principal & Informações Gerais</h2>
-                <p style={{ color: '#888', fontSize: '14px', marginTop: '4px' }}>
-                  A secção do topo foi atualizada para exibir uma capa limpa sem títulos sobrepostos.
-                </p>
+        <div className="adm-body">
+          {section === 'geral' && (
+            <div className="adm-panel">
+              <p className="adm-intro">Contactos e vídeo de apresentação usados no hero, no contacto e no rodapé.</p>
+              <div className="adm-grid">
+                <Field label="Email de contacto" value={content.hero.contactEmail} onChange={v => setHero('contactEmail', v)} />
+                <Field label="WhatsApp (número visível)" value={content.hero.whatsappNumber} onChange={v => setHero('whatsappNumber', v)} placeholder="+258 84 000 0000" />
+                <Field label="WhatsApp (link)" type="url" value={content.hero.whatsappUrl} onChange={v => setHero('whatsappUrl', v)} placeholder="https://wa.me/258840000000" />
+                <Field label="Instagram (nome)" value={content.hero.instagramHandle} onChange={v => setHero('instagramHandle', v)} placeholder="@mizine_8" />
+                <Field label="Instagram (link)" type="url" value={content.hero.instagramUrl} onChange={v => setHero('instagramUrl', v)} />
               </div>
-
-              {/* CARD DE UPLOAD DA CAPA PRINCIPAL */}
-              <div style={{
-                background: '#141414',
-                border: '1px solid #2a2a2a',
-                padding: '24px',
-                borderRadius: '4px'
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                  <div>
-                    <h3 style={{ fontSize: '18px', color: 'var(--red)', margin: 0, fontWeight: 700 }}>
-                      Capa do Topo (Hero Cover)
-                    </h3>
-                    <span style={{ fontSize: '13px', color: '#aaa' }}>
-                      Adicione ou altere a imagem de capa diretamente a partir do seu computador.
-                    </span>
-                  </div>
-                  {content.hero.coverImageUrl && (
-                    <button
-                      type="button"
-                      onClick={() => setContent({ ...content, hero: { ...content.hero, coverImageUrl: '' } })}
-                      style={{
-                        background: 'transparent',
-                        border: '1px solid #ff4d4f',
-                        color: '#ff4d4f',
-                        padding: '6px 14px',
-                        cursor: 'pointer',
-                        fontSize: '12px',
-                        fontWeight: 600
-                      }}
-                    >
-                      Remover Capa
-                    </button>
-                  )}
-                </div>
-
-                {/* Pré-visualização da Capa */}
-                {content.hero.coverImageUrl ? (
-                  <div style={{
-                    position: 'relative',
-                    width: '100%',
-                    height: '260px',
-                    borderRadius: '4px',
-                    overflow: 'hidden',
-                    marginBottom: '16px',
-                    border: '1px solid #333'
-                  }}>
-                    <img
-                      src={content.hero.coverImageUrl}
-                      alt="Pré-visualização da Capa"
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
-                    <div style={{
-                      position: 'absolute',
-                      bottom: '12px',
-                      left: '12px',
-                      background: 'rgba(0,0,0,0.85)',
-                      padding: '4px 10px',
-                      fontSize: '12px',
-                      color: '#00ff66',
-                      borderRadius: '3px',
-                      border: '1px solid #00aa44'
-                    }}>
-                      ✓ Capa Ativa no Site
-                    </div>
-                  </div>
-                ) : (
-                  <div style={{
-                    width: '100%',
-                    height: '140px',
-                    border: '2px dashed #333',
-                    borderRadius: '4px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginBottom: '16px',
-                    color: '#777'
-                  }}>
-                    <span style={{ fontSize: '26px', marginBottom: '6px' }}>🖼️</span>
-                    <span>Nenhuma imagem de capa selecionada (exibirá fundo escuro cinematográfico).</span>
-                  </div>
-                )}
-
-                {/* Botões de Ação para Carregar do Computador */}
-                <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
-                  <label style={{
-                    background: 'var(--red)',
-                    color: '#fff',
-                    padding: '10px 20px',
-                    fontSize: '13px',
-                    fontWeight: 700,
-                    cursor: isUploading ? 'not-allowed' : 'pointer',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    borderRadius: '2px',
-                    transition: 'opacity 0.2s',
-                    opacity: isUploading ? 0.6 : 1
-                  }}>
-                    <span>{isUploading ? '⏳ A carregar...' : '📁 Escolher Capa do Computador (PC)'}</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      style={{ display: 'none' }}
-                      disabled={isUploading}
-                      onChange={(e) => handleFileUpload(e, 'cover')}
-                    />
-                  </label>
-
-                  <div style={{ flex: 1, minWidth: '240px' }}>
-                    <input
-                      type="text"
-                      placeholder="Caminho ou URL da imagem (ex: /media/projects/proj-1.jpg)"
-                      value={content.hero.coverImageUrl || ''}
-                      onChange={(e) => setContent({
-                        ...content,
-                        hero: { ...content.hero, coverImageUrl: e.target.value }
-                      })}
-                      style={{ width: '100%', fontSize: '13px' }}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Informações Opcionais / Metadados */}
-              <details style={{ background: '#121212', border: '1px solid #222', padding: '16px', borderRadius: '4px' }}>
-                <summary style={{ cursor: 'pointer', color: '#999', fontSize: '13px', fontWeight: 600 }}>
-                  Metadados e Textos Opcionais (Ocultos na Capa)
-                </summary>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '16px' }}>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '13px', color: '#ccc', marginBottom: '6px' }}>Título Interno</label>
-                    <textarea
-                      rows={2}
-                      value={content.hero.title}
-                      onChange={(e) => setContent({ ...content, hero: { ...content.hero, title: e.target.value } })}
-                    />
-                  </div>
-
-                  <div>
-                    <label style={{ display: 'block', fontSize: '13px', color: '#ccc', marginBottom: '6px' }}>Frase / Tagline Interna</label>
-                    <textarea
-                      rows={2}
-                      value={content.hero.tagline}
-                      onChange={(e) => setContent({ ...content, hero: { ...content.hero, tagline: e.target.value } })}
-                    />
-                  </div>
-                </div>
-              </details>
-
-              <h3 style={{ fontSize: '20px', marginTop: '16px', color: 'var(--red)' }}>Banner Informativo (Strip)</h3>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '12px', color: '#bbb', marginBottom: '6px' }}>Data / Tag ([00/00])</label>
-                  <input
-                    value={content.hero.bannerDate}
-                    onChange={(e) => setContent({ ...content, hero: { ...content.hero, bannerDate: e.target.value } })}
-                  />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '12px', color: '#bbb', marginBottom: '6px' }}>Título do Evento</label>
-                  <input
-                    value={content.hero.bannerTitle}
-                    onChange={(e) => setContent({ ...content, hero: { ...content.hero, bannerTitle: e.target.value } })}
-                  />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '12px', color: '#bbb', marginBottom: '6px' }}>Descrição Curta</label>
-                  <input
-                    value={content.hero.bannerDescription}
-                    onChange={(e) => setContent({ ...content, hero: { ...content.hero, bannerDescription: e.target.value } })}
-                  />
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '13px', color: '#ccc', marginBottom: '6px' }}>Título de Intenção (Bloco Vermelho)</label>
-                  <textarea
-                    rows={2}
-                    value={content.hero.intentTitle}
-                    onChange={(e) => setContent({ ...content, hero: { ...content.hero, intentTitle: e.target.value } })}
-                  />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '13px', color: '#ccc', marginBottom: '6px' }}>Subtítulo de Intenção</label>
-                  <textarea
-                    rows={2}
-                    value={content.hero.intentSubtitle}
-                    onChange={(e) => setContent({ ...content, hero: { ...content.hero, intentSubtitle: e.target.value } })}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '13px', color: '#ccc', marginBottom: '6px' }}>URL do Vídeo do Showreel (MP4)</label>
-                <input
-                  placeholder="https://exemplo.com/showreel.mp4"
-                  value={content.hero.showreelVideoUrl}
-                  onChange={(e) => setContent({ ...content, hero: { ...content.hero, showreelVideoUrl: e.target.value } })}
-                />
-              </div>
-
-              <h3 style={{ fontSize: '20px', marginTop: '16px', color: 'var(--red)' }}>Canais de Contacto Direto</h3>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '12px', color: '#bbb', marginBottom: '6px' }}>Número WhatsApp</label>
-                  <input
-                    value={content.hero.whatsappNumber}
-                    onChange={(e) => setContent({ ...content, hero: { ...content.hero, whatsappNumber: e.target.value } })}
-                  />
-                  <input
-                    style={{ marginTop: '8px' }}
-                    placeholder="Link (https://wa.me/...)"
-                    value={content.hero.whatsappUrl}
-                    onChange={(e) => setContent({ ...content, hero: { ...content.hero, whatsappUrl: e.target.value } })}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '12px', color: '#bbb', marginBottom: '6px' }}>Instagram</label>
-                  <input
-                    value={content.hero.instagramHandle}
-                    onChange={(e) => setContent({ ...content, hero: { ...content.hero, instagramHandle: e.target.value } })}
-                  />
-                  <input
-                    style={{ marginTop: '8px' }}
-                    placeholder="Link (https://instagram.com/...)"
-                    value={content.hero.instagramUrl}
-                    onChange={(e) => setContent({ ...content, hero: { ...content.hero, instagramUrl: e.target.value } })}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '12px', color: '#bbb', marginBottom: '6px' }}>Email de Contacto</label>
-                  <input
-                    value={content.hero.contactEmail}
-                    onChange={(e) => setContent({ ...content, hero: { ...content.hero, contactEmail: e.target.value } })}
-                  />
-                </div>
-              </div>
+              <Field
+                label="Vídeo de apresentação (botão VER VÍDEO)"
+                type="video"
+                value={content.hero.showreelVideoUrl}
+                onChange={v => setHero('showreelVideoUrl', v)}
+                onUpload={upload}
+                hint="MP4 ou MOV, até 50 MB."
+              />
             </div>
           )}
 
-          {/* TAB: ABOUT */}
-          {activeTab === 'about' && (
-            <div style={{ display: 'grid', gap: '20px' }}>
-              <h2 style={{ fontSize: '26px' }}>Sobre & Abordagem</h2>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '20px' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '13px', color: '#ccc', marginBottom: '6px' }}>Etiqueta da Seção</label>
-                  <input
-                    value={content.about.tagTitle}
-                    onChange={(e) => setContent({ ...content, about: { ...content.about, tagTitle: e.target.value } })}
-                  />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '13px', color: '#ccc', marginBottom: '6px' }}>Subtítulo da Etiqueta</label>
-                  <input
-                    value={content.about.tagSubtitle}
-                    onChange={(e) => setContent({ ...content, about: { ...content.about, tagSubtitle: e.target.value } })}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '13px', color: '#ccc', marginBottom: '6px' }}>Frase Principal de Alto Impacto</label>
-                <textarea
-                  rows={3}
-                  value={content.about.mainHeading}
-                  onChange={(e) => setContent({ ...content, about: { ...content.about, mainHeading: e.target.value } })}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '13px', color: '#ccc', marginBottom: '6px' }}>História / Sobre a Mizine (2 linhas)</label>
-                <textarea
-                  rows={3}
-                  value={content.about.subtext}
-                  onChange={(e) => setContent({ ...content, about: { ...content.about, subtext: e.target.value } })}
-                />
-              </div>
+          {section === 'fundador' && (
+            <div className="adm-panel">
+              <p className="adm-intro">Texto ao lado de “Por trás de cada fotograma, há quem esteja atrás da câmara.”</p>
+              <Field
+                label="Apresentação da Mizine"
+                type="textarea"
+                value={content.about.subtext}
+                onChange={v => setContent(c => ({ ...c, about: { ...c.about, subtext: v } }))}
+              />
             </div>
           )}
 
-          {/* TAB: REELS */}
-          {activeTab === 'reels' && (
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                <h2 style={{ fontSize: '26px' }}>Gestão de Reels e Vídeos</h2>
-                <button onClick={addReel} className="btn red">+ Adicionar Reel</button>
-              </div>
-
-              <div style={{ display: 'grid', gap: '16px' }}>
-                {content.reels.map((reel, idx) => (
-                  <div key={reel.id} style={{
-                    background: '#141414',
-                    border: '1px solid var(--line)',
-                    padding: '20px',
-                    display: 'grid',
-                    gridTemplateColumns: '50px 1.2fr 1fr 1.5fr 1.5fr 40px',
-                    gap: '12px',
-                    alignItems: 'center'
-                  }}>
-                    <span style={{ fontWeight: 700, color: 'var(--red)' }}>#{idx + 1}</span>
-                    <input
-                      placeholder="Título do Reel"
-                      value={reel.title}
-                      onChange={(e) => {
-                        const updated = [...content.reels];
-                        updated[idx].title = e.target.value;
-                        setContent({ ...content, reels: updated });
-                      }}
-                    />
-                    <input
-                      placeholder="[Cliente / ano]"
-                      value={reel.subtitle}
-                      onChange={(e) => {
-                        const updated = [...content.reels];
-                        updated[idx].subtitle = e.target.value;
-                        setContent({ ...content, reels: updated });
-                      }}
-                    />
-                    <input
-                      placeholder="Caminho/URL da Imagem da Capa"
-                      value={reel.imageUrl || ''}
-                      onChange={(e) => {
-                        const updated = [...content.reels];
-                        updated[idx].imageUrl = e.target.value;
-                        setContent({ ...content, reels: updated });
-                      }}
-                    />
-                    <input
-                      placeholder="URL do ficheiro de vídeo (.mp4)"
-                      value={reel.videoUrl || ''}
-                      onChange={(e) => {
-                        const updated = [...content.reels];
-                        updated[idx].videoUrl = e.target.value;
-                        setContent({ ...content, reels: updated });
-                      }}
-                    />
-                    <button
-                      onClick={() => removeReel(reel.id)}
-                      style={{ background: 'none', border: 0, color: '#ff4d4f', cursor: 'pointer', fontSize: '18px' }}
-                      title="Remover"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                ))}
-              </div>
+          {section === 'reels' && (
+            <div className="adm-panel">
+              <p className="adm-intro">Os reels da sala de projecção, pela ordem em que passam na fita.</p>
+              <ListEditor
+                items={content.reels}
+                onChange={reels => setContent(c => ({ ...c, reels }))}
+                titleOf={r => r.title}
+                addLabel="Adicionar reel"
+                onUpload={upload}
+                newItem={() => ({ id: id(), title: 'Novo reel', subtitle: 'Cliente / 2026', artClass: 'a1', videoUrl: '', imageUrl: '' })}
+                fields={[
+                  { key: 'title', label: 'Título' },
+                  { key: 'subtitle', label: 'Legenda', placeholder: 'Cliente / ano' },
+                  { key: 'imageUrl', label: 'Capa (vertical 9:16)', type: 'image' },
+                  { key: 'videoUrl', label: 'Vídeo', type: 'video' }
+                ]}
+              />
             </div>
           )}
 
-          {/* TAB: PROJECTS */}
-          {activeTab === 'projects' && (
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                <h2 style={{ fontSize: '26px' }}>Projetos em Destaque</h2>
-                <button onClick={addProject} className="btn red">+ Adicionar Projeto</button>
-              </div>
-
-              <div style={{ display: 'grid', gap: '16px' }}>
-                {content.projects.map((proj, idx) => (
-                  <div key={proj.id} style={{
-                    background: '#141414',
-                    border: '1px solid var(--line)',
-                    padding: '20px',
-                    display: 'grid',
-                    gap: '12px'
-                  }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontWeight: 700, color: 'var(--red)' }}>Projeto #{idx + 1}</span>
-                      <button
-                        onClick={() => removeProject(proj.id)}
-                        style={{ background: 'none', border: 0, color: '#ff4d4f', cursor: 'pointer' }}
-                      >
-                        Eliminar Projeto
-                      </button>
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1.5fr 1.5fr', gap: '12px' }}>
-                      <input
-                        placeholder="Título do Projeto"
-                        value={proj.title}
-                        onChange={(e) => {
-                          const updated = [...content.projects];
-                          updated[idx].title = e.target.value;
-                          setContent({ ...content, projects: updated });
-                        }}
-                      />
-                      <select
-                        value={proj.isWide ? 'wide' : 'standard'}
-                        onChange={(e) => {
-                          const updated = [...content.projects];
-                          updated[idx].isWide = e.target.value === 'wide';
-                          setContent({ ...content, projects: updated });
-                        }}
-                      >
-                        <option value="standard">Tamanho Normal (1 Coluna)</option>
-                        <option value="wide">Destaque Panorâmico (Wide)</option>
-                      </select>
-                      <input
-                        placeholder="URL/Caminho da Imagem da Capa"
-                        value={proj.imageUrl || ''}
-                        onChange={(e) => {
-                          const updated = [...content.projects];
-                          updated[idx].imageUrl = e.target.value;
-                          setContent({ ...content, projects: updated });
-                        }}
-                      />
-                      <input
-                        placeholder="Link do Projeto (Instagram/Web)"
-                        value={proj.linkUrl || ''}
-                        onChange={(e) => {
-                          const updated = [...content.projects];
-                          updated[idx].linkUrl = e.target.value;
-                          setContent({ ...content, projects: updated });
-                        }}
-                      />
-                    </div>
-
-                    <textarea
-                      placeholder="Descrição curta do projeto"
-                      rows={2}
-                      value={proj.description}
-                      onChange={(e) => {
-                        const updated = [...content.projects];
-                        updated[idx].description = e.target.value;
-                        setContent({ ...content, projects: updated });
-                      }}
-                    />
-                  </div>
-                ))}
-              </div>
+          {section === 'grupo' && (
+            <div className="adm-panel">
+              <p className="adm-intro">As marcas do grupo em “Uma casa. Várias marcas.” — o Studio 8 aparece automaticamente se não estiver na lista.</p>
+              <ListEditor
+                items={content.group}
+                onChange={group => setContent(c => ({ ...c, group }))}
+                titleOf={g => g.name}
+                addLabel="Adicionar marca"
+                onUpload={upload}
+                newItem={() => ({ id: id(), name: 'Nova marca', description: '', buttonText: 'Conhecer', linkUrl: '#contacto' })}
+                fields={[
+                  { key: 'name', label: 'Nome' },
+                  { key: 'description', label: 'Descrição', type: 'textarea' },
+                  { key: 'buttonText', label: 'Texto do botão' },
+                  { key: 'linkUrl', label: 'Link', type: 'url' }
+                ]}
+              />
             </div>
           )}
 
-          {/* TAB: CLIENTS & TESTIMONIALS */}
-          {activeTab === 'clients' && (
-            <div>
-              <h2 style={{ fontSize: '26px', marginBottom: '20px' }}>Marcas, Logotipos & Testemunhos</h2>
-
-              <div style={{ marginBottom: '36px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                  <div>
-                    <h3 style={{ fontSize: '18px', color: 'var(--red)', margin: 0, fontWeight: 700 }}>
-                      Logotipos das Marcas & Clientes
-                    </h3>
-                    <p style={{ color: '#888', fontSize: '13px', margin: '4px 0 0 0' }}>
-                      Adicione os logotipos (PNG, SVG, WEBP) das empresas com quem já trabalhou. Serão exibidos no letreiro e na secção de parceiros.
-                    </p>
-                  </div>
-                  <button onClick={addClient} className="btn red" style={{ fontSize: '13px' }}>
-                    + Adicionar Nova Marca
-                  </button>
-                </div>
-
-                <div style={{ display: 'grid', gap: '14px' }}>
-                  {content.clients.map((c, idx) => {
-                    const logoPreview = c.logoUrl || DEFAULT_BRAND_LOGOS[(c.name || '').trim().toUpperCase()] || '';
-                    return (
-                    <div
-                      key={c.id}
-                      style={{
-                        background: '#141414',
-                        border: '1px solid #282828',
-                        padding: '16px',
-                        display: 'grid',
-                        gridTemplateColumns: '70px 1.5fr 2fr auto 40px',
-                        gap: '14px',
-                        alignItems: 'center',
-                        borderRadius: '4px'
-                      }}
-                    >
-                      {/* Pré-visualização do Logo */}
-                      <div
-                        style={{
-                          width: '70px',
-                          height: '48px',
-                          background: '#0a0a0a',
-                          border: '1px solid #333',
-                          borderRadius: '4px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          padding: '4px',
-                          overflow: 'hidden'
-                        }}
-                      >
-                        {logoPreview ? (
-                          <img
-                            src={logoPreview}
-                            alt={c.name}
-                            style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
-                          />
-                        ) : (
-                          <span style={{ fontSize: '10px', color: '#666' }}>Sem logo</span>
-                        )}
-                      </div>
-
-                      {/* Nome da Marca */}
-                      <div>
-                        <label style={{ display: 'block', fontSize: '11px', color: '#888', marginBottom: '4px' }}>
-                          Nome da Marca
-                        </label>
-                        <input
-                          placeholder="Ex: GEEK EVER"
-                          value={c.name}
-                          onChange={(e) => {
-                            const updated = [...content.clients];
-                            updated[idx].name = e.target.value;
-                            setContent({ ...content, clients: updated });
-                          }}
-                          style={{ width: '100%', fontSize: '13px' }}
-                        />
-                      </div>
-
-                      {/* URL / Caminho do Logo */}
-                      <div>
-                        <label style={{ display: 'block', fontSize: '11px', color: '#888', marginBottom: '4px' }}>
-                          Caminho / URL do Ficheiro de Logo
-                        </label>
-                        <input
-                          placeholder="Ex: /media/clients/geek-ever.svg"
-                          value={c.logoUrl || ''}
-                          onChange={(e) => {
-                            const updated = [...content.clients];
-                            updated[idx].logoUrl = e.target.value;
-                            setContent({ ...content, clients: updated });
-                          }}
-                          style={{ width: '100%', fontSize: '13px' }}
-                        />
-                      </div>
-
-                      {/* Botão de Upload do Computador */}
-                      <div style={{ paddingTop: '16px' }}>
-                        <label
-                          style={{
-                            background: '#222',
-                            border: '1px solid #444',
-                            color: '#fff',
-                            padding: '8px 14px',
-                            fontSize: '12px',
-                            fontWeight: 600,
-                            cursor: isUploading ? 'not-allowed' : 'pointer',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            borderRadius: '3px',
-                            whiteSpace: 'nowrap'
-                          }}
-                          title="Escolher arquivo do seu computador"
-                        >
-                          <span>📁 Upload PC</span>
-                          <input
-                            type="file"
-                            accept="image/*,.svg"
-                            style={{ display: 'none' }}
-                            disabled={isUploading}
-                            onChange={(e) => handleFileUpload(e, 'client', idx)}
-                          />
-                        </label>
-                      </div>
-
-                      {/* Botão Eliminar */}
-                      <button
-                        onClick={() => removeClient(c.id)}
-                        style={{
-                          background: 'none',
-                          border: 0,
-                          color: '#ff4d4f',
-                          cursor: 'pointer',
-                          fontSize: '18px',
-                          marginTop: '14px'
-                        }}
-                        title="Remover Marca"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                  <h3 style={{ fontSize: '18px', color: 'var(--red)' }}>Depoimentos e Avaliações</h3>
-                  <button onClick={addTestimonial} className="btn outline" style={{ fontSize: '12px' }}>+ Adicionar Testemunho</button>
-                </div>
-
-                <div style={{ display: 'grid', gap: '16px' }}>
-                  {content.testimonials.map((t, idx) => (
-                    <div key={t.id} style={{ background: '#141414', border: '1px solid var(--line)', padding: '16px', display: 'grid', gap: '10px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ fontSize: '12px', color: '#888' }}>Depoimento #{idx + 1}</span>
-                        <button onClick={() => removeTestimonial(t.id)} style={{ background: 'none', border: 0, color: '#ff4d4f', cursor: 'pointer' }}>
-                          Eliminar
-                        </button>
-                      </div>
-                      <textarea
-                        rows={2}
-                        placeholder="Texto do depoimento"
-                        value={t.quote}
-                        onChange={(e) => {
-                          const updated = [...content.testimonials];
-                          updated[idx].quote = e.target.value;
-                          setContent({ ...content, testimonials: updated });
-                        }}
-                      />
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                        <input
-                          placeholder="Nome da pessoa"
-                          value={t.author}
-                          onChange={(e) => {
-                            const updated = [...content.testimonials];
-                            updated[idx].author = e.target.value;
-                            setContent({ ...content, testimonials: updated });
-                          }}
-                        />
-                        <input
-                          placeholder="Empresa / Cargo"
-                          value={t.company}
-                          onChange={(e) => {
-                            const updated = [...content.testimonials];
-                            updated[idx].company = e.target.value;
-                            setContent({ ...content, testimonials: updated });
-                          }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB: TIMELINE */}
-          {activeTab === 'timeline' && (
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                <h2 style={{ fontSize: '26px' }}>Percurso e Linha do Tempo</h2>
-                <button onClick={addTimeline} className="btn red">+ Adicionar Etapa</button>
-              </div>
-
-              <div style={{ display: 'grid', gap: '16px' }}>
-                {content.timeline.map((item, idx) => (
-                  <div key={item.id} style={{
-                    background: '#141414',
-                    border: '1px solid var(--line)',
-                    padding: '20px',
-                    display: 'grid',
-                    gap: '12px'
-                  }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontWeight: 700, color: 'var(--red)' }}>Marco #{idx + 1}</span>
-                      <button onClick={() => removeTimeline(item.id)} style={{ background: 'none', border: 0, color: '#ff4d4f', cursor: 'pointer' }}>
-                        Eliminar
-                      </button>
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '12px' }}>
-                      <input
-                        placeholder="Ano / Rótulo"
-                        value={item.yearLabel}
-                        onChange={(e) => {
-                          const updated = [...content.timeline];
-                          updated[idx].yearLabel = e.target.value;
-                          setContent({ ...content, timeline: updated });
-                        }}
-                      />
-                      <input
-                        placeholder="Título da Etapa"
-                        value={item.title}
-                        onChange={(e) => {
-                          const updated = [...content.timeline];
-                          updated[idx].title = e.target.value;
-                          setContent({ ...content, timeline: updated });
-                        }}
-                      />
-                    </div>
-
-                    <textarea
-                      placeholder="Descrição detalhada do momento"
-                      rows={2}
-                      value={item.description}
-                      onChange={(e) => {
-                        const updated = [...content.timeline];
-                        updated[idx].description = e.target.value;
-                        setContent({ ...content, timeline: updated });
-                      }}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* TAB: TEAM */}
-          {activeTab === 'team' && (
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                <h2 style={{ fontSize: '26px' }}>Equipa Mizine</h2>
-                <button onClick={addTeamMember} className="btn red">+ Adicionar Membro</button>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
-                {content.team.map((m, idx) => (
-                  <div key={m.id} style={{ background: '#141414', border: '1px solid var(--line)', padding: '20px', display: 'grid', gap: '12px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ fontWeight: 700, color: 'var(--red)' }}>Membro #{idx + 1}</span>
-                      <button onClick={() => removeTeamMember(m.id)} style={{ background: 'none', border: 0, color: '#ff4d4f', cursor: 'pointer' }}>
-                        Eliminar
-                      </button>
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '60px 1fr', gap: '10px' }}>
-                      <input
-                        placeholder="Letra"
-                        maxLength={2}
-                        value={m.initial}
-                        onChange={(e) => {
-                          const updated = [...content.team];
-                          updated[idx].initial = e.target.value;
-                          setContent({ ...content, team: updated });
-                        }}
-                      />
-                      <input
-                        placeholder="Nome do Profissional"
-                        value={m.name}
-                        onChange={(e) => {
-                          const updated = [...content.team];
-                          updated[idx].name = e.target.value;
-                          setContent({ ...content, team: updated });
-                        }}
-                      />
-                    </div>
-
-                    <input
-                      placeholder="Função / Cargo"
-                      value={m.role}
-                      onChange={(e) => {
-                        const updated = [...content.team];
-                        updated[idx].role = e.target.value;
-                        setContent({ ...content, team: updated });
-                      }}
-                    />
-
-                    <input
-                      placeholder="URL da Foto (opcional)"
-                      value={m.avatarUrl || ''}
-                      onChange={(e) => {
-                        const updated = [...content.team];
-                        updated[idx].avatarUrl = e.target.value;
-                        setContent({ ...content, team: updated });
-                      }}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* TAB: GROUP */}
-          {activeTab === 'group' && (
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                <h2 style={{ fontSize: '26px' }}>Empresas do Grupo Mizine</h2>
-                <button onClick={addGroupCompany} className="btn red">+ Adicionar Empresa</button>
-              </div>
-
-              <div style={{ display: 'grid', gap: '16px' }}>
-                {content.group.map((comp, idx) => (
-                  <div key={comp.id} style={{ background: '#141414', border: '1px solid var(--line)', padding: '20px', display: 'grid', gap: '12px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ fontWeight: 700, color: 'var(--red)' }}>Empresa #{idx + 1}</span>
-                      <button onClick={() => removeGroupCompany(comp.id)} style={{ background: 'none', border: 0, color: '#ff4d4f', cursor: 'pointer' }}>
-                        Eliminar
-                      </button>
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr', gap: '12px' }}>
-                      <input
-                        placeholder="Nome da Empresa"
-                        value={comp.name}
-                        onChange={(e) => {
-                          const updated = [...content.group];
-                          updated[idx].name = e.target.value;
-                          setContent({ ...content, group: updated });
-                        }}
-                      />
-                      <input
-                        placeholder="Texto do Botão (Ex: Visitar)"
-                        value={comp.buttonText}
-                        onChange={(e) => {
-                          const updated = [...content.group];
-                          updated[idx].buttonText = e.target.value;
-                          setContent({ ...content, group: updated });
-                        }}
-                      />
-                      <input
-                        placeholder="Link / URL"
-                        value={comp.linkUrl}
-                        onChange={(e) => {
-                          const updated = [...content.group];
-                          updated[idx].linkUrl = e.target.value;
-                          setContent({ ...content, group: updated });
-                        }}
-                      />
-                    </div>
-
-                    <textarea
-                      placeholder="Descrição curta de uma linha"
-                      rows={2}
-                      value={comp.description}
-                      onChange={(e) => {
-                        const updated = [...content.group];
-                        updated[idx].description = e.target.value;
-                        setContent({ ...content, group: updated });
-                      }}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* TAB: MESSAGES */}
-          {activeTab === 'messages' && (
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                <h2 style={{ fontSize: '26px' }}>Mensagens Recebidas</h2>
-                <button onClick={loadMessages} className="btn outline">Atualizar Lista</button>
-              </div>
-
+          {section === 'mensagens' && (
+            <div className="adm-panel">
               {messages.length === 0 ? (
-                <div style={{ padding: '40px', textAlign: 'center', color: 'var(--mute)' }}>
-                  Ainda não existem mensagens registadas pelo formulário.
+                <div className="adm-empty">
+                  <Icon name="mail" size={28} />
+                  <p>Ainda não há mensagens do formulário de contacto.</p>
                 </div>
               ) : (
-                <div style={{ display: 'grid', gap: '16px' }}>
-                  {messages.map((msg) => (
-                    <div key={msg.id} style={{ background: '#141414', border: '1px solid var(--line)', padding: '20px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '12px' }}>
+                <div className="adm-msgs">
+                  {messages.map(m => (
+                    <article key={m.id} className={`adm-msg ${m.isRead ? '' : 'is-new'}`}>
+                      <header>
                         <div>
-                          <strong style={{ fontSize: '18px' }}>{msg.name}</strong>
-                          <span style={{ color: 'var(--mute)', marginLeft: '12px', fontSize: '13px' }}>
-                            &lt;{msg.email}&gt;
-                          </span>
+                          <strong>{m.name}</strong>
+                          <a href={`mailto:${m.email}`}>{m.email}</a>
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          <span style={{ background: 'rgba(225,6,0,0.15)', color: 'var(--red)', padding: '2px 8px', fontSize: '11px', fontWeight: 700 }}>
-                            {msg.projectType}
-                          </span>
-                          <button
-                            onClick={() => handleDeleteMessage(msg.id)}
-                            style={{ background: 'none', border: 0, color: '#ff4d4f', cursor: 'pointer', fontSize: '13px' }}
-                          >
-                            Eliminar
-                          </button>
-                        </div>
-                      </div>
-
-                      <div style={{ background: '#0a0a0a', padding: '14px', borderLeft: '2px solid var(--red)', whiteSpace: 'pre-wrap', fontSize: '14px' }}>
-                        {msg.message}
-                      </div>
-
-                      <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#666' }}>
-                        <span>Data: {msg.createdAt ? new Date(msg.createdAt).toLocaleString('pt-PT') : 'Recente'}</span>
-                        <a href={`mailto:${msg.email}?subject=Resposta Mizine: ${msg.projectType}`} style={{ color: 'var(--red)', fontWeight: 600 }}>
-                          Responder por Email →
+                        <span className="adm-msg-meta">
+                          <em>{m.projectType}</em>
+                          {m.createdAt ? new Date(m.createdAt).toLocaleString('pt-PT', { dateStyle: 'medium', timeStyle: 'short' }) : ''}
+                        </span>
+                      </header>
+                      <p>{m.message}</p>
+                      <footer>
+                        <a className="adm-btn ghost" href={`mailto:${m.email}?subject=${encodeURIComponent('Mizine — o teu projecto')}`}>
+                          Responder por email
                         </a>
-                      </div>
-                    </div>
+                        <button
+                          type="button"
+                          className="adm-btn danger"
+                          onClick={async () => {
+                            if (!confirm(`Apagar a mensagem de ${m.name}?`)) return;
+                            const ok = await apiService.deleteMessage(m.id);
+                            if (ok) setMessages(list => list.filter(x => x.id !== m.id));
+                            else notify('Não foi possível apagar.', 'err');
+                          }}
+                        >
+                          Apagar
+                        </button>
+                      </footer>
+                    </article>
                   ))}
                 </div>
               )}
             </div>
           )}
 
+          {section === 'arquivo' && (
+            <div className="adm-panel">
+              <p className="adm-intro">Conteúdos guardados que <b>não aparecem</b> no site actual. Ficam aqui para reutilizar.</p>
+              <div className="adm-tabs">
+                {([
+                  ['testimonials', `Testemunhos (${content.testimonials.length})`],
+                  ['clients', `Clientes (${content.clients.length})`],
+                  ['projects', `Projectos (${content.projects.length})`],
+                  ['team', `Equipa (${content.team.length})`],
+                  ['timeline', `Percurso (${content.timeline.length})`]
+                ] as const).map(([k, l]) => (
+                  <button key={k} type="button" className={archiveTab === k ? 'is-on' : ''} onClick={() => setArchiveTab(k)}>
+                    {l}
+                  </button>
+                ))}
+              </div>
+              {archiveTab === 'testimonials' && (
+                <ListEditor
+                  items={content.testimonials}
+                  onChange={testimonials => setContent(c => ({ ...c, testimonials }))}
+                  titleOf={t => t.author}
+                  addLabel="Adicionar testemunho"
+                  onUpload={upload}
+                  newItem={() => ({ id: id(), quote: '', author: 'Nome', company: 'Empresa' })}
+                  fields={[
+                    { key: 'quote', label: 'Testemunho', type: 'textarea' },
+                    { key: 'author', label: 'Autor' },
+                    { key: 'company', label: 'Empresa / cargo' }
+                  ]}
+                />
+              )}
+              {archiveTab === 'clients' && (
+                <ListEditor
+                  items={content.clients}
+                  onChange={clients => setContent(c => ({ ...c, clients }))}
+                  titleOf={c => c.name}
+                  addLabel="Adicionar cliente"
+                  onUpload={upload}
+                  newItem={() => ({ id: id(), name: 'Nova marca', logoUrl: '' })}
+                  fields={[
+                    { key: 'name', label: 'Nome' },
+                    { key: 'logoUrl', label: 'Logótipo', type: 'image' }
+                  ]}
+                />
+              )}
+              {archiveTab === 'projects' && (
+                <ListEditor
+                  items={content.projects}
+                  onChange={projects => setContent(c => ({ ...c, projects }))}
+                  titleOf={p => p.title}
+                  addLabel="Adicionar projecto"
+                  onUpload={upload}
+                  newItem={() => ({ id: id(), title: 'Novo projecto', description: '', isWide: false, artClass: 'a3', linkUrl: '#contacto' })}
+                  fields={[
+                    { key: 'title', label: 'Título' },
+                    { key: 'description', label: 'Descrição', type: 'textarea' },
+                    { key: 'imageUrl', label: 'Imagem', type: 'image' },
+                    { key: 'linkUrl', label: 'Link', type: 'url' }
+                  ]}
+                />
+              )}
+              {archiveTab === 'team' && (
+                <ListEditor
+                  items={content.team}
+                  onChange={team => setContent(c => ({ ...c, team }))}
+                  titleOf={m => m.name}
+                  addLabel="Adicionar membro"
+                  onUpload={upload}
+                  newItem={() => ({ id: id(), name: 'Novo membro', role: 'Função', initial: 'M' })}
+                  fields={[
+                    { key: 'name', label: 'Nome' },
+                    { key: 'role', label: 'Função' },
+                    { key: 'initial', label: 'Inicial' }
+                  ]}
+                />
+              )}
+              {archiveTab === 'timeline' && (
+                <ListEditor
+                  items={content.timeline}
+                  onChange={timeline => setContent(c => ({ ...c, timeline }))}
+                  titleOf={t => `${t.yearLabel} — ${t.title}`}
+                  addLabel="Adicionar marco"
+                  onUpload={upload}
+                  newItem={() => ({ id: id(), yearLabel: '2026', title: 'Novo marco', description: '' })}
+                  fields={[
+                    { key: 'yearLabel', label: 'Ano' },
+                    { key: 'title', label: 'Título' },
+                    { key: 'description', label: 'Descrição', type: 'textarea' }
+                  ]}
+                />
+              )}
+            </div>
+          )}
         </div>
-      </div>
+      </main>
+
+      {toast && <div className={`adm-toast ${toast.kind === 'err' ? 'is-err' : ''}`}>{toast.text}</div>}
     </div>
   );
 };
-

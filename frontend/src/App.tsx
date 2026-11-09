@@ -158,7 +158,6 @@ export function App() {
 
     return (
       <div className="mizine-app">
-        <Navbar onBackToSite={navigateToSite} isAdminView={true} />
         <AdminDashboard
           initialContent={content}
           onClose={navigateToSite}

@@ -5,6 +5,7 @@ import './story.css'
 import './lower.css'
 import './chapters.css'
 import './finale.css'
+import './admin/admin.css'
 import App from './App.tsx'
 
 createRoot(document.getElementById('root')!).render(

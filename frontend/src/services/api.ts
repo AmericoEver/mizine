@@ -63,7 +63,7 @@ export const apiService = {
   },
 
   // Autenticação Admin
-  async login(password: string): Promise<{ success: boolean; token?: string }> {
+  async login(password: string): Promise<{ success: boolean; token?: string; error?: string }> {
     try {
       const res = await fetch(`${API_BASE}/admin/login`, {
         method: 'POST',
@@ -75,20 +75,11 @@ export const apiService = {
         localStorage.setItem('mizine_admin_token', data.token);
         return { success: true, token: data.token };
       }
+      if (res.status === 429) return { success: false, error: 'Demasiadas tentativas. Aguarda um minuto.' };
+      return { success: false, error: 'Senha incorrecta.' };
     } catch {
-      // Em fallback de demonstração local
-      if (password === 'admin123' || password === 'mizine2026') {
-        const demoToken = 'demo-token-' + Date.now();
-        localStorage.setItem('mizine_admin_token', demoToken);
-        return { success: true, token: demoToken };
-      }
+      return { success: false, error: 'Sem ligação ao servidor. Tenta novamente.' };
     }
-    if (password === 'admin123' || password === 'mizine2026') {
-      const demoToken = 'demo-token-' + Date.now();
-      localStorage.setItem('mizine_admin_token', demoToken);
-      return { success: true, token: demoToken };
-    }
-    return { success: false };
   },
 
   logout(): void {
@@ -116,11 +107,11 @@ export const apiService = {
         localStorage.setItem('mizine_content_cache', JSON.stringify(content));
         return true;
       }
+      if (res.status === 401) this.logout();
     } catch {
-      // Em fallback salva no cache
+      // sem ligação: NÃO fingir sucesso — o painel avisa que nada foi publicado
     }
-    localStorage.setItem('mizine_content_cache', JSON.stringify(content));
-    return true;
+    return false;
   },
 
   // Obter mensagens de contacto para o Admin
@@ -147,18 +138,18 @@ export const apiService = {
   // Deletar mensagem
   async deleteMessage(id: number | string): Promise<boolean> {
     const token = localStorage.getItem('mizine_admin_token');
-    try {
-      await fetch(`${API_BASE}/admin/messages/${id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` }
-      });
-    } catch {
-      // fallback
-    }
     const stored = JSON.parse(localStorage.getItem('mizine_offline_msgs') || '[]');
-    const filtered = stored.filter((m: ContactMessage) => m.id !== id);
-    localStorage.setItem('mizine_offline_msgs', JSON.stringify(filtered));
-    return true;
+    localStorage.setItem('mizine_offline_msgs', JSON.stringify(stored.filter((m: ContactMessage) => m.id !== id)));
+    try {
+      const res = await fetch(`${API_BASE}/admin/messages/${id}`, {
+        method: 'DELETE',
+        headers: { Accept: 'application/json', Authorization: `Bearer ${token}` }
+      });
+      if (res.status === 401) this.logout();
+      return res.ok;
+    } catch {
+      return false;
+    }
   },
 
   // Upload de imagem/capa a partir do computador (PC)
@@ -177,25 +168,18 @@ export const apiService = {
         body: formData
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (res.ok && data.url) {
         return { success: true, url: data.url };
       }
-    } catch (err) {
-      console.warn('Erro no envio para a API, a utilizar data-url local:', err);
+      if (res.status === 401) {
+        this.logout();
+        return { success: false, url: '', error: 'Sessão expirada. Entra novamente.' };
+      }
+      return { success: false, url: '', error: data.message || 'Formato não suportado (JPG, PNG, WEBP, GIF, MP4, MOV).' };
+    } catch {
+      return { success: false, url: '', error: 'Sem ligação ao servidor.' };
     }
-
-    // Fallback local caso a API esteja temporariamente indisponível
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        resolve({ success: true, url: reader.result as string });
-      };
-      reader.onerror = () => {
-        resolve({ success: false, url: '', error: 'Falha ao ler o ficheiro local' });
-      };
-      reader.readAsDataURL(file);
-    });
   }
 };
 

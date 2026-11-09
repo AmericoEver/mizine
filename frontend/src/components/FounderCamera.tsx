@@ -9,7 +9,7 @@ import { useScrollScene, smoothstep, lerp, clamp01 } from '../hooks/useScrollSce
  */
 const SHOTS = [
   { src: '/media/set/shot-02-palco.jpg', scene: 'CONFNES 2025 • PALCO PRINCIPAL', pos: '50% 60%' },
-  { src: '/media/set/shot-03-painel.jpg', scene: 'PAINEL DE ESPECIALISTAS • 4K DCI', pos: '50% 55%' },
+  { src: '/media/set/shot-03-painel.jpg', scene: 'PAINEL DE ESPECIALISTAS • MULTICÂMARA', pos: '50% 55%' },
   { src: '/media/set/shot-01-aerea.jpg', scene: 'PLANO AÉREO • DRONE', pos: '50% 50%' },
   { src: '/media/set/shot-07-sala.jpg', scene: 'WORKSHOP • CAPTAÇÃO CONTÍNUA', pos: '50% 50%' },
   { src: '/media/set/shot-06-reuniao.jpg', scene: 'ENTREVISTA INSTITUCIONAL', pos: '50% 45%' },
@@ -186,7 +186,7 @@ export const FounderCamera: React.FC = () => {
             <span>
               TC <b ref={el => { tcRef.current = el; }}>01:00:00:00</b>
             </span>
-            <span>4K DCI • 24 FPS</span>
+            <span>CINE • 24 FPS</span>
             <span className="cam-hud-batt">▮▮▮▮▯ 98%</span>
           </div>
 

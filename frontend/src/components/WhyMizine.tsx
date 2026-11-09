@@ -2,7 +2,7 @@ import React from 'react';
 
 const POINTS = [
   { code: '01', title: 'Um único interlocutor', desc: 'Do roteiro à captação, cor, áudio e entrega. Sem coordenar cinco freelancers, sem passagens de testemunho.' },
-  { code: '02', title: 'Olhar e equipamento de cinema', desc: 'Câmaras 4K/6K, lentes cine, luz e pós-produção broadcast — para a tua marca parecer internacional.' },
+  { code: '02', title: 'Olhar e equipamento de cinema', desc: 'Câmaras de cinema, lentes cine, luz e pós-produção broadcast — para a tua marca parecer internacional.' },
   { code: '03', title: 'Retenção nos primeiros 3 segundos', desc: 'Desenhamos ganchos visuais que param o scroll e transformam espectadores em clientes.' },
   { code: '04', title: 'Prazos sagrados', desc: 'Um dia de atraso estraga um lançamento. O calendário acordado é uma garantia, não uma estimativa.' }
 ];
@@ -17,9 +17,9 @@ const STATS = [
 export const WhyMizine: React.FC = () => {
   return (
     <section className="why2-section" id="porque">
-      {/* saída do buraco negro: o universo escuro abre-se para a luz do dia */}
+      {/* amanhecer: a sala escura abre-se para a luz do dia */}
       <div className="why2-exit" aria-hidden="true">
-        <span className="why2-exit-label">SAÍDA DO HORIZONTE • REGRESSO A MAPUTO ☀️</span>
+        <span className="why2-exit-label">AMANHECER EM MAPUTO</span>
       </div>
 
       <div className="wrap">

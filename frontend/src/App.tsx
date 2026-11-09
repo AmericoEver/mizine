@@ -8,10 +8,9 @@ import { Hero } from './components/Hero';
 import { IntroMetrics } from './components/IntroMetrics';
 import { ServicesPillars } from './components/ServicesPillars';
 import { Projects } from './components/Projects';
-import { Reels } from './components/Reels';
+import { ReelsFilm } from './components/ReelsFilm';
 import { WhyMizine } from './components/WhyMizine';
 import { ProjectCalculator } from './components/ProjectCalculator';
-import { Clients } from './components/Clients';
 import { Group } from './components/Group';
 import { FAQ } from './components/FAQ';
 import { Contact } from './components/Contact';
@@ -187,10 +186,9 @@ export function App() {
       <IntroMetrics content={content.about} />
       <ServicesPillars pillars={content.pillars || defaultContent.pillars} />
       <Projects projects={content.projects} />
-      <Reels reels={content.reels} onOpenReel={handleOpenVideo} />
+      <ReelsFilm reels={content.reels} onOpenReel={handleOpenVideo} />
       <ProjectCalculator heroContent={content.hero} />
       <WhyMizine />
-      <Clients clients={content.clients} testimonials={content.testimonials} />
       <Group companies={content.group} />
       <FAQ items={content.faq || defaultContent.faq} />
       <Contact hero={content.hero} />

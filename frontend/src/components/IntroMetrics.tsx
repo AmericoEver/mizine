@@ -1,5 +1,6 @@
 import React from 'react';
 import { AboutContent } from '../types';
+import { Icon } from './Icon';
 import { FounderCamera } from './FounderCamera';
 
 interface IntroMetricsProps {
@@ -28,10 +29,10 @@ export const IntroMetrics: React.FC<IntroMetricsProps> = ({ content }) => {
           </h2>
           <div className="uc-manifesto-aside daylight-aside">
             <p className="uc-manifesto-sub daylight-subtext">
-              {content.subtext || 'Nascida em Moçambique e com visão global, a Mizine une estética cinematográfica em 4K DCI, engenharia de atenção para redes sociais e comunicação estratégica com acabamento impecável.'}
+              {content.subtext || 'Nascida em Moçambique e com visão global, a Mizine une estética cinematográfica, engenharia de atenção para redes sociais e comunicação estratégica com acabamento impecável.'}
             </p>
             <div className="daylight-origin-badge">
-              <span className="origin-flag">🇲🇿</span>
+              <span className="origin-flag"><Icon name="pin" size={15} /></span>
               <span className="origin-text">MAPUTO, MOÇAMBIQUE • ESTÚDIO CENTRAL</span>
             </div>
           </div>

@@ -135,7 +135,7 @@ export const Footer: React.FC<FooterProps> = ({ hero }) => {
 
       <div className="wrap footer2-bottom">
         <span>© {new Date().getFullYear()} Mizine Multimédia. Todos os direitos reservados.</span>
-        <span className="footer2-status">● REC • 4K DCI • 24 FPS</span>
+        <span className="footer2-status">● REC • 24 FPS • MAPUTO</span>
         <a href="/admin" className="footer2-admin">Admin</a>
       </div>
     </footer>

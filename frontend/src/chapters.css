@@ -1,0 +1,346 @@
+/* ==========================================================================
+   ÍCONES SVG
+   ========================================================================== */
+.mz-icon { display: inline-block; vertical-align: middle; flex: none; }
+.meta-icon { margin-left: 4px; color: #f5b84a; vertical-align: -2px; }
+.info-icon .mz-icon { width: 20px; height: 20px; color: #ff3b30; }
+.tab-icon .mz-icon { color: #ff3b30; }
+.check-bullet .mz-icon { vertical-align: -2px; }
+.origin-flag .mz-icon { color: #ff3b30; }
+
+/* ==========================================================================
+   CAPÍTULO 06 — SALA DE PROJECÇÃO (reels em película)
+   ========================================================================== */
+.rf-section { background: #050507; color: #fff; }
+.rf-track { position: relative; }
+.rf-stage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+  background: radial-gradient(ellipse 70% 60% at 50% 55%, #15161d 0%, #050507 70%);
+}
+.rf-beam {
+  position: absolute;
+  left: -10%;
+  top: -30%;
+  width: 120%;
+  height: 160%;
+  pointer-events: none;
+  background: conic-gradient(from 152deg at 8% 0%, rgba(255, 244, 220, 0) 0deg, rgba(255, 238, 205, 0.11) 14deg, rgba(255, 238, 205, 0.04) 26deg, rgba(255, 244, 220, 0) 34deg);
+  filter: blur(6px);
+  mix-blend-mode: screen;
+}
+.rf-dust {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.35;
+  background-image:
+    radial-gradient(1px 1px at 20% 30%, rgba(255, 255, 255, 0.8), transparent),
+    radial-gradient(1px 1px at 60% 20%, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(1.5px 1.5px at 35% 60%, rgba(255, 255, 255, 0.5), transparent),
+    radial-gradient(1px 1px at 80% 45%, rgba(255, 255, 255, 0.7), transparent),
+    radial-gradient(1px 1px at 50% 80%, rgba(255, 255, 255, 0.5), transparent);
+  background-size: 420px 420px;
+  animation: rfDust 18s linear infinite;
+}
+@keyframes rfDust { to { background-position: 420px -420px; } }
+.rf-head { position: relative; z-index: 3; padding-top: 104px; }
+.rf-head h2 {
+  margin: 18px 0 0;
+  font-family: var(--font-display);
+  font-size: clamp(44px, 6vw, 96px);
+  font-weight: 800;
+  line-height: 0.92;
+  letter-spacing: -0.035em;
+  text-transform: uppercase;
+}
+.rf-gate {
+  position: absolute;
+  left: 50%;
+  top: 57%;
+  z-index: 1;
+  width: calc(clamp(130px, 11.5vw, 190px) * 1.18 + 36px);
+  height: calc(clamp(130px, 11.5vw, 190px) * 1.18 * 16 / 9 + 96px);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.rf-gate i { position: absolute; width: 26px; height: 26px; border: 0 solid rgba(255, 255, 255, 0.55); }
+.rf-gate i:nth-child(1) { left: 0; top: 0; border-left-width: 1.5px; border-top-width: 1.5px; }
+.rf-gate i:nth-child(2) { right: 0; top: 0; border-right-width: 1.5px; border-top-width: 1.5px; }
+.rf-gate i:nth-child(3) { left: 0; bottom: 0; border-left-width: 1.5px; border-bottom-width: 1.5px; }
+.rf-gate i:nth-child(4) { right: 0; bottom: 0; border-right-width: 1.5px; border-bottom-width: 1.5px; }
+.rf-strip {
+  --rfw: clamp(130px, 11.5vw, 190px);
+  position: absolute;
+  left: 0;
+  top: 57%;
+  z-index: 2;
+  display: flex;
+  transform-origin: 0 50%;
+  translate: 0 -50%;
+  will-change: transform;
+  background: #0c0c10;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
+}
+.rf-frame {
+  --focus: 0;
+  position: relative;
+  flex: none;
+  width: var(--rfw);
+  padding: 0;
+  border: 0;
+  background: #0c0c10;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  transform: scale(calc(1 + var(--focus) * 0.18));
+  transition: transform 0.12s linear;
+}
+.rf-perfs {
+  display: block;
+  height: 26px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='14' viewBox='0 0 26 14'%3E%3Crect x='6' y='0' width='14' height='14' rx='2.6' fill='%23f1e7da' fill-opacity='.85'/%3E%3C/svg%3E") repeat-x center / calc(var(--rfw) / 6) 13px;
+}
+.rf-window {
+  position: relative;
+  display: block;
+  margin: 0 6px;
+  aspect-ratio: 9 / 16;
+  overflow: hidden;
+  background: #16161d;
+}
+.rf-window img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  filter: brightness(calc(0.35 + var(--focus) * 0.7)) saturate(calc(0.4 + var(--focus) * 0.7)) sepia(calc((1 - var(--focus)) * 0.35));
+}
+.rf-fallback { position: absolute; inset: 0; background: linear-gradient(160deg, #1c1c28, #ff3b30); }
+.rf-play {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.85);
+  color: #fff;
+  transform: translate(-50%, -50%) scale(calc(0.6 + var(--focus) * 0.4));
+  opacity: var(--focus);
+  backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.25);
+  transition: background 0.25s ease, border-color 0.25s ease;
+}
+.rf-frame:hover .rf-play { background: #ff3b30; border-color: #ff3b30; }
+.rf-edge {
+  position: absolute;
+  left: 10px;
+  bottom: 6px;
+  font-family: var(--font-mono);
+  font-size: 7px;
+  letter-spacing: 0.12em;
+  color: rgba(226, 162, 58, 0.75);
+}
+.rf-caption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 5vh;
+  z-index: 3;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 30px;
+}
+.rf-now { display: flex; flex-direction: column; gap: 6px; }
+.rf-count { font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.18em; color: #ff3b30; }
+.rf-title { font-family: var(--font-display); font-size: clamp(22px, 2.4vw, 36px); font-weight: 800; letter-spacing: -0.02em; text-transform: uppercase; }
+.rf-sub { font-size: 13px; color: rgba(255, 255, 255, 0.55); }
+.rf-progress { width: min(280px, 30vw); height: 2px; background: rgba(255, 255, 255, 0.15); }
+.rf-progress span { display: block; height: 100%; background: #ff3b30; transform-origin: left; transform: scaleX(0); }
+@media (max-width: 760px) {
+  .rf-strip { --rfw: 128px; }
+  .rf-head { padding-top: 88px; }
+  .rf-caption { flex-direction: column; align-items: flex-start; gap: 14px; }
+  .rf-progress { width: 100%; }
+}
+
+/* ==========================================================================
+   O GRUPO — SISTEMA SOLAR (a Mizine é o sol, as franquias são planetas)
+   ========================================================================== */
+.sys-section { background: #020204; color: #fff; }
+.sys-track { position: relative; }
+.sys-stage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+  background: radial-gradient(ellipse 60% 60% at 36% 54%, #1a0d08 0%, #07060a 55%, #020204 100%);
+}
+.sys-stars {
+  position: absolute;
+  inset: 0;
+  opacity: 0.7;
+  background-image:
+    radial-gradient(1px 1px at 12% 18%, #fff, transparent),
+    radial-gradient(1px 1px at 72% 12%, rgba(255, 255, 255, 0.8), transparent),
+    radial-gradient(1.5px 1.5px at 88% 64%, rgba(255, 255, 255, 0.7), transparent),
+    radial-gradient(1px 1px at 30% 82%, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(1px 1px at 55% 40%, rgba(255, 255, 255, 0.5), transparent),
+    radial-gradient(1px 1px at 8% 60%, rgba(255, 255, 255, 0.7), transparent),
+    radial-gradient(1px 1px at 95% 30%, rgba(255, 255, 255, 0.6), transparent);
+  background-size: 520px 520px;
+}
+.sys-head { position: relative; z-index: 3; padding-top: 104px; }
+.sys-intro {
+  position: absolute;
+  z-index: 7;
+  right: max(28px, calc((100vw - 1200px) / 2));
+  top: 50%;
+  margin-top: -150px;
+  width: min(440px, 36vw);
+  opacity: 0;
+}
+.sys-intro h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(36px, 4.8vw, 76px);
+  font-weight: 800;
+  line-height: 0.95;
+  letter-spacing: -0.035em;
+}
+.sys-intro h2 span { color: rgba(255, 255, 255, 0.4); }
+.sys-intro p { margin: 18px 0 0; max-width: 560px; font-size: 15px; line-height: 1.65; color: rgba(255, 255, 255, 0.6); }
+.sys-orbit {
+  --draw: 0;
+  position: absolute;
+  z-index: 1;
+  border-radius: 50%;
+  border: 1px dashed rgba(255, 255, 255, 0.16);
+  transform: scale(calc(0.6 + var(--draw) * 0.4));
+  transition: border-color 0.4s ease;
+  pointer-events: none;
+}
+.sys-orbit.is-active { border-style: solid; border-color: rgba(255, 140, 80, 0.55); }
+.sys-sun {
+  position: absolute;
+  z-index: 4;
+  width: clamp(120px, 13vw, 190px);
+  aspect-ratio: 1;
+  opacity: 0;
+}
+.sys-sun-corona {
+  position: absolute;
+  inset: -55%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 160, 70, 0.55) 0%, rgba(255, 90, 40, 0.18) 38%, rgba(255, 60, 30, 0) 68%);
+  animation: sysPulse 4s ease-in-out infinite;
+}
+@keyframes sysPulse { 50% { transform: scale(1.08); opacity: 0.85; } }
+.sys-sun-core {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 34%, #fff6df 0%, #ffc56b 22%, #ff6a2b 58%, #c81d0f 100%);
+  box-shadow: 0 0 60px rgba(255, 120, 50, 0.65), inset -14px -18px 40px rgba(120, 10, 0, 0.45);
+}
+.sys-sun-core strong { font-family: var(--font-display); font-size: clamp(18px, 1.9vw, 28px); font-weight: 900; letter-spacing: 0.06em; color: #1a0703; }
+.sys-sun-core small { font-family: var(--font-mono); font-size: 8px; font-weight: 700; letter-spacing: 0.24em; color: rgba(26, 7, 3, 0.7); }
+.sys-planet {
+  --pc: #fff;
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: #fff;
+  text-decoration: none;
+  opacity: 0;
+  will-change: transform;
+}
+.sys-planet-body {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  color: #0b0b10;
+  background: radial-gradient(circle at 35% 30%, #fff 0%, var(--pc) 45%, color-mix(in srgb, var(--pc) 45%, #000) 100%);
+  box-shadow: 0 0 0 0 transparent, inset -8px -10px 18px rgba(0, 0, 0, 0.35);
+  transition: box-shadow 0.4s ease;
+}
+.sys-planet.is-active .sys-planet-body { box-shadow: 0 0 0 6px color-mix(in srgb, var(--pc) 25%, transparent), 0 0 40px var(--pc), inset -8px -10px 18px rgba(0, 0, 0, 0.35); }
+.sys-planet-name {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+}
+.sys-cards {
+  position: absolute;
+  z-index: 8;
+  right: max(28px, calc((100vw - 1200px) / 2));
+  top: 50%;
+  width: min(380px, 32vw);
+  height: 260px;
+  transform: translateY(-40%);
+}
+.sys-card {
+  --pc: #fff;
+  position: absolute;
+  inset: 0;
+  padding: 26px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(14, 14, 20, 0.72);
+  backdrop-filter: blur(14px);
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.45s ease, transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+.sys-card.is-on { opacity: 1; transform: none; pointer-events: auto; }
+.sys-card-role { display: flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.16em; color: var(--pc); }
+.sys-card h3 { margin: 14px 0 10px; font-family: var(--font-display); font-size: 34px; font-weight: 800; letter-spacing: -0.02em; text-transform: uppercase; }
+.sys-card p { margin: 0 0 20px; font-size: 14px; line-height: 1.65; color: rgba(255, 255, 255, 0.68); }
+.sys-card a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #fff;
+  text-decoration: none;
+  border-bottom: 1px solid var(--pc);
+  padding-bottom: 4px;
+}
+.sys-dots { position: absolute; left: 0; bottom: -34px; display: flex; gap: 8px; }
+.sys-dots span { width: 22px; height: 2px; background: rgba(255, 255, 255, 0.2); transition: background 0.3s ease, width 0.3s ease; }
+.sys-dots span.is-on { width: 40px; background: #ff3b30; }
+@media (max-width: 760px) {
+  .sys-cards { left: 16px; right: 16px; top: auto; bottom: 7vh; width: auto; height: 220px; transform: none; }
+  .sys-card { padding: 18px; }
+  .sys-card h3 { font-size: 24px; margin: 8px 0 6px; }
+  .sys-card p { font-size: 13px; margin-bottom: 12px; }
+  .sys-intro { left: 16px; right: 16px; top: auto; bottom: 7vh; margin-top: 0; width: auto; }
+  .sys-intro h2 { font-size: 30px; }
+  .sys-planet-body { width: 40px; height: 40px; }
+  .sys-planet-name { font-size: 8px; }
+}

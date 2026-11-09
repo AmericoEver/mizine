@@ -36,7 +36,7 @@ const MARKERS: Marker3D[] = [
     color: '#ff9500'
   },
   {
-    name: 'PRODUÇÃO 4K [EUROPA]',
+    name: 'PRODUÇÃO [EUROPA]',
     sub: 'Showreels & Cinema de Marca',
     lat: 51.5,
     lon: -0.12,
@@ -389,7 +389,7 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
       if (isHoveringMoon) {
         shutterFlash = 1.0;
         onPlayVideo?.(
-          'Mizine Multimédia — Apresentação 4K DCI',
+          'Mizine Multimédia — Apresentação',
           '/media/videos/showreel.mp4'
         );
         return;
@@ -398,7 +398,7 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
       if (hoveredFilmIndex >= 0) {
         shutterFlash = 1.0;
         onPlayVideo?.(
-          'Mizine Multimédia — O Que É A Mizine [4K DCI]',
+          'Mizine Multimédia — O Que É A Mizine',
           '/media/videos/showreel.mp4'
         );
         return;
@@ -443,7 +443,7 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
         currentMouseY = e.touches[0].clientY - rect.top;
 
         if (isHoveringMoon || hoveredFilmIndex >= 0) {
-          onPlayVideo?.('Mizine Multimédia — Apresentação 4K', '/media/videos/showreel.mp4');
+          onPlayVideo?.('Mizine Multimédia — Apresentação', '/media/videos/showreel.mp4');
           return;
         }
 
@@ -694,7 +694,7 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
 
       ctx.restore();
 
-      // Camera Viewfinder Corners around the Moon [ 🔴 REC ]
+      // Camera Viewfinder Corners around the Moon [ REC ]
       const vfX = moonX - vfW / 2;
       const vfY = moonY - vfH / 2;
       const cLen = isHoveringMoon ? 12 : 10;
@@ -749,9 +749,9 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
         ctx.fillStyle = '#ff3b30';
         ctx.fillText(`● ESTÚDIO AO VIVO • CLIQUE PARA ASSISTIR ▶`, vfX - 8, vfY + vfH + 15);
         ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
-        ctx.fillText(`4K DCI • 24.000FPS • ISO 800 • 1/48`, vfX - 8, vfY + vfH + 26);
+        ctx.fillText(`24 FPS • ISO 800 • 1/48`, vfX - 8, vfY + vfH + 26);
       } else {
-        ctx.fillText(`● LUA / REC • 4K DCI`, vfX, vfY + vfH + 14);
+        ctx.fillText(`● LUA / REC`, vfX, vfY + vfH + 14);
         ctx.fillText(tcStr, vfX, vfY + vfH + 24);
       }
       ctx.restore();
@@ -1128,7 +1128,7 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
           ctx.fill();
 
           ctx.font = '800 9.5px "Space Grotesk", sans-serif';
-          const tipText = '▶ VER APRESENTAÇÃO MIZINE 4K';
+          const tipText = 'VER APRESENTAÇÃO MIZINE';
           const tipW = ctx.measureText(tipText).width + 16;
           ctx.fillStyle = '#030408';
           ctx.strokeStyle = '#00d4ff';
@@ -1392,7 +1392,7 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
 
             ctx.fillStyle = '#ffffff';
             ctx.textAlign = 'left';
-            ctx.fillText('🇲🇿 ' + hqTitle, boxX + padX, boxY + 16);
+            ctx.fillText('MZ ' + hqTitle, boxX + padX, boxY + 16);
 
             ctx.font = '600 8.5px "JetBrains Mono", monospace';
             ctx.fillStyle = '#ff3b30';

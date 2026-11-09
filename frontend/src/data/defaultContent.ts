@@ -9,7 +9,7 @@ export const defaultContent: SiteContent = {
     bannerTitle: 'Ecossistema Multimédia',
     bannerDescription: 'Produções cinematográficas, reels de retenção máxima e convites digitais memoráveis.',
     intentTitle: 'Cada frame conta.\nCada segundo converte.',
-    intentSubtitle: 'Do conceito criativo e captação 4K à viralidade e entrega impecável.',
+    intentSubtitle: 'Do conceito criativo e captação à viralidade e entrega impecável.',
     showreelVideoUrl: '/media/videos/showreel.mp4',
     whatsappNumber: '+258 84 000 0000',
     whatsappUrl: 'https://wa.me/258840000000',
@@ -29,8 +29,8 @@ export const defaultContent: SiteContent = {
       code: '01',
       title: 'Video Making & Cinema Comercial',
       category: 'PRODUÇÃO AUDIOVISUAL',
-      badge: '4K CINEMA',
-      description: 'Captação 4K/6K com iluminação de cinema, áudio cristalino e pós-produção profissional para anúncios de TV, comerciais digitais, aftermovies de eventos VIP e documentários corporativos.',
+      badge: 'CINEMA',
+      description: 'Captação com iluminação de cinema, áudio cristalino e pós-produção profissional para anúncios de TV, comerciais digitais, aftermovies de eventos VIP e documentários corporativos.',
       deliverables: ['Spots Comerciais & TV', 'Aftermovies de Eventos VIP', 'Captação Aérea com Drone', 'Color Grading & Pós-Produção']
     },
     {
@@ -115,7 +115,7 @@ export const defaultContent: SiteContent = {
     {
       id: 1,
       title: 'Campanha de Posicionamento de Marca',
-      description: 'Direção criativa, captação 4K e edição dinâmica para lançamento nacional com foco em autoridade e conexão com o público.',
+      description: 'Direção criativa, captação e edição dinâmica para lançamento nacional com foco em autoridade e conexão com o público.',
       isWide: true,
       artClass: 'a3',
       imageUrl: '/media/projects/proj-1.jpg',
@@ -206,7 +206,7 @@ export const defaultContent: SiteContent = {
     {
       id: 2,
       name: 'Direção de Fotografia',
-      role: 'Cinematografia & Luz 4K',
+      role: 'Cinematografia & Luz',
       initial: 'D'
     },
     {
@@ -249,7 +249,7 @@ export const defaultContent: SiteContent = {
     {
       id: 1,
       question: 'Qual é a diferença entre um vídeo tradicional e a abordagem de Video Making da Mizine?',
-      answer: 'Tratamos cada produção com técnicas e óticas de cinema — iluminação dramática, captação 4K/6K, edição rítmica e color grading profissional. Os nossos vídeos são desenhados com psicologia de atenção para prender o espectador nos primeiros 3 segundos.'
+      answer: 'Tratamos cada produção com técnicas e óticas de cinema — iluminação dramática, captação de alta resolução, edição rítmica e color grading profissional. Os nossos vídeos são desenhados com psicologia de atenção para prender o espectador nos primeiros 3 segundos.'
     },
     {
       id: 2,

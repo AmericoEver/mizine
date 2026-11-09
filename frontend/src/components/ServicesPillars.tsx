@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { ServicePillar } from '../types';
+import { Icon } from './Icon';
 import { useInteractiveCards } from '../hooks/useInteractiveCards';
 
 interface ServicesPillarsProps {
@@ -62,7 +63,7 @@ export const ServicesPillars: React.FC<ServicesPillarsProps> = ({ pillars = [] }
                   <ul>
                     {pillar.deliverables.map((item, idx) => (
                       <li key={idx}>
-                        <span className="check-bullet text-red">✓</span>
+                        <span className="check-bullet text-red"><Icon name="check" size={14} /></span>
                         <span>{item}</span>
                       </li>
                     ))}

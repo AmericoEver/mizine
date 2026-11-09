@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { HeroContent } from '../types';
 import { HeroGlobe } from './HeroGlobe';
+import { Icon } from './Icon';
 import { CLIENT_BRANDS, stripBrandAt } from '../data/clientBrands';
 
 interface HeroProps {
@@ -75,7 +76,7 @@ export const Hero: React.FC<HeroProps> = ({ content, onPlayShowreel }) => {
             </h1>
 
             <p className="uc-hero-narrative reveal-up">
-              Produção 4K DCI, reels estratégicos de alta retenção e soluções visuais que aceleram marcas.
+              Produção audiovisual, reels estratégicos de alta retenção e soluções visuais que aceleram marcas.
             </p>
 
             <div className="uc-hero-pills reveal-up">
@@ -85,7 +86,7 @@ export const Hero: React.FC<HeroProps> = ({ content, onPlayShowreel }) => {
               </a>
 
               <button
-                onClick={() => onPlayShowreel('Mizine Multimédia — Apresentação 4K DCI', content.showreelVideoUrl || '/media/videos/showreel.mp4')}
+                onClick={() => onPlayShowreel('Mizine Multimédia — Apresentação', content.showreelVideoUrl || '/media/videos/showreel.mp4')}
                 className="uc-pill uc-pill-play"
                 title="Assistir Apresentação Mizine"
               >
@@ -96,7 +97,7 @@ export const Hero: React.FC<HeroProps> = ({ content, onPlayShowreel }) => {
 
             <div className="uc-hero-telemetry reveal-up">
               <div className="telemetry-item">
-                <span className="telemetry-val">4K DCI</span>
+                <span className="telemetry-val">CINEMA</span>
                 <span className="telemetry-lbl">Cinema 24FPS</span>
               </div>
               <div className="telemetry-div" />
@@ -134,7 +135,7 @@ export const Hero: React.FC<HeroProps> = ({ content, onPlayShowreel }) => {
               <span className="meta-index">02/06</span>
               <span className="meta-bracket">]</span>
               <span className="meta-sep">•</span>
-              <span className="meta-title">TERRA // MAPUTO • DIA ENSOLARADO [ 12:00 ] ☀️</span>
+              <span className="meta-title">TERRA // MAPUTO • DIA ENSOLARADO [ 12:00 ] <Icon name="sun" size={13} className="meta-icon" /></span>
             </div>
             <h2 className="landing-title">
               TRABALHAMOS COM <span className="text-crimson-gradient">MARCAS CORAJOSAS.</span>

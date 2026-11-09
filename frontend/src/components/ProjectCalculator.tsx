@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Icon } from './Icon';
 import { HeroContent } from '../types';
 
 interface ProjectCalculatorProps {
@@ -19,7 +20,7 @@ export const ProjectCalculator: React.FC<ProjectCalculatorProps> = ({ heroConten
   };
 
   const serviceLabels = {
-    video: 'Video Making & Cinema Comercial (4K)',
+    video: 'Video Making & Cinema Comercial',
     reels: 'Pacote de Reels & Gestão de Redes Sociais',
     celebrate: 'Mizine Celebrate (Convites Digitais & Eventos)',
     group: 'Ecossistema Multimédia Completo (Geek Ever + Produção)'
@@ -27,9 +28,9 @@ export const ProjectCalculator: React.FC<ProjectCalculatorProps> = ({ heroConten
 
   const tierDetails = {
     video: {
-      standard: { name: 'Comercial Direto (30s)', desc: '1 dia de captação, edição dinâmica e entrega em 4K', est: 'Sob Consulta' },
-      pro: { name: 'Campanha de Marca (60s)', desc: 'Roteiro, captação 4K com luz de cinema e pós-produção broadcast', est: 'Mais Popular' },
-      master: { name: 'Produção Completa / Aftermovie VIP', desc: 'Múltiplas câmaras, drone 4K, edição sonora e teasers imediatos', est: 'Produção de Luxo' }
+      standard: { name: 'Comercial Direto (30s)', desc: '1 dia de captação, edição dinâmica e entrega pronta a publicar', est: 'Sob Consulta' },
+      pro: { name: 'Campanha de Marca (60s)', desc: 'Roteiro, captação com luz de cinema e pós-produção broadcast', est: 'Mais Popular' },
+      master: { name: 'Produção Completa / Aftermovie VIP', desc: 'Múltiplas câmaras, drone, edição sonora e teasers imediatos', est: 'Produção de Luxo' }
     },
     reels: {
       standard: { name: 'Starter Pack (4 Reels / Mês)', desc: 'Captação mensal concentrada e edição vertical para parar o scroll', est: 'Mensal' },
@@ -57,7 +58,7 @@ export const ProjectCalculator: React.FC<ProjectCalculatorProps> = ({ heroConten
     const tierName = currentTier.name;
     const extrasNames = extras.length > 0 ? extras.join(', ') : 'Nenhum extra selecionado';
 
-    const message = `Olá Mizine Multimédia! 👋\n\nFiz uma simulação no vosso site:\n• Serviço: ${serviceName}\n• Pacote: ${tierName}\n• Extras Selecionados: ${extrasNames}\n\nGostaria de receber uma proposta e verificar disponibilidade de datas!`;
+    const message = `Olá Mizine Multimédia!\n\nFiz uma simulação no vosso site:\n• Serviço: ${serviceName}\n• Pacote: ${tierName}\n• Extras Selecionados: ${extrasNames}\n\nGostaria de receber uma proposta e verificar disponibilidade de datas!`;
     return `https://wa.me/${rawNumber}?text=${encodeURIComponent(message)}`;
   };
 
@@ -90,10 +91,10 @@ export const ProjectCalculator: React.FC<ProjectCalculatorProps> = ({ heroConten
             </div>
             <div className="service-tabs-grid">
               {[
-                { id: 'video', label: 'Video Making (Cinema 4K)', icon: '🎬' },
-                { id: 'reels', label: 'Gestão de Redes Sociais & Reels', icon: '📱' },
-                { id: 'celebrate', label: 'Mizine Celebrate (Convites)', icon: '✨' },
-                { id: 'group', label: 'Ecossistema Multimédia (Tech + Vídeo)', icon: '⚡' }
+                { id: 'video', label: 'Video Making & Cinema', icon: 'camera' as const },
+                { id: 'reels', label: 'Gestão de Redes Sociais & Reels', icon: 'reel' as const },
+                { id: 'celebrate', label: 'Mizine Celebrate (Convites)', icon: 'invite' as const },
+                { id: 'group', label: 'Ecossistema Multimédia (Tech + Vídeo)', icon: 'orbit' as const }
               ].map((s) => (
                 <button
                   key={s.id}
@@ -101,7 +102,7 @@ export const ProjectCalculator: React.FC<ProjectCalculatorProps> = ({ heroConten
                   className={`service-tab-btn ${selectedService === s.id ? 'active' : ''}`}
                   onClick={() => setSelectedService(s.id as any)}
                 >
-                  <span className="tab-icon">{s.icon}</span>
+                  <span className="tab-icon"><Icon name={s.icon} size={22} /></span>
                   <span className="tab-text">{s.label}</span>
                 </button>
               ))}
@@ -131,7 +132,7 @@ export const ProjectCalculator: React.FC<ProjectCalculatorProps> = ({ heroConten
                     <h4 className="tier-name">{info.name}</h4>
                     <p className="tier-desc">{info.desc}</p>
                     <div className="tier-check">
-                      <span>{isSelected ? '✓ Selecionado' : 'Selecionar'}</span>
+                      <span>{isSelected ? 'Selecionado' : 'Selecionar'}</span>
                     </div>
                   </div>
                 );
@@ -147,7 +148,7 @@ export const ProjectCalculator: React.FC<ProjectCalculatorProps> = ({ heroConten
             </div>
             <div className="extras-grid">
               {[
-                { id: 'drone', label: 'Captação Aérea com Drone 4K', desc: 'Planos panorâmicos de alta resolução' },
+                { id: 'drone', label: 'Captação Aérea com Drone', desc: 'Planos panorâmicos de alta resolução' },
                 { id: 'express', label: 'Entrega Express (48 Horas)', desc: 'Prioridade máxima em ilha de edição' },
                 { id: 'audio', label: 'Locução & Voz-off Profissional', desc: 'Voz institucional gravada em estúdio' },
                 { id: 'multi', label: 'Exportação Multiformato (16:9 + 9:16)', desc: 'Adaptado para TV, YouTube e Reels' }

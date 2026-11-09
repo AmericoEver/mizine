@@ -17,7 +17,7 @@ const LOCATIONS = [
 ];
 
 const CAPABILITIES = [
-  'VIDEO MAKING 4K DCI',
+  'VIDEO MAKING & CINEMA',
   'REELS DE ALTA RETENÇÃO',
   'GESTÃO DE REDES SOCIAIS',
   'CONVITES DIGITAIS (CELEBRATE)',
@@ -235,7 +235,7 @@ export const Preloader: React.FC<PreloaderProps> = ({ onComplete }) => {
 
       ctx.font = '700 9.5px "Space Grotesk", sans-serif';
       ctx.fillStyle = '#ffffff';
-      ctx.fillText('🇲🇿 MOÇAMBIQUE [SEDE]', lineEndX + 4, lineEndY - 3);
+      ctx.fillText('MZ MOÇAMBIQUE [SEDE]', lineEndX + 4, lineEndY - 3);
 
       ctx.font = '500 7.5px "JetBrains Mono", monospace';
       ctx.fillStyle = '#ff3b30';
@@ -295,7 +295,7 @@ export const Preloader: React.FC<PreloaderProps> = ({ onComplete }) => {
         <div className="uc-preloader-col uc-preloader-right">
           <div className="uc-preloader-counter-wrap">
             <span className="uc-preloader-number">{progress < 10 ? `0${progress}` : progress}</span>
-            <span className="uc-preloader-spinner" aria-hidden="true">✢</span>
+            <span className="uc-preloader-spinner" aria-hidden="true">+</span>
           </div>
 
           <div className="uc-preloader-list uc-preloader-list-right">

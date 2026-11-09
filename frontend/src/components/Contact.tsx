@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { HeroContent } from '../types';
+import { Icon } from './Icon';
 import { apiService } from '../services/api';
 
 interface ContactProps {
@@ -92,7 +93,7 @@ export const Contact: React.FC<ContactProps> = ({ hero }) => {
                   onChange={(e) => setFormData({ ...formData, projectType: e.target.value })}
                   className="uc-select"
                 >
-                  <option value="Video Making & Cinema Comercial">Video Making & Cinema Comercial (4K)</option>
+                  <option value="Video Making & Cinema Comercial">Video Making & Cinema Comercial</option>
                   <option value="Gestão de Redes Sociais & Reels">Gestão de Redes Sociais & Pacote de Reels</option>
                   <option value="Mizine Celebrate (Convites Digitais)">Mizine Celebrate (Convites Digitais & Eventos)</option>
                   <option value="Cobertura de Evento VIP / Aftermovie">Cobertura de Evento VIP / Aftermovie</option>
@@ -144,7 +145,7 @@ export const Contact: React.FC<ContactProps> = ({ hero }) => {
                 rel="noreferrer"
                 className="info-item-link highlight"
               >
-                <span className="info-icon">💬</span>
+                <span className="info-icon"><Icon name="chat" /></span>
                 <div>
                   <div className="info-tag">WHATSAPP DIRETO</div>
                   <div className="info-val">{hero.whatsappNumber || '+258 84 000 0000'}</div>
@@ -155,7 +156,7 @@ export const Contact: React.FC<ContactProps> = ({ hero }) => {
                 href={`mailto:${hero.contactEmail || 'support@mizine.co.mz'}`}
                 className="info-item-link"
               >
-                <span className="info-icon">✉️</span>
+                <span className="info-icon"><Icon name="mail" /></span>
                 <div>
                   <div className="info-tag">EMAIL CORPORATIVO</div>
                   <div className="info-val">{hero.contactEmail || 'support@mizine.co.mz'}</div>
@@ -168,7 +169,7 @@ export const Contact: React.FC<ContactProps> = ({ hero }) => {
                 rel="noreferrer"
                 className="info-item-link"
               >
-                <span className="info-icon">📸</span>
+                <span className="info-icon"><Icon name="instagram" /></span>
                 <div>
                   <div className="info-tag">INSTAGRAM OFICIAL</div>
                   <div className="info-val">{hero.instagramHandle || '@mizine_8'}</div>
@@ -176,7 +177,7 @@ export const Contact: React.FC<ContactProps> = ({ hero }) => {
               </a>
 
               <div className="info-item-link">
-                <span className="info-icon">📍</span>
+                <span className="info-icon"><Icon name="pin" /></span>
                 <div>
                   <div className="info-tag">LOCALIZAÇÃO</div>
                   <div className="info-val">Maputo, Moçambique • Atendimento Nacional & Internacional</div>

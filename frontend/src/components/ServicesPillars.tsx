@@ -29,7 +29,7 @@ export const ServicesPillars: React.FC<ServicesPillarsProps> = ({ pillars = [] }
             <span className="text-red">Sob um único ecossistema multimédia.</span>
           </h2>
           <p className="uc-section-desc daylight-desc">
-            Não precisas de gerir múltiplos fornecedores e freelancers sem alinhamento. A Mizine centraliza direção criativa, produção técnica 4K DCI, distribuição viral e tecnologia interativa.
+            Não precisas de gerir múltiplos fornecedores e freelancers sem alinhamento. A Mizine centraliza direção criativa, produção técnica de cinema, distribuição viral e tecnologia interativa.
           </p>
         </div>
 
@@ -71,8 +71,8 @@ export const ServicesPillars: React.FC<ServicesPillarsProps> = ({ pillars = [] }
                 </div>
 
                 <div className="pillar-footer daylight-p-footer">
-                  <a href="#simulador" className="pillar-link daylight-link">
-                    <span>Simular este serviço</span>
+                  <a href="#contacto" className="pillar-link daylight-link">
+                    <span>Pedir proposta</span>
                     <span className="link-arrow">→</span>
                   </a>
                 </div>

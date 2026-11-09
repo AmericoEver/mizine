@@ -4,6 +4,7 @@ import './index.css'
 import './story.css'
 import './lower.css'
 import './chapters.css'
+import './finale.css'
 import App from './App.tsx'
 
 createRoot(document.getElementById('root')!).render(

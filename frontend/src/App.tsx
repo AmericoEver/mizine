@@ -10,7 +10,6 @@ import { ServicesPillars } from './components/ServicesPillars';
 import { Projects } from './components/Projects';
 import { ReelsFilm } from './components/ReelsFilm';
 import { WhyMizine } from './components/WhyMizine';
-import { ProjectCalculator } from './components/ProjectCalculator';
 import { Group } from './components/Group';
 import { FAQ } from './components/FAQ';
 import { Contact } from './components/Contact';
@@ -187,7 +186,6 @@ export function App() {
       <ServicesPillars pillars={content.pillars || defaultContent.pillars} />
       <Projects projects={content.projects} />
       <ReelsFilm reels={content.reels} onOpenReel={handleOpenVideo} />
-      <ProjectCalculator heroContent={content.hero} />
       <WhyMizine />
       <Group companies={content.group} />
       <FAQ items={content.faq || defaultContent.faq} />

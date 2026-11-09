@@ -21,17 +21,18 @@ export const Navbar: React.FC<NavbarProps> = ({ onBackToSite, isAdminView }) => 
             <>
               {/* Clean Nav Links */}
               <ul className={`uc-nav-links ${isOpen ? 'is-active' : ''}`}>
+                <li><a href="#sobre" onClick={() => setIsOpen(false)}>FUNDADOR</a></li>
                 <li><a href="#pilares" onClick={() => setIsOpen(false)}>SERVIÇOS</a></li>
-                <li><a href="#reels" onClick={() => setIsOpen(false)}>TRABALHOS</a></li>
-                <li><a href="#porque" onClick={() => setIsOpen(false)}>DIFERENCIAIS</a></li>
-                <li><a href="#simulador" onClick={() => setIsOpen(false)}>SIMULADOR</a></li>
+                <li><a href="#trabalhos" onClick={() => setIsOpen(false)}>TRABALHOS</a></li>
+                <li><a href="#reels" onClick={() => setIsOpen(false)}>REELS</a></li>
+                <li><a href="#grupo" onClick={() => setIsOpen(false)}>GRUPO</a></li>
                 <li><a href="#faq" onClick={() => setIsOpen(false)}>FAQ</a></li>
                 <li><a href="#contacto" onClick={() => setIsOpen(false)}>CONTACTO</a></li>
               </ul>
 
               {/* Right Action: White Pill Button */}
               <div className="uc-nav-action-wrap">
-                <a className="uc-pill uc-pill-solid uc-nav-cta" href="#simulador">
+                <a className="uc-pill uc-pill-solid uc-nav-cta" href="#contacto">
                   <span>INICIAR PROJETO</span>
                   <span className="uc-pill-arrow">↗</span>
                 </a>

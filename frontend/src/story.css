@@ -304,8 +304,8 @@
   .cam-dossier {
     left: 16px;
     right: 16px;
-    /* logo abaixo do monitor (centro a 42vh, altura = 100vw × 9/16) */
-    top: calc(42vh + 28.125vw + 18px);
+    /* logo abaixo do monitor vertical (topo a 78px, altura = min((100vw-24)×1.25, 66vh)) */
+    top: calc(92px + min((100vw - 24px) * 1.25, 66vh));
     bottom: auto;
     margin-top: 0;
     width: auto;

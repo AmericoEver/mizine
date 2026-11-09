@@ -11,7 +11,7 @@ export const Contact: React.FC<ContactProps> = ({ hero }) => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    projectType: 'Video Making & Cinema Comercial',
+    projectType: 'Video Making & Cinema',
     message: ''
   });
   const [status, setStatus] = useState<string>('');
@@ -28,7 +28,7 @@ export const Contact: React.FC<ContactProps> = ({ hero }) => {
       setFormData({
         name: '',
         email: '',
-        projectType: 'Video Making & Cinema Comercial',
+        projectType: 'Video Making & Cinema',
         message: ''
       });
     } catch {
@@ -38,159 +38,75 @@ export const Contact: React.FC<ContactProps> = ({ hero }) => {
     }
   };
 
+  const services = ['Video Making & Cinema', 'Redes Sociais & Reels', 'Cobertura de Evento', 'Convites (Celebrate)', 'Design & Branding', 'Outro'];
+  const wa = hero.whatsappUrl || 'https://wa.me/258840000000';
+  const email = hero.contactEmail || 'support@mizine.co.mz';
+  const channels = [
+    { icon: 'chat' as const, label: 'WhatsApp', value: hero.whatsappNumber || '+258 84 000 0000', href: wa, ext: true },
+    { icon: 'mail' as const, label: 'Email', value: email, href: `mailto:${email}`, ext: false },
+    { icon: 'instagram' as const, label: 'Instagram', value: hero.instagramHandle || '@mizine_8', href: hero.instagramUrl || 'https://www.instagram.com/mizine_8', ext: true },
+    { icon: 'pin' as const, label: 'Estúdio', value: 'Maputo, Moçambique', href: '#topo', ext: false }
+  ];
+
   return (
-    <section className="uc-contact-section" id="contacto">
-      <div className="wrap">
-        <div className="uc-section-header reveal-up">
-          <div className="uc-meta-tag">
-            <span className="meta-bracket">[</span>
-            <span className="meta-index">CONTACTO</span>
-            <span className="meta-bracket">]</span>
-            <span className="meta-sep">•</span>
-            <span className="meta-title">INICIAR UM NOVO PROJETO</span>
-          </div>
-          <h2 className="uc-section-title">
-            Vamos criar algo memorável.<br />
-            <span className="text-red">Fala connosco hoje.</span>
+    <section className="ct-section" id="contacto">
+      <div className="wrap ct-grid">
+        <div className="ct-left reveal-up">
+          <span className="why2-kicker">CONTACTO</span>
+          <h2>
+            Vamos filmar<br />
+            <span>a tua história.</span>
           </h2>
-          <p className="uc-section-desc">
-            Seja para um comercial de cinema, gestão contínua de redes sociais ou convites digitais exclusivos, estamos prontos para elevar a tua marca.
-          </p>
+          <p className="ct-lead">Conta-nos o projecto. Respondemos em menos de 2 horas, de segunda a sábado.</p>
+          <div className="ct-channels">
+            {channels.map(c => (
+              <a key={c.label} href={c.href} target={c.ext ? '_blank' : undefined} rel="noreferrer" className="ct-channel">
+                <Icon name={c.icon} size={18} />
+                <span className="ct-channel-label">{c.label}</span>
+                <span className="ct-channel-value">{c.value}</span>
+                <Icon name="arrow-up-right" size={16} className="ct-channel-go" />
+              </a>
+            ))}
+          </div>
         </div>
 
-        <div className="uc-contact-grid reveal-up">
-          {/* Form Column */}
-          <div className="uc-contact-form-card">
-            <form onSubmit={handleSubmit} className="uc-form">
-              <div className="form-group">
-                <label className="form-label">O SEU NOME OU EMPRESA</label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Ex: Carlos Mondlane / Empresa X"
-                  required
-                  className="uc-input"
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">EMAIL CORPORATIVO OU PESSOAL</label>
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="Ex: contacto@suaempresa.co.mz"
-                  required
-                  className="uc-input"
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">SERVIÇO OU PROJETO PRETENDIDO</label>
-                <select
-                  value={formData.projectType}
-                  onChange={(e) => setFormData({ ...formData, projectType: e.target.value })}
-                  className="uc-select"
+        <form onSubmit={handleSubmit} className="ct-form reveal-up">
+          <span className="ct-form-tag">● REC • BRIEF DO PROJECTO</span>
+          <label className="ct-field">
+            <span>Nome ou empresa</span>
+            <input type="text" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} placeholder="Carlos Mondlane / Empresa X" required />
+          </label>
+          <label className="ct-field">
+            <span>Email</span>
+            <input type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} placeholder="contacto@empresa.co.mz" required />
+          </label>
+          <div className="ct-field">
+            <span>O que precisas?</span>
+            <div className="ct-pills" role="radiogroup">
+              {services.map(sv => (
+                <button
+                  type="button"
+                  key={sv}
+                  role="radio"
+                  aria-checked={formData.projectType === sv}
+                  className={`ct-pill ${formData.projectType === sv ? 'is-on' : ''}`}
+                  onClick={() => setFormData({ ...formData, projectType: sv })}
                 >
-                  <option value="Video Making & Cinema Comercial">Video Making & Cinema Comercial</option>
-                  <option value="Gestão de Redes Sociais & Reels">Gestão de Redes Sociais & Pacote de Reels</option>
-                  <option value="Mizine Celebrate (Convites Digitais)">Mizine Celebrate (Convites Digitais & Eventos)</option>
-                  <option value="Cobertura de Evento VIP / Aftermovie">Cobertura de Evento VIP / Aftermovie</option>
-                  <option value="Ecossistema Geek Ever (Tech + Vídeo)">Ecossistema Geek Ever (Tech + Vídeo)</option>
-                  <option value="Outro Projeto Personalizado">Outro Projeto Personalizado</option>
-                </select>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">DETALHES OU OBJETIVO DO PROJETO</label>
-                <textarea
-                  rows={4}
-                  value={formData.message}
-                  onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                  placeholder="Conte-nos brevemente sobre a sua visão, datas de lançamento e necessidades específicas..."
-                  required
-                  className="uc-textarea"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="btn uc-btn-primary full-width"
-              >
-                <span>{isSubmitting ? 'A enviar...' : 'Enviar Mensagem'}</span>
-                <span className="btn-arrow">→</span>
-              </button>
-
-              {status && (
-                <div className={`uc-form-alert ${status.includes('Erro') ? 'error' : 'success'}`}>
-                  {status}
-                </div>
-              )}
-            </form>
-          </div>
-
-          {/* Direct Details Column */}
-          <div className="uc-contact-info-card">
-            <h3 className="info-title">Canais Diretos de Produção</h3>
-            <p className="info-desc">
-              Prefere falar diretamente no WhatsApp com a nossa equipa criativa? Estamos operacionais de Segunda a Sábado.
-            </p>
-
-            <div className="info-items">
-              <a
-                href={hero.whatsappUrl || 'https://wa.me/258840000000'}
-                target="_blank"
-                rel="noreferrer"
-                className="info-item-link highlight"
-              >
-                <span className="info-icon"><Icon name="chat" /></span>
-                <div>
-                  <div className="info-tag">WHATSAPP DIRETO</div>
-                  <div className="info-val">{hero.whatsappNumber || '+258 84 000 0000'}</div>
-                </div>
-              </a>
-
-              <a
-                href={`mailto:${hero.contactEmail || 'support@mizine.co.mz'}`}
-                className="info-item-link"
-              >
-                <span className="info-icon"><Icon name="mail" /></span>
-                <div>
-                  <div className="info-tag">EMAIL CORPORATIVO</div>
-                  <div className="info-val">{hero.contactEmail || 'support@mizine.co.mz'}</div>
-                </div>
-              </a>
-
-              <a
-                href={hero.instagramUrl || 'https://www.instagram.com/mizine_8'}
-                target="_blank"
-                rel="noreferrer"
-                className="info-item-link"
-              >
-                <span className="info-icon"><Icon name="instagram" /></span>
-                <div>
-                  <div className="info-tag">INSTAGRAM OFICIAL</div>
-                  <div className="info-val">{hero.instagramHandle || '@mizine_8'}</div>
-                </div>
-              </a>
-
-              <div className="info-item-link">
-                <span className="info-icon"><Icon name="pin" /></span>
-                <div>
-                  <div className="info-tag">LOCALIZAÇÃO</div>
-                  <div className="info-val">Maputo, Moçambique • Atendimento Nacional & Internacional</div>
-                </div>
-              </div>
-            </div>
-
-            <div className="info-working-hours">
-              <span className="hours-dot">●</span>
-              <span>ESTÚDIO EM OPERAÇÃO • RESPOSTA MÉDIA: &lt; 2 HORAS</span>
+                  {sv}
+                </button>
+              ))}
             </div>
           </div>
-        </div>
+          <label className="ct-field">
+            <span>Sobre o projecto</span>
+            <textarea rows={3} value={formData.message} onChange={e => setFormData({ ...formData, message: e.target.value })} placeholder="Objectivo, datas, local e o que imaginas…" required />
+          </label>
+          <button type="submit" disabled={isSubmitting} className="ct-submit">
+            <span>{isSubmitting ? 'A enviar…' : 'Enviar brief'}</span>
+            <Icon name="arrow" size={18} />
+          </button>
+          {status && <div className={`ct-status ${status.includes('Erro') ? 'is-error' : ''}`}>{status}</div>}
+        </form>
       </div>
     </section>
   );

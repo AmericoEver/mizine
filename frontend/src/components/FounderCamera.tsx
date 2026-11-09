@@ -58,10 +58,11 @@ export const FounderCamera: React.FC = () => {
     const mobile = vw < 760;
 
     // Monitor da câmara: grande, 16:9, entra com um ligeiro "push-in"
-    const fW = Math.min(vw * (mobile ? 1 : 0.94), vh * 0.82 * (16 / 9));
-    const fH = fW * (9 / 16);
+    // telemóvel: monitor vertical (4:5) a ocupar o ecrã; desktop: 16:9
+    const fW = mobile ? vw - 24 : Math.min(vw * 0.94, vh * 0.82 * (16 / 9));
+    const fH = mobile ? Math.min(fW * 1.25, vh * 0.66) : fW * (9 / 16);
     const fCx = vw / 2;
-    const fCy = mobile ? vh * 0.42 : vh * 0.54;
+    const fCy = mobile ? 70 + fH / 2 + 8 : vh * 0.54;
     const enter = smoothstep(0, 0.06, p);
     screen.style.left = `${(fCx - fW / 2).toFixed(1)}px`;
     screen.style.top = `${(fCy - fH / 2).toFixed(1)}px`;
@@ -121,10 +122,12 @@ export const FounderCamera: React.FC = () => {
       const roam = 1 - smoothstep(0.5, 0.6, p);
       const rx = 38 + Math.sin(t * 0.7) * 10 * roam;
       const ry = 26 + Math.cos(t * 0.9) * 8 * roam;
-      fr.style.left = `${lerp(rx, 31.5, lock) + (1 - lock) * Math.sin(t * 3.1) * (1 - roam) * 3}%`;
-      fr.style.top = `${lerp(ry, 17, lock)}%`;
-      fr.style.width = `${lerp(24, 26, lock)}%`;
-      fr.style.height = `${lerp(44, 58, lock)}%`;
+      // alvo do rosto: depende do formato do monitor (16:9 no desktop, 4:5 no telemóvel)
+      const face = mobile ? { l: 27, t: 9, w: 46, h: 36 } : { l: 31.5, t: 17, w: 26, h: 58 };
+      fr.style.left = `${lerp(rx, face.l, lock) + (1 - lock) * Math.sin(t * 3.1) * (1 - roam) * 3}%`;
+      fr.style.top = `${lerp(ry, face.t, lock)}%`;
+      fr.style.width = `${lerp(24, face.w, lock)}%`;
+      fr.style.height = `${lerp(mobile ? 30 : 44, face.h, lock)}%`;
       fr.classList.toggle('is-locked', lock > 0.98);
     }
     if (subjectRef.current) {

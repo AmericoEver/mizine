@@ -585,8 +585,9 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
 
       // --- PLANETA À DIREITA EM REPOUSO, MERGULHO ATÉ MOÇAMBIQUE ---
       const isMobile = width < 900;
+      // telemóvel: o globo espreita por baixo do texto (metade inferior do ecrã)
       const baseRadius = isMobile
-        ? Math.min(width * 0.42, height * 0.32)
+        ? Math.min(width * 0.74, height * 0.4)
         : Math.min(height * 0.39, width * 0.26);
 
       // Zoom exponencial (sensação de velocidade constante): até 11x — Moçambique enche o ecrã
@@ -607,7 +608,7 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
       const sinX = Math.sin(currentRotX);
 
       const defaultCX = isMobile ? width * 0.50 : width - baseRadius - 75;
-      const defaultCY = isMobile ? height * 0.36 : height * 0.50;
+      const defaultCY = isMobile ? height * 1.02 : height * 0.50;
 
       // Centro do globo calculado para que Maputo fique EXACTAMENTE no centro do ecrã
       const mozVec = latLonToVec(-25.96, 32.58);
@@ -624,7 +625,7 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
       const vfW = isMobile ? 86 : (isHoveringMoon ? 120 : 105);
       const vfH = isMobile ? 54 : (isHoveringMoon ? 70 : 60);
 
-      const moonAlpha = Math.max(0, 1 - sp * 2.8);
+      const moonAlpha = isMobile ? 0 : Math.max(0, 1 - sp * 2.8);
       if (moonAlpha > 0.01) {
         ctx.save();
         ctx.globalAlpha = moonAlpha;
@@ -1330,7 +1331,8 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
           const mx = cx + rot.x * radius;
           const my = cy + rot.y * radius;
           // as etiquetas desaparecem ao entrar na atmosfera (não ficam "fantasma" sobre as nuvens)
-          const alpha = Math.min(1, (rot.z - 0.05) * 2.8) * (1 - smoothstep(0.42, 0.6, sp));
+          // no telemóvel as etiquetas tapavam o texto do hero: escondidas
+          const alpha = isMobile ? 0 : Math.min(1, (rot.z - 0.05) * 2.8) * (1 - smoothstep(0.42, 0.6, sp));
           if (alpha < 0.01) continue;
 
           ctx.save();

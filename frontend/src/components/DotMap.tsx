@@ -19,14 +19,28 @@ export const DotMap: React.FC<{ className?: string; reveal?: boolean }> = ({ cla
       { lat: -26.2, lon: 28.0 }, { lat: 51.5, lon: -0.1 }, { lat: 40.7, lon: -74.0 }, { lat: 1.3, lon: 103.8 }
     ];
     let w = 0, h = 0, raf = 0, visible = false;
+    // vista: escala igual em lon/lat (sem esticar). Ecrãs largos: mundo inteiro; estreitos: África/Moçambique em foco
+    let sc = 1, lonC = 0, latC = 10, dot = 1.3;
     const resize = () => {
       const r = c.getBoundingClientRect();
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       w = r.width; h = r.height;
       c.width = w * dpr; c.height = h * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      if (w / h >= 1.7) {
+        sc = Math.min(w / 360, h / 140);
+        lonC = 0;
+        latC = 10;
+      } else {
+        // largura visível ~ 120°..60° de longitude conforme o ecrã, centrada entre África e o Índico
+        const lonSpan = Math.max(62, Math.min(130, 130 * (w / h) / 1.7));
+        sc = Math.min(w / lonSpan, h / 95);
+        lonC = 24;
+        latC = -2;
+      }
+      dot = Math.max(1.3, Math.min(3.2, sc * 0.55));
     };
-    const proj = (lat: number, lon: number) => ({ x: ((lon + 180) / 360) * w, y: ((80 - lat) / 140) * h });
+    const proj = (lat: number, lon: number) => ({ x: w / 2 + (lon - lonC) * sc, y: h / 2 - (lat - latC) * sc });
     const t0 = performance.now();
     const draw = () => {
       const t = (performance.now() - t0) / 1000;
@@ -35,9 +49,10 @@ export const DotMap: React.FC<{ className?: string; reveal?: boolean }> = ({ cla
       for (const p of pts) {
         if (p.lat < -60 || p.lat > 80) continue;
         const { x, y } = proj(p.lat, p.lon);
-        if (x > sweep * w) continue;
-        ctx.fillStyle = p.moz ? 'rgba(255,59,48,0.95)' : 'rgba(255,255,255,0.16)';
-        ctx.fillRect(x, y, p.moz ? 1.8 : 1.3, p.moz ? 1.8 : 1.3);
+        if (x > sweep * w || x < -4 || x > w + 4 || y < -4 || y > h + 4) continue;
+        ctx.fillStyle = p.moz ? 'rgba(255,59,48,0.95)' : 'rgba(255,255,255,0.18)';
+        const ds = p.moz ? dot * 1.35 : dot;
+        ctx.fillRect(x - ds / 2, y - ds / 2, ds, ds);
       }
       const o = proj(HQ.lat, HQ.lon);
       targets.forEach((tg, i) => {

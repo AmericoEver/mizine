@@ -26,8 +26,8 @@ const METRICS = [
 
 /** Depois do fundador, a câmara continua a gravar a família Mizine (mesma animação). */
 const CREW = [
-  { name: 'Américo Mabunda', tag: 'SUJEITO 02 // POR TRÁS DO CÓDIGO', role: 'Co-fundador • Desenvolvimento & Tecnologia', line: 'Constrói as plataformas e a experiência digital do grupo.', src: '/media/team/americo.jpg', pos: '50% 12%', face: { l: 10, t: 14, w: 36, h: 66 }, faceM: { l: 10, t: 13, w: 36, h: 30 } },
-  { name: 'Jorge Mabunda', tag: 'SUJEITO 03 // QUEM FEZ A IDEIA EXISTIR', role: 'Co-fundador • Director Executivo', line: 'Incentivou tudo desde o primeiro dia — a visão que tornou a Mizine possível.', src: '/media/team/jorge.jpg', pos: '50% 5%', face: { l: 35, t: 5, w: 34, h: 70 }, faceM: { l: 35, t: 5, w: 34, h: 32 } }
+  { name: 'Américo Mabunda', tag: 'SUJEITO 02 // POR TRÁS DO CÓDIGO', role: 'Co-fundador • Desenvolvimento & Tecnologia', line: 'Constrói as plataformas e a experiência digital do grupo.', src: '/media/team/americo.jpg', pos: '50% 12%', face: { l: 10, t: 14, w: 36, h: 66 }, faceM: { l: 4, t: 13, w: 41, h: 30 } },
+  { name: 'Jorge Mabunda', tag: 'SUJEITO 03 // QUEM FEZ A IDEIA EXISTIR', role: 'Co-fundador • Director Executivo', line: 'Incentivou tudo desde o primeiro dia — a visão que tornou a Mizine possível.', src: '/media/team/jorge.jpg', pos: '50% 5%', face: { l: 35, t: 5, w: 34, h: 70 }, faceM: { l: 33, t: 5, w: 39, h: 32 } }
 ];
 /** fracção do scroll dedicada ao B-roll + fundador; o resto é para a equipa */
 const M_END = 0.56;
@@ -73,7 +73,7 @@ export const FounderCamera: React.FC = () => {
     // Monitor da câmara: grande, 16:9, entra com um ligeiro "push-in"
     // telemóvel: monitor vertical (4:5) a ocupar o ecrã; desktop: 16:9
     const fW = mobile ? vw - 24 : Math.min(vw * 0.94, vh * 0.82 * (16 / 9));
-    const fH = mobile ? Math.min(fW * 1.25, vh * 0.66) : fW * (9 / 16);
+    const fH = mobile ? Math.min(fW * 1.45, vh - 290) : fW * (9 / 16);
     const fCx = vw / 2;
     const fCy = mobile ? 70 + fH / 2 + 8 : vh * 0.54;
     const enter = smoothstep(0, 0.06, p);
@@ -141,7 +141,7 @@ export const FounderCamera: React.FC = () => {
       const rx = 38 + Math.sin(t * 0.7) * 10 * roam;
       const ry = 26 + Math.cos(t * 0.9) * 8 * roam;
       // alvo do rosto: depende do formato do monitor (16:9 no desktop, 4:5 no telemóvel)
-      const face = mobile ? { l: 27, t: 9, w: 46, h: 36 } : { l: 31.5, t: 17, w: 26, h: 58 };
+      const face = mobile ? { l: 24, t: 9, w: 53, h: 36 } : { l: 31.5, t: 17, w: 26, h: 58 };
       fr.style.left = `${lerp(rx, face.l, lock) + (1 - lock) * Math.sin(t * 3.1) * (1 - roam) * 3}%`;
       fr.style.top = `${lerp(ry, face.t, lock)}%`;
       fr.style.width = `${lerp(24, face.w, lock)}%`;

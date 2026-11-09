@@ -444,3 +444,44 @@
   .cam-track { height: 620vh !important; }
   .cam-crew-line { font-size: 12px; }
 }
+
+
+/* ==========================================================================
+   TELEMÓVEL — passagem 2 (respiração, mapas, legibilidade)
+   ========================================================================== */
+@media (max-width: 760px) {
+  /* rodapé: mapa em cima (proporção real, África em foco), frase por baixo */
+  .footer2-mapwrap { height: auto; min-height: 0; display: flex; flex-direction: column; }
+  .footer2-map { position: relative; inset: auto; width: 100%; height: 108vw; }
+  .footer2-loop { height: auto; padding-top: 8px; padding-bottom: 48px; gap: 14px; }
+  .footer2-loop p { font-size: 40px; }
+  .footer2-cols { padding-top: 48px; gap: 28px 20px; }
+  .fw-letter { font-size: 22vw; }
+
+  /* preloader: mapa ao centro, contador por baixo */
+  .pl2-map { inset: 18vh 0 26vh; }
+  .pl2-count { font-size: 72px; }
+
+  /* letra mono mínima legível */
+  .uc-meta-tag .meta-title,
+  .uc-meta-tag .meta-index { font-size: 9.5px !important; letter-spacing: 0.12em !important; }
+  .cam-hud-top, .cam-hud-bottom { font-size: 9px; }
+  .cam-subject-tag, .cam-focus-label { font-size: 9px; }
+  .cam-subject strong { font-size: 30px; }
+  .cam-subject-role, .cam-years-lbl { font-size: 9.5px; }
+  .cam-crew-line { font-size: 13px; }
+  .why2-stat span, .rf-count, .grp-card-role { font-size: 10px; }
+
+  /* mais ar entre secções e cartões */
+  .uc-section-header { margin-bottom: 28px; }
+  .uc-pillars-grid { gap: 18px !important; }
+  .uc-pillar-card { padding: 26px 20px !important; }
+  .works-row { padding: 22px 0; }
+  .works-name { font-size: 22px; }
+  .rf-head h2 { font-size: 44px; }
+  .grp-left h2 { font-size: 38px; }
+  .ct-left h2 { font-size: 46px; }
+  .ct-form { gap: 22px; }
+  .faq2-item button { font-size: 17px; padding: 22px 0; }
+  .wrap { padding-left: 20px !important; padding-right: 20px !important; }
+}

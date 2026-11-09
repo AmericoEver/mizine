@@ -69,7 +69,7 @@ export const Group: React.FC<GroupProps> = ({ companies }) => {
     if (barRef.current) barRef.current.style.transform = `scaleY(${((active + 1) / n).toFixed(3)})`;
     if (countRef.current) countRef.current.textContent = String(active + 1).padStart(2, '0');
     if (headRef.current) {
-      const h = smoothstep(0, 0.08, p);
+      const h = 0.35 + 0.65 * smoothstep(0, 0.06, p);
       headRef.current.style.opacity = h.toFixed(3);
       headRef.current.style.transform = `translateY(${((1 - h) * 20).toFixed(1)}px)`;
     }

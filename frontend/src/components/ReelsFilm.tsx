@@ -37,7 +37,7 @@ export const ReelsFilm: React.FC<ReelsFilmProps> = ({ reels, onOpenReel }) => {
     // entra pela direita, percorre todos os reels, sai pela esquerda
     const enter = smoothstep(0, 0.1, p);
     const run = smoothstep(0.08, 0.92, p);
-    const offset = lerp(-1.6, n - 1, run) + (1 - enter) * -1.2;
+    const offset = lerp(-0.4, n - 1, run) + (1 - enter) * -0.8;
     const x = W / 2 - fw / 2 - offset * fw;
     strip.style.transform = `translate3d(${x.toFixed(1)}px, 0, 0)`;
 

@@ -305,7 +305,7 @@
     left: 16px;
     right: 16px;
     /* logo abaixo do monitor vertical (topo a 78px, altura = min((100vw-24)×1.25, 66vh)) */
-    top: calc(92px + min((100vw - 24px) * 1.25, 66vh));
+    top: calc(92px + min((100vw - 24px) * 1.45, 100vh - 290px));
     bottom: auto;
     margin-top: 0;
     width: auto;

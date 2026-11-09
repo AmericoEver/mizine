@@ -17,10 +17,6 @@ const STATS = [
 export const WhyMizine: React.FC = () => {
   return (
     <section className="why2-section" id="porque">
-      {/* amanhecer: a sala escura abre-se para a luz do dia */}
-      <div className="why2-exit" aria-hidden="true">
-        <span className="why2-exit-label">AMANHECER EM MAPUTO</span>
-      </div>
 
       <div className="wrap">
         <div className="why2-grid">

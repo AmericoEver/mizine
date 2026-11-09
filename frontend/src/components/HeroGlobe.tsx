@@ -750,9 +750,9 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
         ctx.fillStyle = '#ff3b30';
         ctx.fillText(`● ESTÚDIO AO VIVO • CLIQUE PARA ASSISTIR ▶`, vfX - 8, vfY + vfH + 15);
         ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
-        ctx.fillText(`24 FPS • ISO 800 • 1/48`, vfX - 8, vfY + vfH + 26);
+        
       } else {
-        ctx.fillText(`● LUA / REC`, vfX, vfY + vfH + 14);
+        
         ctx.fillText(tcStr, vfX, vfY + vfH + 24);
       }
       ctx.restore();
@@ -1018,28 +1018,41 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
         ctx.save();
         ctx.globalAlpha = alpha;
 
-        // 1. Base de acetato preta contínua
+        // Película REAL é translúcida: acetato âmbar por onde se vê o planeta/céu.
+        // A base é desenhada com a janela e as perfurações recortadas (evenodd) — são mesmo "buracos".
+        const perfs = () => {
+          for (let k = 0; k < PERF_COUNT; k++) {
+            const uc = (k + 0.5) / PERF_COUNT;
+            quadPath(uc - PERF_W / 2, uc + PERF_W / 2, PERF_V0, PERF_V1);
+            quadPath(uc - PERF_W / 2, uc + PERF_W / 2, 1 - PERF_V1, 1 - PERF_V0);
+          }
+        };
+
+        // 1. Acetato (carris laterais + linhas de fotograma), translúcido
         ctx.beginPath();
         quadPath(0, 1, 0, 1);
-        ctx.fillStyle = isBack ? 'rgba(8, 8, 12, 0.85)' : '#0c0c10';
+        quadPath(WIN_U0, 1 - WIN_U0, WIN_V0, WIN_V1);
+        perfs();
+        const baseA = isBack ? 0.22 : lerp(0.5, 0.78, litP);
+        ctx.fillStyle = `rgba(30, 20, 12, ${baseA})`;
         if (isHovered) {
           ctx.shadowColor = '#00d4ff';
           ctx.shadowBlur = 16;
         }
-        ctx.fill();
+        ctx.fill('evenodd');
         ctx.shadowBlur = 0;
 
-        // 2. Janela do fotograma (separada por linhas de fotograma pretas)
+        // 2. Janela do fotograma: no espaço, celulóide âmbar quase transparente; depois das nuvens, revelado (claro)
         ctx.beginPath();
         quadPath(WIN_U0, 1 - WIN_U0, WIN_V0, WIN_V1);
-        // Espaço: celulóide escuro com tom âmbar de negativo; depois das nuvens: fotograma revelado (claro)
-        const wr = Math.round(lerp(42, 245, litP));
-        const wg = Math.round(lerp(31, 246, litP));
-        const wb = Math.round(lerp(24, 249, litP));
-        ctx.fillStyle = `rgb(${wr}, ${wg}, ${wb})`;
+        const winA = isBack ? 0.06 : lerp(0.16, 0.92, litP);
+        const wr = Math.round(lerp(150, 250, litP));
+        const wg = Math.round(lerp(96, 249, litP));
+        const wb = Math.round(lerp(48, 246, litP));
+        ctx.fillStyle = `rgba(${wr}, ${wg}, ${wb}, ${winA})`;
         ctx.fill();
         if (isHovered && !isBack) {
-          ctx.fillStyle = 'rgba(0, 212, 255, 0.25)';
+          ctx.fillStyle = 'rgba(0, 212, 255, 0.2)';
           ctx.fill();
         }
         // Brilho do celulóide (reflexo diagonal subtil)
@@ -1048,23 +1061,18 @@ export const HeroGlobe: React.FC<HeroGlobeProps> = ({ onPlayVideo, viewportRef }
           const g1 = P(1, WIN_V1);
           const sheen = ctx.createLinearGradient(g0.x, g0.y, g1.x, g1.y);
           sheen.addColorStop(0, 'rgba(255,255,255,0)');
-          sheen.addColorStop(0.45, `rgba(200,206,220,${0.12 + 0.1 * litP})`);
+          sheen.addColorStop(0.45, `rgba(255,236,210,${0.1 + 0.06 * litP})`);
           sheen.addColorStop(1, 'rgba(255,255,255,0)');
           ctx.fillStyle = sheen;
           ctx.fill();
         }
 
-        // 3. Perfurações (8 por fotograma, em cima e em baixo — como fita 35mm)
+        // 3. Perfurações: buracos (só o rebordo desenhado — o fundo vê-se através)
         ctx.beginPath();
-        for (let k = 0; k < PERF_COUNT; k++) {
-          const uc = (k + 0.5) / PERF_COUNT;
-          quadPath(uc - PERF_W / 2, uc + PERF_W / 2, PERF_V0, PERF_V1);
-          quadPath(uc - PERF_W / 2, uc + PERF_W / 2, 1 - PERF_V1, 1 - PERF_V0);
-        }
-        ctx.fillStyle = isBack
-          ? 'rgba(200, 208, 225, 0.35)'
-          : `rgba(${Math.round(lerp(205, 248, litP))}, ${Math.round(lerp(212, 249, litP))}, ${Math.round(lerp(228, 252, litP))}, 0.95)`;
-        ctx.fill();
+        perfs();
+        ctx.strokeStyle = isBack ? 'rgba(255, 230, 200, 0.18)' : `rgba(255, 232, 205, ${lerp(0.55, 0.25, litP)})`;
+        ctx.lineWidth = 0.8;
+        ctx.stroke();
 
         // 4. Logótipo do cliente + nome (igual à fita DOM)
         if (!isBack) {

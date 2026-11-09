@@ -71,7 +71,7 @@ export const Contact: React.FC<ContactProps> = ({ hero }) => {
         </div>
 
         <form onSubmit={handleSubmit} className="ct-form reveal-up">
-          <span className="ct-form-tag">● REC • BRIEF DO PROJECTO</span>
+          <span className="ct-form-tag">BRIEF DO PROJECTO</span>
           <label className="ct-field">
             <span>Nome ou empresa</span>
             <input type="text" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} placeholder="Carlos Mondlane / Empresa X" required />

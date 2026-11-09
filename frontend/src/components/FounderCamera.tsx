@@ -189,7 +189,7 @@ export const FounderCamera: React.FC = () => {
             <span>
               TC <b ref={el => { tcRef.current = el; }}>01:00:00:00</b>
             </span>
-            <span>CINE • 24 FPS</span>
+            <span>CÂMARA 01</span>
             <span className="cam-hud-batt">▮▮▮▮▯ 98%</span>
           </div>
 

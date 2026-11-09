@@ -151,7 +151,7 @@ class ContentController extends Controller
             'name' => 'required|string|max:150',
             'email' => 'required|email|max:150',
             'projectType' => 'nullable|string|max:100',
-            'message' => 'required|string',
+            'message' => 'required|string|max:5000',
         ]);
 
         DB::table('contact_messages')->insert([

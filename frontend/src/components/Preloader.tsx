@@ -50,7 +50,7 @@ export const Preloader: React.FC<PreloaderProps> = ({ onComplete }) => {
         <span className="pl2-loc">MAPUTO [HQ] • 25°58′S 32°35′E</span>
       </div>
       <div className="pl2-bottom">
-        <span className="pl2-tag">● REC • A PREPARAR A CENA</span>
+        <span className="pl2-tag">A PREPARAR A CENA</span>
         <span className="pl2-count">{String(progress).padStart(3, '0')}</span>
       </div>
       <div className="pl2-bar">

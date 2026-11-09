@@ -4051,8 +4051,9 @@ a {
   width: 100%;
   height: var(--fh);
   overflow: hidden;
-  background: #0c0c10;
-  box-shadow: 0 22px 40px rgba(10, 12, 25, 0.18), 0 2px 0 rgba(255, 255, 255, 0.04) inset;
+  /* película translúcida: o acetato está em cada fotograma (igual ao canvas) */
+  background: transparent;
+  box-shadow: 0 22px 40px rgba(10, 12, 25, 0.12);
 }
 .cine-strip::after {
   /* reflexo do acetato */
@@ -4075,7 +4076,7 @@ a {
   flex: none;
   width: var(--fw);
   height: var(--fh);
-  background: #0c0c10;
+  background: rgba(30, 20, 12, 0.78);
   cursor: pointer;
 }
 .cine-frame::before,
@@ -4100,7 +4101,7 @@ a {
   left: calc(var(--fw) * 0.016);
   right: calc(var(--fw) * 0.016);
   border-radius: 2px;
-  background: linear-gradient(135deg, #f5f6f9 0%, #e6e9ef 45%, #f7f8fa 100%);
+  background: linear-gradient(135deg, rgba(250, 249, 246, 0.95) 0%, rgba(238, 236, 232, 0.92) 45%, rgba(250, 249, 246, 0.95) 100%);
   transition: box-shadow 0.25s ease, background 0.25s ease;
 }
 .cine-frame:hover .cine-frame-window {

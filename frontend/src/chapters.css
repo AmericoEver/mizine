@@ -81,8 +81,8 @@
   transform-origin: 0 50%;
   translate: 0 -50%;
   will-change: transform;
-  background: #0c0c10;
-  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
+  background: transparent;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.45);
 }
 .rf-frame {
   --focus: 0;
@@ -91,7 +91,7 @@
   width: var(--rfw);
   padding: 0;
   border: 0;
-  background: #0c0c10;
+  background: rgba(40, 26, 14, 0.62);
   cursor: pointer;
   display: flex;
   flex-direction: column;

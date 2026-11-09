@@ -23,7 +23,7 @@ export const Hero: React.FC<HeroProps> = ({ content, onPlayShowreel }) => {
           <div className="flight-altimeter" id="flightTelemetryHud" aria-hidden="true">
             <div className="alt-head">
               <span className="hud-rec-dot" />
-              <span>DESCIDA • REC 24FPS</span>
+              <span>DESCIDA • MAPUTO</span>
             </div>
             <div className="alt-body">
               <div className="alt-tape" id="hudAltTape">
@@ -98,7 +98,7 @@ export const Hero: React.FC<HeroProps> = ({ content, onPlayShowreel }) => {
             <div className="uc-hero-telemetry reveal-up">
               <div className="telemetry-item">
                 <span className="telemetry-val">CINEMA</span>
-                <span className="telemetry-lbl">Cinema 24FPS</span>
+                <span className="telemetry-lbl">Produção audiovisual</span>
               </div>
               <div className="telemetry-div" />
               <div className="telemetry-item">
@@ -153,7 +153,7 @@ export const Hero: React.FC<HeroProps> = ({ content, onPlayShowreel }) => {
                 <span>FITA DE GRAVAÇÃO 24MM // PARCEIROS & CLIENTES</span>
               </div>
               <div className="film-reel-spec">
-                <span>24 FPS • EXPOSIÇÃO LUZ DO DIA 5600K</span>
+                <span>PARCEIROS & CLIENTES</span>
               </div>
             </div>
 

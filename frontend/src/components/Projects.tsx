@@ -139,7 +139,6 @@ export const Projects: React.FC<ProjectsProps> = () => {
             {WORKS.map((w, i) => (
               <img key={w.image} src={w.image} alt="" className={hover === i ? 'is-on' : ''} loading="lazy" />
             ))}
-            <span className="works-preview-rec">● REC</span>
           </div>
         </div>
 

@@ -44,10 +44,9 @@ export const ServicesPillars: React.FC<ServicesPillarsProps> = ({ pillars = [] }
                 onMouseEnter={() => setActiveCode(pillar.code)}
                 onClick={() => setActiveCode(pillar.code)}
               >
-                {/* camada interactiva: luz do cursor, retícula de visor, REC e flash do obturador */}
+                {/* camada interactiva: luz do cursor, retícula de visor e flash do obturador */}
                 <span className="ix-glare" aria-hidden="true" />
                 <span className="ix-reticle" aria-hidden="true"><i /><i /><i /><i /></span>
-                <span className="ix-rec" aria-hidden="true">● REC {pillar.code}</span>
                 <span className="ix-flash" aria-hidden="true" />
                 <div className="pillar-top daylight-pillar-top">
                   <span className="pillar-code daylight-code">{pillar.code}</span>

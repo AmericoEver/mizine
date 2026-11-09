@@ -5,7 +5,7 @@ use App\Http\Controllers\Api\ContentController;
 
 // Rotas públicas
 Route::get('/content', [ContentController::class, 'getContent']);
-Route::post('/contact', [ContentController::class, 'submitContact']);
+Route::post('/contact', [ContentController::class, 'submitContact'])->middleware('throttle:5,1');
 
 // Rotas de Administração (todas exigem o token Bearer emitido no login — ver ContentController::denyUnlessAdmin)
 Route::post('/admin/login', [ContentController::class, 'login'])->middleware('throttle:8,1');

@@ -18,7 +18,7 @@ export const IntroMetrics: React.FC<IntroMetricsProps> = ({ content }) => {
             <span className="meta-index">03/06</span>
             <span className="meta-bracket">]</span>
             <span className="meta-sep">•</span>
-            <span className="meta-title">CÂMARA 01 // A GRAVAÇÃO CONTINUA ● REC</span>
+            <span className="meta-title">CÂMARA 01 // A GRAVAÇÃO CONTINUA</span>
           </div>
           <span className="uc-header-sub daylight-sub">Sede Operacional em Maputo & Ecossistema de Produção</span>
         </div>

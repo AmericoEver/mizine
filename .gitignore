@@ -37,3 +37,6 @@ backend/database/*.sqlite-journal
 # Deploy bundles & heavy raw media
 *.zip
 frontend/public/media/portfolio_extracted/
+
+# Ficheiros pesados/privados
+*.pdf
